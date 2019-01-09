@@ -33,6 +33,6 @@ require "connect.php";
 	{
 	?>
 	<META http-equiv="refresh" URL="https://www.arnaudguy.fr/">
-	<?
+	<?php
 	}
 ?>
