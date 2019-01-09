@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 16/05/2018
-# @Version : 3.1.33
+# @Update : 26/10/2018
+# @Version : 3.1.36
 ################################################################################
 
 //initialize variables 
@@ -49,9 +49,11 @@ if ($_POST['agency']=="") $_POST['agency']='%';
 if ($_POST['model']=="") $_POST['model']='%';
 
 //count company from company list to display company filter or not
-$query = $db->query("SELECT count(id) FROM tcompany WHERE disable='0'"); 
-$company_cnt = $query->fetch();
-$query->closeCursor();
+$qry=$db->prepare("SELECT COUNT(id) FROM `tcompany` WHERE disable='0'");
+$qry->execute();
+$company_cnt=$qry->fetch();
+$qry->closeCursor();
+
 if($company_cnt[0]>1 && $rparameters['user_advanced']==1) {$company_filter=1;} else {$company_filter=0;}
 
 //case agency parameter is enabled
@@ -78,12 +80,17 @@ if (($rparameters['user_limit_service']==1 && $cnt_service!=0) || $rright['stat'
 			<i class="icon-bar-chart"></i>  '.T_('Statistiques').'
 			<div class="pull-right">
 				';
+				$token=uniqid(); 
 				if ($_GET['tab']=='asset')
 				{
+					//clean token
+					$qry=$db->prepare("DELETE FROM `ttoken` WHERE action='export_asset'");
+					$qry->execute();
+					
 					//generate token
-					$token=uniqid(); 
-					$db->exec("DELETE FROM ttoken WHERE action='export_asset'");
-					$db->exec("INSERT INTO ttoken (token,action) VALUES ('$token','export_asset')");
+					$qry=$db->prepare("INSERT INTO `ttoken` (`token`,`action`) VALUES (:token,'export_asset')");
+					$qry->execute(array('token' => $token));
+					
 					echo'
 						<a title="'.T_("Télécharge un fichier au format CSV avec l'ensemble des équipements").'" target="_blank" href="./core/export_assets.php?token='.$token.'&technician='.$_POST['tech'].'&service='.$_POST['service'].'&type='.$_POST['type'].'&criticality='.$_POST['criticality'].'&category='.$_POST['category'].'&month='.$_POST['month'].'&year='.$_POST['year'].'&company='.$_POST['company'].'">
 							<button  class="btn btn-xs btn-purple">
@@ -93,10 +100,14 @@ if (($rparameters['user_limit_service']==1 && $cnt_service!=0) || $rright['stat'
 						</a>
 					';
 				} else {
+					//clean token
+					$qry=$db->prepare("DELETE FROM `ttoken` WHERE action='export_ticket'");
+					$qry->execute();
+					
 					//generate token
-					$token=uniqid(); 
-					$db->exec("DELETE FROM ttoken WHERE action='export_ticket'");
-					$db->exec("INSERT INTO ttoken (token,action) VALUES ('$token','export_ticket')");
+					$qry=$db->prepare("INSERT INTO `ttoken` (`token`,`action`) VALUES (:token,'export_ticket')");
+					$qry->execute(array('token' => $token));
+					
 					echo'
 						<a title="'.T_("Télécharge un fichier au format CSV avec l'ensemble des tickets").'" target="_blank" href="./core/export_tickets.php?token='.$token.'&technician='.$_POST['tech'].'&service='.$_POST['service'].'&agency='.$_POST['agency'].'&type='.$_POST['type'].'&criticality='.$_POST['criticality'].'&category='.$_POST['category'].'&month='.$_POST['month'].'&year='.$_POST['year'].'&userid='.$_SESSION['user_id'].'">
 							<button  class="btn btn-xs btn-purple">

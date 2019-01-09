@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 07/03/2010
-# @Update : 21/09/2018
-# @Version : 3.1.35
+# @Update : 18/10/2018
+# @Version : 3.1.36
 ################################################################################
 
 //cookies initialization
@@ -220,12 +220,10 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 		<meta name="description" content="gestsup" />
 		<meta name="robots" content="noindex, nofollow">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		
 		<!-- basic styles -->
 		<link href="./template/assets/css/bootstrap.min.css" rel="stylesheet" />
 		<link rel="stylesheet" href="./template/assets/css/font-awesome.min.css" />
-		
-		<!-- timepicker styles -->
-		<link rel="stylesheet" href="template/assets/css/bootstrap-timepicker.css" />
 		
 		<link rel="stylesheet" href="./template/assets/css/ace-fonts.css" />
 		<link rel="stylesheet" href="./template/assets/css/jquery-ui-1.10.3.full.min.css" />
@@ -237,6 +235,9 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 			echo '
 			<!-- chosen styles -->
 			<link rel="stylesheet" href="./template/assets/css/chosen.min.css" />
+			
+			<!-- timepicker styles -->
+			<link rel="stylesheet" href="template/assets/css/bootstrap-timepicker.css" />
 			';
 		}
 		if($_GET['page']=='calendar')
@@ -406,7 +407,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 			$query->closeCursor();
 			
 			if ($nbun[0]!=0) {
-				$new='<a href="./index.php?page=dashboard&userid=0&state=%"><img style="border-style: none" alt="img" title="'.$nbun[0].' nouvelles demandes" src="./images/wait_min.png" /></a>';
+				$new='<a href="./index.php?page=dashboard&userid=0&state=%25"><img style="border-style: none" alt="img" title="'.$nbun[0].' nouvelles demandes" src="./images/wait_min.png" /></a>';
 			} else {$new='';}
 			if (($ra2[0]==0)&&($ra1[0]==0)){$ratio=0;}
 			else if ($ra2[0]==0){$ratio=0;}
@@ -453,7 +454,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 									{
 									echo'
 										<li class="red">
-											<a title="'.T_('Ticket en attente d\'attribution').'" href="./index.php?page=dashboard&amp;userid=0&amp;t_group=0&amp;state=%">
+											<a title="'.T_('Ticket en attente d\'attribution').'" href="./index.php?page=dashboard&amp;userid=0&amp;t_group=0&amp;state=%25">
 												<i class="icon-bell-alt icon-animated-bell"></i>
 												<span class="badge badge-important">'; if($mobile==0) {echo $cnt5[0];} echo '</span>
 											</a>

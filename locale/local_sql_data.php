@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 06/12/2016
-# @Update : 06/12/2017
-# @Version : 3.1.34
+# @Update : 12/10/2018
+# @Version : 3.1.36
 ################################################################################
 
 //tickets states
@@ -233,6 +233,8 @@ echo T_("Affiche uniquement les procédures de la société rattachée à l'util
 echo T_("Affiche le champ société sur une procédure");
 echo T_("Modification de l'agence sur la fiche de l'utilisateur");
 echo T_("Bonjour, <br />Vous avez fait la demande suivante auprès du support:");
+echo T_("Affiche le bouton inserer image sur le champ description");
+echo T_("Affiche le bouton inserer image sur le champ résolution");
 
 //Assets states
 echo T_("Stock");

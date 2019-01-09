@@ -6,8 +6,8 @@
 # @Parameters : unit, values, names, libchart
 # @Author : Flox
 # @Create : 05/06/2014
-# @Update : 27/12/2016
-# @Version : 3.1.15
+# @Update : 26/10/2018
+# @Version : 3.1.36
 ################################################################################
 ?>
 
@@ -79,6 +79,5 @@ $(function () {
             }]
         });
     });
-    
 });
 </script>

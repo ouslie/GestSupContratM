@@ -5,8 +5,8 @@
 # @Call : /menu.php
 # @Author : Flox
 # @Create : 20/11/2014
-# @Update : 21/08/2018
-# @Version : 3.1.35
+# @Update : 25/09/2018
+# @Version : 3.1.36
 ################################################################################
 
 //initialize variables 
@@ -240,7 +240,20 @@ if ($rparameters['debug']==1)
 	$where_debug=str_replace("OR", "OR <br />",$where_debug);
 	$join_debug =str_replace("LEFT", "<br />LEFT",$join);
 	echo "
-	<b>SELECT DISTINCT</b> tassets.*<br />
+	<b>SELECT DISTINCT</b> 
+	tassets.id,
+	tassets.netbios,
+	tassets.user,
+	tassets.type,
+	tassets.id,
+	tassets.model,
+	tassets.description,
+	tassets.location,
+	tassets.date_stock,
+	tassets.state,
+	tassets.department,
+	tassets.date_end_warranty,
+	tassets.sn_internal<br />
 	<b>FROM</b>	$from
 	$join_debug <br />
 	<b>WHERE</b><br />
@@ -253,7 +266,25 @@ $query=$db->query("SELECT COUNT(DISTINCT tassets.id) FROM $from $join WHERE $whe
 $resultcount=$query->fetch();
 $query->closeCursor();
 
-$masterquery = $db->query("SELECT DISTINCT tassets.* FROM $from $join WHERE $where ORDER BY $db_order $db_way LIMIT $db_cursor,$rparameters[maxline]"); 
+$masterquery = $db->query("
+SELECT DISTINCT 
+tassets.id,
+tassets.netbios,
+tassets.user,
+tassets.type,
+tassets.id,
+tassets.model,
+tassets.description,
+tassets.location,
+tassets.date_stock,
+tassets.state,
+tassets.department,
+tassets.date_end_warranty,
+tassets.sn_internal
+FROM $from $join 
+WHERE $where 
+ORDER BY $db_order $db_way 
+LIMIT $db_cursor,$rparameters[maxline]"); 
 
 //auto launch asset if only one resultcount
 if($resultcount[0]==1 && $assetkeywords!='')

@@ -5,8 +5,8 @@
 # @Call : admin.php
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 11/09/2018
-# @Version : 3.1.35
+# @Update : 22/10/2018
+# @Version : 3.1.36
 ################################################################################
 
 //initialize variables 
@@ -170,8 +170,13 @@ if($_POST['Modifier'])
 	}
 	if($_POST['mail'])
 	{
-		if(!strpos($_POST['mail'],'@')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("l'adresse mail doit possèder un arobase.").' </div>';}
 		if(!strpos($_POST['mail'],'.')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("l'adresse mail doit possèder un point.").' </div>';}
+		if(strpos($_POST['mail'],'@'))
+		{
+			$mail_domain=explode('@',$_POST['mail']);
+			if(!strpos($mail_domain[1],'.')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("Le domaine de l'adresse mail doit posséder un point.").' </div>';}
+		} else {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("l'adresse mail doit possèder un arobase.").' </div>';}
+		
 	}
 	if($_POST['login'])
 	{
@@ -489,8 +494,12 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 		$error=0;
 		if($_POST['mail'])
 		{
-			if(!strpos($_POST['mail'],'@')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("l'adresse mail doit possèder un arobase.").' </div>';}
 			if(!strpos($_POST['mail'],'.')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("l'adresse mail doit possèder un point.").' </div>';}
+			if(strpos($_POST['mail'],'@'))
+			{
+				$mail_domain=explode('@',$_POST['mail']);
+				if(!strpos($mail_domain[1],'.')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("Le domaine de l'adresse mail doit posséder un point.").' </div>';}
+			} else {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("l'adresse mail doit possèder un arobase.").' </div>';}
 		}
 	}
 	if($_POST['login'])
@@ -576,11 +585,10 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 			'function' => $_POST['function']
 			));
 		
-		
+		$last_user_id=$db->lastInsertId();
 		//if post service insert new assoc
 		if ($_POST['service'])
 		{
-			$last_user_id=$db->lastInsertId(); 
 			$qry=$db->prepare("INSERT INTO `tusers_services` (`user_id`,`service_id`) VALUES (:user_id,:service_id)");
 			$qry->execute(array(
 				'user_id' => $last_user_id,
@@ -593,7 +601,6 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 			//if post agency insert new assoc
 			if ($_POST['agency'])
 			{
-				$last_user_id=$db->lastInsertId(); 
 				$qry=$db->prepare("INSERT INTO `tusers_agencies` (`user_id`,`agency_id`) VALUES (:user_id,:agency_id)");
 				$qry->execute(array(
 					'user_id' => $last_user_id,

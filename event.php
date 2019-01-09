@@ -7,7 +7,7 @@
 # @Author : Flox
 # @Create : 20/07/2011
 # @Update : 21/08/2018
-# @Version : 3.1.35
+# @Version : 3.1.36 p1
 ################################################################################
 
 //initialize variables 
@@ -83,8 +83,16 @@ if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
 			$query->closeCursor();
 				
 			if ($_POST['direct']!='') {$date=$_POST['direct'];} else {$date="$_POST[date] $_POST[hour]";}
-			$db->exec("INSERT INTO tevents (technician,incident,date_start,type,title,classname) VALUES ('$_SESSION[user_id]',$db_id,'$date','1','Rappel: $rticket[title]','label-warning')");
-			//redirect
+			$qry=$db->prepare("INSERT INTO `tevents` (`technician`,`incident`,`date_start`,`type`,`title`,`classname`) VALUES (:technician,:incident,:date_start,:type,:title,:classname)");
+			$qry->execute(array(
+				'technician' => $_SESSION['user_id'],
+				'incident' => $_GET['id'],
+				'date_start' => $date,
+				'type' => '1',
+				'title' => "Rappel: $rticket[title]",
+				'classname' => 'label-warning'
+				));
+				//redirect
 			$www = "./index.php?page=ticket&id=$_GET[id]&userid=$_GET[userid]";
 			echo '<script language="Javascript">
 			<!--

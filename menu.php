@@ -524,12 +524,6 @@ if(!isset($state)) $state = '';
 				<span class="menu-text">'.T_('Contrats').'</span>
 			</a>
 		</li>';
-		if($_GET['page']=='contrats') echo '<li class="active">'; else echo '<li>'; echo '
-			<a href="./index.php?page=identif">
-				<i class="icon-bar-chart"></i>
-				<span class="menu-text">'.T_('Identifiants').'</span>
-			</a>
-		</li>';
 	}
 
 

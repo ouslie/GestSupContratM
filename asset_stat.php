@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 25/01/2016
-# @Update : 13/09/2017
-# @Version : 3.1.26
+# @Update : 26/10/2018
+# @Version : 3.1.36
 ################################################################################
 
 //initialize variables 
@@ -18,7 +18,7 @@ if(!isset($_POST['model'])) $_POST['model']='';
 <form method="post" action="" name="filter" >
 	<center>
 	<small><?php echo T_('Filtre global'); ?>:</small>
-	<select name="tech" onchange=submit()>
+	<select style="width:155px" name="tech" onchange=submit()>
 		<?php
 		$query = $db->query("SELECT * FROM tusers WHERE (profile=0 OR profile=4) and disable=0 ORDER BY lastname");				
 		while ($row=$query->fetch()) {
@@ -31,7 +31,7 @@ if(!isset($_POST['model'])) $_POST['model']='';
 		if ($find!="1") {echo '<option value="%" selected >'.T_('Tous les techniciens').'</option>';} else {echo '<option value="%" >'.('Tous les techniciens').'</option>';}											
 		?>
 	</select>
-	<select name="service" onchange=submit()>
+	<select style="width:155px" name="service" onchange=submit()>
 		<?php
 		$query = $db->query("SELECT * FROM tservices WHERE disable=0 ORDER BY name");				
 		while ($row=$query->fetch()) {
@@ -47,7 +47,7 @@ if(!isset($_POST['model'])) $_POST['model']='';
 	if($company_filter==1)
 	{
 		echo '
-			<select name="company" onchange=submit()>
+			<select style="width:155px" name="company" onchange=submit()>
 				';
 				$query = $db->query("SELECT * FROM tcompany WHERE disable='0' ORDER BY name");				
 				while ($row=$query->fetch()) {
@@ -62,7 +62,7 @@ if(!isset($_POST['model'])) $_POST['model']='';
 		';
 	}
 	?>
-	<select name="type" onchange=submit()>
+	<select style="width:155px" name="type" onchange=submit()>
 	<?php
 	$query = $db->query("SELECT * FROM tassets_type ORDER BY name");				
 	while ($row=$query->fetch()) {
@@ -75,7 +75,7 @@ if(!isset($_POST['model'])) $_POST['model']='';
 	echo '<option '; if ($_POST['type']=='%') echo 'selected'; echo' value="%" >'.T_('Tous les types').'</option>';										
 	?>
 	</select> 
-	<select name="model" onchange=submit()>
+	<select style="width:155px" name="model" onchange=submit()>
 	<?php
 	$query = $db->query("SELECT * FROM tassets_model ORDER BY type");				
 	while ($row=$query->fetch()) {
@@ -89,7 +89,7 @@ if(!isset($_POST['model'])) $_POST['model']='';
 	?>
 	</select> 
 	
-	<select name="month" onchange=submit()>
+	<select style="width:155px" name="month" onchange=submit()>
 		<option value="%" <?php if ($_POST['month'] == '%')echo "selected" ?>><?php echo T_('Tous les mois'); ?></option>
 		<option value="01" <?php if ($_POST['month'] == '1')echo "selected" ?>><?php echo T_('Janvier'); ?></option>
 		<option value="02" <?php if ($_POST['month'] == '2')echo "selected" ?>><?php echo T_('Février'); ?></option>
@@ -105,7 +105,7 @@ if(!isset($_POST['model'])) $_POST['model']='';
 		<option value="12" <?php if ($_POST['month'] == '12')echo "selected" ?>><?php echo T_('Décembre'); ?></option>	
 	</select>
 
-	<select name="year" onchange=submit()>
+	<select style="width:155px" name="year" onchange=submit()>
 		<?php
 		$q1= $db->query("SELECT distinct year(date_install) as year FROM `tassets` WHERE date_install not like '0000-00-00' ORDER BY year(date_install)");
 		while ($row=$q1->fetch()) 

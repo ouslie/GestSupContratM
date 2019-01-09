@@ -5,9 +5,9 @@
 # @Call : auto mail
 # @Parameters : token
 # @Author : Flox
-# @Version : 3.1.32
+# @Version : 3.1.36
 # @Create : 22/04/2017
-# @Update : 16/04/2018
+# @Update : 26/10/2018
 ################################################################################
 
 //initialize variables 
@@ -32,16 +32,19 @@ $db->exec('SET sql_mode = ""');
 $db_token=strip_tags($db->quote($_GET['token']));
 
 //load parameters table
-$query=$db->query("SELECT * FROM tparameters");
-$rparameters=$query->fetch();
-$query->closeCursor();
+$qry=$db->prepare("SELECT * FROM `tparameters`");
+$qry->execute();
+$rparameters=$qry->fetch();
+$qry->closeCursor();
 
 if ($_GET['token'])
 {
 	//check if token exist
-	$query=$db->query("SELECT ticket_id FROM ttoken WHERE token=$db_token");
-	$row=$query->fetch();
-	$query->closeCursor();
+	$qry=$db->prepare("SELECT `ticket_id` FROM `ttoken` WHERE token=:token");
+	$qry->execute(array('token' => $_GET['token']));
+	$row=$qry->fetch();
+	$qry->closeCursor();
+
 	if($row)
 	{
 		$token=true;
@@ -60,7 +63,7 @@ if($rparameters['server_timezone']) {date_default_timezone_set($rparameters['ser
 
 $datetime=date('Y-m-d H:i:s');
 
-//locales
+//load locales
 $lang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
 if ($lang=='fr') {$_GET['lang'] = 'fr_FR';}
 else {$_GET['lang'] = 'en_US';}
@@ -75,16 +78,18 @@ T_bindtextdomain($_GET['lang'], LOCALE_DIR);
 T_bind_textdomain_codeset($_GET['lang'], $encoding);
 T_textdomain($_GET['lang']);
 
-
 //get ticket data
-$query = $db->query("SELECT title,user FROM `tincidents` WHERE id='$ticket_id'");
-$ticket=$query->fetch();
-$query->closecursor();
+$qry=$db->prepare("SELECT `title`,`user` FROM `tincidents` WHERE id=:id");
+$qry->execute(array('id' => $ticket_id));
+$ticket=$qry->fetch();
+$qry->closeCursor();
 
 //if survey is already begin then goto last empty question
-$query = $db->query("SELECT number FROM `tsurvey_questions` WHERE id=(SELECT MAX(question_id) FROM tsurvey_answers WHERE ticket_id='$ticket_id')");
-$current_question_number=$query->fetch();
-$query->closecursor();
+$qry=$db->prepare("SELECT `number` FROM `tsurvey_questions` WHERE id=(SELECT MAX(question_id) FROM tsurvey_answers WHERE ticket_id=:ticket_id)");
+$qry->execute(array('ticket_id' => $ticket_id));
+$current_question_number=$qry->fetch();
+$qry->closeCursor();
+
 if($current_question_number[0]) {$question_number=$current_question_number[0]+1;}
 
 //actions on submit
@@ -93,23 +98,36 @@ if($_POST['previous'] || $_POST['next'] || $_POST['validation']) {
 	//check error
 	if($_POST['answer'] && (strlen(trim($_POST['answer']))!=0) && ($_POST['next'] || $_POST['validation'])) {
 		//check previous answer
-		$query = $db->query("SELECT * FROM `tsurvey_answers` WHERE ticket_id='$ticket_id' AND question_id='$_POST[question_id]'");
-		$row=$query->fetch();
-		$query->closecursor();
+		$qry=$db->prepare("SELECT `answer` FROM `tsurvey_answers` WHERE ticket_id=:ticket_id AND question_id=:question_id");
+		$qry->execute(array('ticket_id' => $ticket_id,'question_id' => $_POST['question_id']));
+		$row=$qry->fetch();
+		$qry->closeCursor();
+		
 		if($row)
 		{
 			if($row['answer']!=$_POST['answer']) //if answer is different than db row update it
 			{
-				$_POST['answer'] = $db->quote($_POST['answer']);
+				$_POST['answer'] = strip_tags($_POST['answer']);
 				//update answer
-				$db->exec("UPDATE tsurvey_answers SET date='$datetime', answer=$_POST[answer] WHERE ticket_id='$ticket_id' AND question_id='$_POST[question_id]'");
+				$qry=$db->prepare("UPDATE `tsurvey_answers` SET `date`=:date, `answer`=:answer WHERE ticket_id=:ticket_id AND question_id=:question_id");
+				$qry->execute(array(
+					'date' => $datetime,
+					'answer' => $_POST['answer'],
+					'ticket_id' => $ticket_id,
+					'question_id' => $_POST['question_id']
+					));
 			}
 		} else {
-			$_POST['answer'] = $db->quote($_POST['answer']);
+			$_POST['answer'] = strip_tags($_POST['answer']);
 			//insert answer
-			$db->exec("INSERT INTO tsurvey_answers (date, ticket_id, question_id,answer) VALUES ('$datetime','$ticket_id','$_POST[question_id]',$_POST[answer])");
+			$qry=$db->prepare("INSERT INTO `tsurvey_answers` (`date`,`ticket_id`,`question_id`,`answer`) VALUES (:date,:ticket_id,:question_id,:answer)");
+			$qry->execute(array(
+				'date' => $datetime,
+				'ticket_id' => $ticket_id,
+				'question_id' => $_POST['question_id'],
+				'answer' => $_POST['answer']
+				));
 		}
-		
 	} else {if(!$_POST['previous']){$error='<b>'.T_('ERREUR').':</b> '.T_("Aucune réponse n'a été saisie");}}
 	//change current question number
 	if(!$error)
@@ -121,25 +139,38 @@ if($_POST['previous'] || $_POST['next'] || $_POST['validation']) {
 }
 
 //get question id
-$query = $db->query("SELECT id FROM `tsurvey_questions` WHERE number='$question_number'");
-$question_id=$query->fetch();
-$query->closecursor();
+$qry=$db->prepare("SELECT `id` FROM `tsurvey_questions` WHERE number=:number");
+$qry->execute(array('number' => $question_number));
+$question_id=$qry->fetch();
+$qry->closeCursor();
 $question_id=$question_id[0];
 
 //display debug
 if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR:</b> POST_answer='.$_POST['answer'].' question_number='.$question_number.' post_question_number='.$_POST['question_number'].' question_id='.$question_id.' post_question_id='.$_POST['question_id']; }
 
-if($_POST['validation'] && !$error)
+if($_POST['validation'] && !$error && $ticket_id)
 {
 	//delete token
-	$db->exec("DELETE FROM ttoken WHERE ticket_id='$ticket_id'");
+	$qry=$db->prepare("DELETE FROM `ttoken` WHERE ticket_id=:ticket_id");
+	$qry->execute(array('ticket_id' => $ticket_id));
 	
 	if($rparameters['survey_auto_close_ticket']==1)
 	{
 		//modify ticket state in close and unread tag
-		$db->exec("UPDATE tincidents SET state='3',date_res='$datetime' WHERE id='$ticket_id'");
+		$qry=$db->prepare("UPDATE `tincidents` SET `state`='3',date_res=:date_res WHERE `id`=:id");
+		$qry->execute(array(
+			'date_res' => $datetime,
+			'id' => $ticket_id
+			));
+		
 		//insert close thread
-		$db->exec("INSERT INTO tthreads (ticket, date, type, author) VALUES ('$ticket_id','$datetime','4','$ticket[user]')");
+		$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`type`,`author`) VALUES (:ticket,:date,'4',:author)");
+		$qry->execute(array(
+			'ticket' => $ticket_id,
+			'date' => $datetime,
+			'author' => $ticket['user']
+			));
+		
 	}
 }
 ?>
@@ -207,8 +238,9 @@ if($_POST['validation'] && !$error)
 											<div id="fuelux-wizard" class="row-fluid" data-target="#step-container">
 												<ul class="wizard-steps">
 													';
-													$query = $db->query("SELECT id,number FROM `tsurvey_questions` WHERE disable='0'");
-													while ($row=$query->fetch())
+													$qry=$db->prepare("SELECT `id`,`number` FROM `tsurvey_questions` WHERE disable='0'");
+													$qry->execute();
+													while($row=$qry->fetch()) 
 													{
 														if ($question_number>=$row['number']) {$active='active';} else {$active='';}
 														echo '
@@ -217,7 +249,7 @@ if($_POST['validation'] && !$error)
 														</li>
 														';
 													}
-													$query->closecursor();
+													$qry->closeCursor();
 													echo '
 												</ul>
 											</div>
@@ -232,14 +264,16 @@ if($_POST['validation'] && !$error)
 													<div class="col-xs-6 col-sm-10" id="step1">
 															';
 															//get question
-															$query = $db->query("SELECT * FROM `tsurvey_questions` WHERE number='$question_number' AND disable='0'");
-															$row=$query->fetch();
-															$query->closecursor();
+															$qry=$db->prepare("SELECT * FROM `tsurvey_questions` WHERE number=:number AND disable='0'");
+															$qry->execute(array('number' => $question_number));
+															$row=$qry->fetch();
+															$qry->closeCursor();
 															
 															//get question answer
-															$query = $db->query("SELECT * FROM `tsurvey_answers` WHERE ticket_id='$ticket_id' AND question_id='$question_id'");
-															$answer=$query->fetch();
-															$query->closecursor();
+															$qry=$db->prepare("SELECT * FROM `tsurvey_answers` WHERE ticket_id=:ticket_id AND question_id=:question_id");
+															$qry->execute(array('ticket_id' => $ticket_id, 'question_id' => $question_id,));
+															$answer=$qry->fetch();
+															$qry->closeCursor();
 															
 															//display question
 															echo '<h3 class="lighter block green">'.T_('Question').' n°'.$row['number'].': '.$row['text'].'</h3><div class="space-8"></div>';
@@ -327,9 +361,11 @@ if($_POST['validation'] && !$error)
 																';
 															}
 															//get last question number
-															$query = $db->query("SELECT MAX(number) FROM `tsurvey_questions` WHERE disable='0'");
-															$row=$query->fetch();
-															$query->closecursor();
+															$qry=$db->prepare("SELECT MAX(number) FROM `tsurvey_questions` WHERE disable='0'");
+															$qry->execute();
+															$row=$qry->fetch();
+															$qry->closeCursor();
+															
 															if($row[0]==$question_number)
 															{
 																echo '
@@ -363,7 +399,6 @@ if($_POST['validation'] && !$error)
 						} else {
 							echo '<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i><b> '.T_('Erreur').'</b>: '.T_("La fonction sondage n'est pas activée contacter votre administrateur").'</center></div>';
 						} 
-					
 						?>
 					</div>
 				</div>

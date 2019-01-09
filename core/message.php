@@ -6,12 +6,12 @@
 # @parameters : $from, $to, $message, $object
 # @Author : Flox
 # @Create : 21/11/2012
-# @Update : 23/08/2018
-# @Version : 3.1.35
+# @Update : 15/10/2018
+# @Version : 3.1.36 p1
 ################################################################################
 
 //functions
-require('./core/crypt.php');
+require_once('./core/crypt.php');
 
 require_once("components/PHPMailer/src/PHPMailer.php");
 require_once("components/PHPMailer/src/SMTP.php");
@@ -36,7 +36,13 @@ $mail->Password = "$rparameters[mail_password]";
 $mail->IsHTML(true); // Envoi en html
 $mail->From = "$from";
 $mail->FromName = "$from";
-$mail->AddAddress("$to");
+//multiadr case
+if(preg_match('#;#',$to))
+{
+	$to=explode(';',$to);
+	foreach ($to as &$mailadr) {if($mailadr){$mail->AddAddress("$mailadr");}}
+} else { $mail->AddAddress("$to");}
+
 $mail->AddReplyTo("$from");
 $mail->Subject = "$object";
 if ($rparameters['mail_ssl_check']==0)

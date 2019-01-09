@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 06/11/2012
-# @Update : 16/05/2017
-# @Version : 3.1.33
+# @Update : 26/10/2018
+# @Version : 3.1.36
 ################################################################################
 ?>
 <script type="text/javascript">
@@ -15,7 +15,6 @@ $(function () {
     var chart;
     $(document).ready(function() {
         chart = new Highcharts.Chart({
-	
             chart: {
                 renderTo: '<?php echo $container; ?>',
                 type: 'column',
@@ -61,7 +60,6 @@ $(function () {
                         this.x +': '+ this.y +' h';
                 }
             },
-			
             plotOptions: {
                 column: {
                     pointPadding: 0.2,
@@ -86,6 +84,5 @@ $(function () {
 				]
         });
     });
-    
 });
 </script>
