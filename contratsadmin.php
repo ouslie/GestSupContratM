@@ -11,7 +11,7 @@
 ################################################################################
 //secure ticket access page
 //ini_set("display_errors", "1");
-$token_export =uniqid();
+$token_export = uniqid();
 $db->exec("INSERT INTO ttoken (token) VALUES ('$token_export')");
 ?>
 
@@ -86,7 +86,7 @@ $db->exec("INSERT INTO ttoken (token) VALUES ('$token_export')");
       <span class="close">&times;</span>
       <h2>Ajouter un nouveau contrat</h2>
 <?php echo $_POST["id"];
- echo $_GET["id"]; ?>
+echo $_GET["id"]; ?>
     </div>
     <div class="modal-body">
 						<form  method="post">
@@ -96,14 +96,13 @@ $db->exec("INSERT INTO ttoken (token) VALUES ('$token_export')");
 							<div class="col-sm-8">
 							<?php
 
-$query="SELECT * FROM tusers";
-$query = $db->query($query);
-$option = '';
-while ($row = $query->fetch())
-{
-$option .= '<option value = "'.$row['id'].'">'.$row['firstname'].'&nbsp;'.$row['lastname'].'</option>';
-}
-?>
+						$query = "SELECT * FROM tusers";
+						$query = $db->query($query);
+						$option = '';
+						while ($row = $query->fetch()) {
+							$option .= '<option value = "' . $row['id'] . '">' . $row['firstname'] . '&nbsp;' . $row['lastname'] . '</option>';
+						}
+						?>
 <html>
 <body>
 <form>
@@ -121,14 +120,13 @@ $option .= '<option value = "'.$row['id'].'">'.$row['firstname'].'&nbsp;'.$row['
 							<div class="col-sm-8">
 							<?php
 
-$query="SELECT * FROM tcontratstype WHERE fonction = 'type'";
-$query = $db->query($query);
-$option = '';
-while ($row = $query->fetch())
-{
-$option .= '<option value = "'.$row['id'].'">'.$row['nom'].'</option>';
-}
-?>
+						$query = "SELECT * FROM tcontratstype WHERE fonction = 'type'";
+						$query = $db->query($query);
+						$option = '';
+						while ($row = $query->fetch()) {
+							$option .= '<option value = "' . $row['id'] . '">' . $row['nom'] . '</option>';
+						}
+						?>
 <html>
 <body>
 <form>
@@ -220,20 +218,18 @@ $option .= '<option value = "'.$row['id'].'">'.$row['nom'].'</option>';
 <script src="./components/Highcharts/js/modules/exporting.js"></script>
 <?php
 //Verification droit
-if ($rright['admin_contrat']!=0)
-	{
+if ($rright['admin_contrat'] != 0) {
 	//include
 //	include("contratsajout.php");
 	//Recupération variable
 	$view = $_GET['view'];
 
 	function selectcontrat($view)
-		{
+	{
 		global $db;
 		global $query;
-		if ($view==1)
-			{
-			$query="SELECT sum(time) AS timeused, tcontrats.id, tusers.firstname, tusers.lastname, tcontrats.status,tcontrats.nom as nomcontrat,tcontrats.date_souscription,tcontrats.date_fin ,tcontrats.temps_souscrit, 					tcontrats.tarif, tcontratstype.nom as nomtype, tcontrats.periode as nomperiode, tcontrats.prepaye, tcontrats.tarifcontrat, tcontrats.facturelink
+		if ($view == 1) {
+			$query = "SELECT sum(time) AS timeused, tcontrats.id, tusers.firstname, tusers.lastname, tcontrats.status,tcontrats.nom as nomcontrat,tcontrats.date_souscription,tcontrats.date_fin ,tcontrats.temps_souscrit, 					tcontrats.tarif, tcontratstype.nom as nomtype, tcontrats.periode as nomperiode, tcontrats.prepaye, tcontrats.tarifcontrat, tcontrats.facturelink
 			FROM tincidents
 			INNER JOIN tusers ON (tincidents.user=tusers.id)
 			INNER JOIN tcontrats ON (tincidents.contrats=tcontrats.id)
@@ -241,21 +237,18 @@ if ($rright['admin_contrat']!=0)
 			WHERE tcontratstype.id = 1 AND tcontrats.status = 1
 			GROUP BY tincidents.user, tcontrats.id
 			ORDER BY tcontrats.id DESC";
-			}
-		if ($view==2)
-
-			{
-			$query="SELECT tcontrats.id , tcontrats.user, tcontrats.status, tcontrats.nom AS nomcontrat,tcontrats.type,tcontrats.date_souscription,tcontrats.date_fin,tcontrats.tarifcontrat,tusers.lastname,tusers.firstname,tcontratstype.nom AS nomtype, tcontrats.temps_souscrit, tcontrats.periode as nomperiode, tcontrats.facturelink
+		}
+		if ($view == 2) {
+			$query = "SELECT tcontrats.id , tcontrats.user, tcontrats.status, tcontrats.nom AS nomcontrat,tcontrats.type,tcontrats.date_souscription,tcontrats.date_fin,tcontrats.tarifcontrat,tusers.lastname,tusers.firstname,tcontratstype.nom AS nomtype, tcontrats.temps_souscrit, tcontrats.periode as nomperiode, tcontrats.facturelink
 			FROM tcontrats
 			INNER JOIN tusers ON (tcontrats.user=tusers.id)
 			INNER JOIN tcontratstype ON (tcontrats.type=tcontratstype.id)
 			WHERE tcontratstype.id = $view AND tcontrats.status = 1
 			ORDER BY tcontrats.id DESC";
-			}
+		}
 
-				if ($view==4)
-					{
-					$query="SELECT sum(time) AS timeused, tcontrats.id, tusers.firstname, tusers.lastname, tcontrats.status,tcontrats.nom as nomcontrat,tcontrats.date_souscription,tcontrats.date_fin ,tcontrats.temps_souscrit, 					tcontrats.tarif, tcontratstype.nom as nomtype, tcontrats.periode as nomperiode, tcontrats.prepaye, tcontrats.tarifcontrat, tcontrats.facturelink
+		if ($view == 4) {
+			$query = "SELECT sum(time) AS timeused, tcontrats.id, tusers.firstname, tusers.lastname, tcontrats.status,tcontrats.nom as nomcontrat,tcontrats.date_souscription,tcontrats.date_fin ,tcontrats.temps_souscrit, 					tcontrats.tarif, tcontratstype.nom as nomtype, tcontrats.periode as nomperiode, tcontrats.prepaye, tcontrats.tarifcontrat, tcontrats.facturelink
 					FROM tincidents
 					INNER JOIN tusers ON (tincidents.user=tusers.id)
 					INNER JOIN tcontrats ON (tincidents.contrats=tcontrats.id)
@@ -263,37 +256,38 @@ if ($rright['admin_contrat']!=0)
 					WHERE tcontratstype.id = 1 AND tcontrats.status = 0
 					GROUP BY tincidents.user, tcontrats.id
 					ORDER BY tcontrats.id DESC";
-					}
-					if ($view==3)
-						{
-							$query="SELECT tcontrats.id , tcontrats.user, tcontrats.status, tcontrats.nom AS nomcontrat,tcontrats.type,tcontrats.date_souscription,tcontrats.date_fin,tcontrats.tarifcontrat,tusers.lastname,tusers.firstname,tcontratstype.nom AS nomtype, tcontrats.temps_souscrit, tcontrats.periode as nomperiode, tcontrats.facturelink
+		}
+		if ($view == 3) {
+			$query = "SELECT tcontrats.id , tcontrats.user, tcontrats.status, tcontrats.nom AS nomcontrat,tcontrats.type,tcontrats.date_souscription,tcontrats.date_fin,tcontrats.tarifcontrat,tusers.lastname,tusers.firstname,tcontratstype.nom AS nomtype, tcontrats.temps_souscrit, tcontrats.periode as nomperiode, tcontrats.facturelink
 							FROM tcontrats
 							INNER JOIN tusers ON (tcontrats.user=tusers.id)
 							INNER JOIN tcontratstype ON (tcontrats.type=tcontratstype.id)
 							WHERE tcontratstype.id = 2 AND tcontrats.status = 0
 							ORDER BY tcontrats.id DESC";
-						}
 		}
+	}
 	function hour_min($minutes)
-		{
-		if($minutes == 0){return '';}
-		else
-    		{
-			$hours  = round(intval($minutes/60) , 2); //round down to nearest minute.
-			$minutes = $minutes % 60; return sprintf("%02d", $hours).'h'.sprintf("%02d", $minutes).'min';
-			}
+	{
+		if ($minutes == 0) {
+			return '';
+		} else {
+			$hours = round(intval($minutes / 60), 2); //round down to nearest minute.
+			$minutes = $minutes % 60;
+			return sprintf("%02d", $hours) . 'h' . sprintf("%02d", $minutes) . 'min';
 		}
+	}
 	function hour_min2($minutes)
-		{
-		if($minutes == 0){return '';}
-		else
-			{
-			$hours  = round(intval($minutes/60) , 2); //round down to nearest minute.
-			$minutes = $minutes % 60; return  $hours.','.sprintf("%02d", $minutes).'';
-			}
+	{
+		if ($minutes == 0) {
+			return '';
+		} else {
+			$hours = round(intval($minutes / 60), 2); //round down to nearest minute.
+			$minutes = $minutes % 60;
+			return $hours . ',' . sprintf("%02d", $minutes) . '';
 		}
+	}
 	function nbrecontrattype($typecontrat, $status)
-		{
+	{
 		global $db;
 		global $query;
 		$query = "SELECT * FROM tcontrats WHERE type = '$typecontrat' AND status = '$status'";
@@ -301,26 +295,26 @@ if ($rright['admin_contrat']!=0)
 		$count = $query->rowCount();
 		echo $count;
 		$query->closecursor();
-		}
+	}
 	function addcontrat()
-		{
+	{
 		global $db;
 		global $query;
-		$demandeur =   $_POST['demandeur'];
-		$type =   $_POST['type'];
-		$periode =   $_POST['periode'];
-		$date_debut =  $_POST['date_debut'];
-		$date_fin =  $_POST['date_fin'];
+		$demandeur = $_POST['demandeur'];
+		$type = $_POST['type'];
+		$periode = $_POST['periode'];
+		$date_debut = $_POST['date_debut'];
+		$date_fin = $_POST['date_fin'];
 		$temps_souscrit = $_POST['temps_souscrit'];
-		$montantheure =   $_POST['montantheure'];
-		$tarifcontrat =   $_POST['tarifcontrat'];
-		$service =   $_POST['service'];
+		$montantheure = $_POST['montantheure'];
+		$tarifcontrat = $_POST['tarifcontrat'];
+		$service = $_POST['service'];
 		$query = "INSERT INTO tcontrats (user, status, date_souscription, date_fin, temps_souscrit, tarif, tarifcontrat, type, periode,nom) VALUES ('$demandeur', '1' , STR_TO_DATE('$date_debut', '%d/%m/%Y'),STR_TO_DATE('$date_fin', '%d/%m/%Y'), '$temps_souscrit', '$montantheure','$tarifcontrat', '$type', '$periode','$service')";
 		$query = $db->query($query);
 		echo '<meta http-equiv="refresh" content="0">';
-		}
+	}
 	function cloturecontrat()
-		{
+	{
 		global $db;
 		global $query;
 		global $mail;
@@ -336,37 +330,44 @@ if ($rright['admin_contrat']!=0)
 		$query = "SELECT tcontrats.user, tcontrats.id, tusers.id, tusers.mail, tcontrats.type, tcontrats.nom,tcontrats.facturelink,tcontrats.prepaye,tcontrats.periode, tcontratstype.nom AS typecontrat  FROM tcontrats INNER JOIN tusers ON (tcontrats.user=tusers.id) INNER JOIN tcontratstype ON (tcontrats.type = tcontratstype.id) WHERE tcontrats.id='$var'";
 		$query = $db->query($query);
 		while ($row = $query->fetch()) {
- 		$mailuser = $row['mail']; $nomcontrat = $row['nom']; $periode = $row['periode']; $typecontrat = $row['type'];  $prepaye = $row['prepaye'];
-    if (isset($facturelink)){}else{$facturelink = $row['facturelink'];}
-  }
-		if ($typecontrat==2){
-			$subject   ="Notifications de clôture contrat";
-			$messages  = "Bonjour,  </br> </br>";
-			$messages .="Votre contrat ". $nomcontrat ." ". $periode ." à été clôturé. </br>";
-			$messages .="Vous trouverez ci-dessous le lien pour la facture :  </br>";
-			$messages .=" $facturelink  </br> </br>";
-			$messages .="Je reste à votre disposition, </br> ";
-			$messages .="Arnaud GUY </br>";
-			$messages .="www.arnaudguy.fr </br>";
+			$mailuser = $row['mail'];
+			$nomcontrat = $row['nom'];
+			$periode = $row['periode'];
+			$typecontrat = $row['type'];
+			$prepaye = $row['prepaye'];
+			if (isset($facturelink)) {
+			} else {
+				$facturelink = $row['facturelink'];
+			}
 		}
-		if ($typecontrat==1){
-			if ($prepaye==0){
-				$subject   ="Notifications clôture décompte d'heure mensuel";
-				$messages  = "Bonjour,  </br></br>";
-				$messages .="Votre décompte d'heure mensuel à été cloturé.</br>";
-				$messages .="Vous trouverez ci-dessous le lien pour la facture : </br>";
-				$messages .=" $facturelink </br></br>";
-				$messages .="Je reste à votre disposition,</br>";
-				$messages .="Arnaud GUY</br>";
-				$messages .="www.arnaudguy.fr</br>";
+		if ($typecontrat == 2) {
+			$subject = "Notifications de clôture contrat";
+			$messages = "Bonjour,  </br> </br>";
+			$messages .= "Votre contrat " . $nomcontrat . " " . $periode . " à été clôturé. </br>";
+			$messages .= "Vous trouverez ci-dessous le lien pour la facture :  </br>";
+			$messages .= " $facturelink  </br> </br>";
+			$messages .= "Je reste à votre disposition, </br> ";
+			$messages .= "Arnaud GUY </br>";
+			$messages .= "www.arnaudguy.fr </br>";
+		}
+		if ($typecontrat == 1) {
+			if ($prepaye == 0) {
+				$subject = "Notifications clôture décompte d'heure mensuel";
+				$messages = "Bonjour,  </br></br>";
+				$messages .= "Votre décompte d'heure mensuel à été cloturé.</br>";
+				$messages .= "Vous trouverez ci-dessous le lien pour la facture : </br>";
+				$messages .= " $facturelink </br></br>";
+				$messages .= "Je reste à votre disposition,</br>";
+				$messages .= "Arnaud GUY</br>";
+				$messages .= "www.arnaudguy.fr</br>";
 
 			} else {
-				$subject   ="Notifications de clôture contrat";
-				$messages  = "Bonjour,  </br> </br>";
-				$messages .="Votre contrat ". $nomcontrat ." ". $periode ." est arrivé à expiration et à donc été cloturé. </br> </br>";
-				$messages .="Je reste à votre disposition, </br> ";
-				$messages .="Arnaud GUY </br>";
-				$messages .="www.arnaudguy.fr </br>";
+				$subject = "Notifications de clôture contrat";
+				$messages = "Bonjour,  </br> </br>";
+				$messages .= "Votre contrat " . $nomcontrat . " " . $periode . " est arrivé à expiration et à donc été cloturé. </br> </br>";
+				$messages .= "Je reste à votre disposition, </br> ";
+				$messages .= "Arnaud GUY </br>";
+				$messages .= "www.arnaudguy.fr </br>";
 
 			}
 
@@ -375,29 +376,33 @@ if ($rright['admin_contrat']!=0)
 		include('components/PHPMailer/src/PHPMailer.php');
 		include('components/PHPMailer/src/SMTP.php');
 		include('components/PHPMailer/src/Exception.php');
-		/*
-		require_once('components/PHPMailer/src/PHPMailer.php');
-		require_once('components/PHPMailer/src/SMTP.php');
-		require_once('components/PHPMailer/src/Exception.php');
-		*/
+		require_once('./core/crypt.php');
+
 		$mail = new PHPMailer\PHPMailer\PHPMailer(true);
 		$mail->AddAddress("$mailuser");
 		$mail->CharSet = 'UTF-8'; //ISO-8859-1 possible if string problems
-		if ($rparameters['mail_smtp_class']=='IsSendMail()') {$mail->IsSendMail();} else {$mail->IsSMTP();}
-		if($rparameters['mail_secure']=='SSL')
-		{$mail->Host = "ssl://$rparameters[mail_smtp]";}
-		elseif($rparameters['mail_secure']=='TLS')
-		{$mail->Host = "tls://$rparameters[mail_smtp]";}
-		else
-		{$mail->Host = "$rparameters[mail_smtp]";}
+		if ($rparameters['mail_smtp_class'] == 'IsSendMail()') {
+			$mail->IsSendMail();
+		} else {
+			$mail->IsSMTP();
+		}
+		if ($rparameters['mail_secure'] == 'SSL') {
+			$mail->Host = "ssl://$rparameters[mail_smtp]";
+		} elseif ($rparameters['mail_secure'] == 'TLS') {
+			$mail->Host = "tls://$rparameters[mail_smtp]";
+		} else {
+			$mail->Host = "$rparameters[mail_smtp]";
+		}
 		$mail->SMTPAuth = $rparameters['mail_auth'];
-		if ($rparameters['debug']==1) $mail->SMTPDebug = 4;
-		if ($rparameters['mail_secure']!=0) $mail->SMTPSecure = $rparameters['mail_secure'];
-		if ($rparameters['mail_port']!=25) $mail->Port = $rparameters['mail_port'];
+		if ($rparameters['debug'] == 1) $mail->SMTPDebug = 4;
+		if ($rparameters['mail_secure'] != 0) $mail->SMTPSecure = $rparameters['mail_secure'];
+		if ($rparameters['mail_port'] != 25) $mail->Port = $rparameters['mail_port'];
 		$mail->Username = "$rparameters[mail_username]";
+		if (preg_match('/gs_en/', $rparameters['mail_password'])) {
+			$rparameters['mail_password'] = gs_crypt($rparameters['mail_password'], 'd', $rparameters['server_private_key']);
+		}
 		$mail->Password = "$rparameters[mail_password]";
 		$mail->IsHTML(true);
-		if($rparameters['mail_from_adr']==''){$emetteur=$creatorrow['mail'];} else {$emetteur=$rparameters['mail_from_adr'];}
 
 		$mail->From = "notifications@arnaudguy.fr";
 		$mail->FromName = "Arnaud GUY | Notifications";
@@ -405,68 +410,65 @@ if ($rright['admin_contrat']!=0)
 		$mail->Subject = "$subject";
 		$mail->Body = "$messages";
 
-		if ($notificationmail==on){
+		if ($notificationmail == on) {
 		//mail($mailuser,$subject,$messages,implode("\r\n", $headers));
-		if (!$mail->Send()){
-				echo '<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>'.T_('Message non envoyé, vérifier la configuration de votre serveur de messagerie').'.</b> (';
-						echo $mail->ErrorInfo;
+			if (!$mail->Send()) {
+				echo '<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>' . T_('Message non envoyé, vérifier la configuration de votre serveur de messagerie') . '.</b> (';
+				echo $mail->ErrorInfo;
 				echo ')</center></div>';
-		} elseif(isset($_SESSION['user_id'])) {
-			echo '<div class="alert alert-block alert-success"><center><i class="icon-envelope green"></i> '.T_('Message envoyé').'.</center></div>';
+			} elseif (isset($_SESSION['user_id'])) {
+				echo '<div class="alert alert-block alert-success"><center><i class="icon-envelope green"></i> ' . T_('Message envoyé') . '.</center></div>';
 			//redirect
 
-		}
-		$mail->SmtpClose();
+			}
+			$mail->SmtpClose();
 
-		echo '<meta http-equiv="refresh" content="0">';
+			echo '<meta http-equiv="refresh" content="0">';
 
 		}
-		}
+	}
 	//Ajout contrat
-	if(isset($_POST['ajoutcontrat']) )
-		{
+	if (isset($_POST['ajoutcontrat'])) {
 		addcontrat();
-		}
+	}
 
   //Ajoute $facturelink
 
-  if(isset($_POST['addfacture']) )
-    {
-      $var = $_POST['peer-id'];
-      $facturelink = $_POST['facturelink'];
-      echo $var;
-      echo $facturelink;
-      $query = "UPDATE tcontrats SET facturelink='$facturelink' WHERE id='$var'";
-      $query = $db->query($query);
-    }
+	if (isset($_POST['addfacture'])) {
+		$var = $_POST['peer-id'];
+		$facturelink = $_POST['facturelink'];
+		echo $var;
+		echo $facturelink;
+		$query = "UPDATE tcontrats SET facturelink='$facturelink' WHERE id='$var'";
+		$query = $db->query($query);
+	}
 
 	// cloture du contrat
 
 
-	if(isset($_POST['formSubmitdelete'])||  isset($_POST['formSubmitcloture']) )
-		{
-		$var = $_POST['peer-id'];?>
+	if (isset($_POST['formSubmitdelete']) || isset($_POST['formSubmitcloture'])) {
+		$var = $_POST['peer-id']; ?>
 		<div class="page-header position-relative">
 			<h1><i class="icon-briefcase"></i>Cloture contrats numéro &nbsp;<?php echo $var; ?></h1>
 		</br>
     <?php
 
-    $query = "SELECT facturelink FROM tcontrats WHERE id='$var'";
-    $query = $db->query($query);
-    while ($row = $query->fetch()) {
-    $facturerecup = $row['facturelink'];
-  }
-     ?>
+			$query = "SELECT facturelink FROM tcontrats WHERE id='$var'";
+			$query = $db->query($query);
+			while ($row = $query->fetch()) {
+				$facturerecup = $row['facturelink'];
+			}
+			?>
 		<form id="myformaddfact" method="POST" action="">
-			<p> Lien facture : <input type="text" name="facturelink" value="<?php echo $facturerecup;?>">
-        <input type="hidden" name="peer-id" value="<?php echo $var;?>" >
+			<p> Lien facture : <input type="text" name="facturelink" value="<?php echo $facturerecup; ?>">
+        <input type="hidden" name="peer-id" value="<?php echo $var; ?>" >
         <button type="submit" name="addfacture" value="addfact" class="btn btn-sm btn-success">Ajouter</button>
       </p>
     </form>
 
     <form id="myFormcloture" method="POST" action="">
 			<p> Notification mail : <input type="checkbox" name="notificationmail">
-			<input type="hidden" name="peer-id" value="<?php echo $var;?>" >
+			<input type="hidden" name="peer-id" value="<?php echo $var; ?>" >
 				<button type="submit" name="formSubmitcloture" value="Clore" class="btn btn-sm btn-danger">
 					<i class="icon-remove icon-on-right bigger-110"></i>
 					&nbsp;Clore
@@ -475,15 +477,12 @@ if ($rright['admin_contrat']!=0)
 		</form>
 	</div>
 		<?php
-		if(isset($_POST['formSubmitcloture']) )
-			{
-			cloturecontrat();
-			}
-		}
-		else
-			{
+	if (isset($_POST['formSubmitcloture'])) {
+		cloturecontrat();
+	}
+} else {
 
-				?>
+	?>
 
 			<div class="page-header position-relative">
 				<h1><i class="icon-briefcase"></i>  <?php echo T_('Contrats'); ?></h1>
@@ -495,7 +494,7 @@ if ($rright['admin_contrat']!=0)
 					<button class="btn btn-sm btn-success">
 						Décompte d'heure
 						</br>
-						Actif	<?php nbrecontrattype(1,1);?>
+						Actif	<?php nbrecontrattype(1, 1); ?>
 					</button>
 				</a>
 
@@ -505,7 +504,7 @@ if ($rright['admin_contrat']!=0)
 						Contrats maintenance
 						</br>
 						Actif
-						<?php nbrecontrattype(2,1);?>
+						<?php nbrecontrattype(2, 1); ?>
 					</button>
 					<a href=index.php?page=contratsadmin&view=3>
 						<button class="btn btn-sm btn-danger">
@@ -513,7 +512,7 @@ if ($rright['admin_contrat']!=0)
 							Contrats maintenance Inactif
 							</br>
 							Actif
-							<?php nbrecontrattype(2,0);?>
+							<?php nbrecontrattype(2, 0); ?>
 						</button>
 						<a href=index.php?page=contratsadmin&view=4>
 							<button class="btn btn-sm btn-danger">
@@ -521,7 +520,7 @@ if ($rright['admin_contrat']!=0)
 								Décompte d'heure
 								</br>
 								Inactif
-								<?php nbrecontrattype(1,0);?>
+								<?php nbrecontrattype(1, 0); ?>
 							</button>
 				</a>
 			</div>
@@ -549,14 +548,18 @@ if ($rright['admin_contrat']!=0)
 								<th w>
 									Période
 								</th>
-								<?php if($view==1 || $view==4 ){echo "<th>Prépayé</th>";}?>
+								<?php if ($view == 1 || $view == 4) {
+								echo "<th>Prépayé</th>";
+							} ?>
 								<th w>
 									Date de souscription
 								</th>
 								<th w>
 									Date de fin
 								</th>
-								<?php if($view==1 || $view ==4 ){ echo "<th w>Temps souscrit</th><th w>Temps consommé</th><th w>Temps restant</th>";}?>
+								<?php if ($view == 1 || $view == 4) {
+								echo "<th w>Temps souscrit</th><th w>Temps consommé</th><th w>Temps restant</th>";
+							} ?>
 								<th w>
 									Tarif
 								</th>
@@ -570,56 +573,95 @@ if ($rright['admin_contrat']!=0)
 							</thead>
 						<tbody>
 							<?php
-							selectcontrat($view);
-							if ($rparameters['debug']==1) {echo $query;}
-							$query = $db->query($query);
-							while ($row = $query->fetch())
-							{
-								if ($row['status']==0) {$row['status']="Inactif"; $color="#d15b47";};
-								if ($row['status']==1) {$row['status']="Actif"; $color="#87b87f";};
-								if ($row['prepaye']==0) {$row['prepaye']="Non"; };
-								if ($row['prepaye']==1) {$row['prepaye']="Oui"; };
-								$temps_restant = $row['temps_souscrit'] - $row['timeused'] ;
-								$temps_souscrit = hour_min($row['temps_souscrit']);
-								$temps_conso = hour_min($row['timeused']);
-								if ($temps_restant == 0){ $temps_restant = "Terminé";}
-								else {$temps_restant = hour_min($temps_restant);}
-								if($row['timeused']<>"")
-									{
-									$tarif = $row['timeused'] * $row['tarif'] ;
-									$tarif = $tarif / 60;
-									$tarif  = round($tarif, 2);
-									}
-									?>
-									<tr bgcolor=<?php echo $color;?>>
-										<td><?php echo $row['id'];?></td>
-										<td><?php echo $row['firstname']; echo "&nbsp;"; echo $row['lastname'];?> </td>
-										<td><?php echo $row['status'];?></td>
-										<td><?php echo $row['nomtype'];?></td>
-										<td><?php echo $row['nomcontrat'];?></td>
-										<td><?php echo $row['nomperiode'];?></td>
-										<?php if($view==1 || $view==4){echo "<td>"; echo $row['prepaye'];echo"</td>";}?>
-										<td><?php echo $row['date_souscription'];?></td>
-										<td><?php echo $row['date_fin'];?></td>
-										<?php if ($view==1 || $view==4)
-											{
-											echo "<td>"; if ($row['prepaye']=="Oui") {echo $temps_souscrit;} else { echo "--";} echo "</td>";
-											echo "<td>"; echo $temps_conso; echo "</td>";
-											echo "<td>"; if ($row['prepaye']=="Oui"){echo $temps_restant;} else {echo "--";}echo"</td>";
-											}?>
-										<td><?php if ($view==1 || $view==4 ){echo $tarif;echo "€";} else { echo $row['tarifcontrat']; echo "€";} ?> </td>
-										<td><?php if (!empty($row['facturelink']))
-											{?> <a href="<?php echo $row['facturelink'];?>" target=_blank>
+						selectcontrat($view);
+						if ($rparameters['debug'] == 1) {
+							echo $query;
+						}
+						$query = $db->query($query);
+						while ($row = $query->fetch()) {
+							if ($row['status'] == 0) {
+								$row['status'] = "Inactif";
+								$color = "#d15b47";
+							};
+							if ($row['status'] == 1) {
+								$row['status'] = "Actif";
+								$color = "#87b87f";
+							};
+							if ($row['prepaye'] == 0) {
+								$row['prepaye'] = "Non";
+							};
+							if ($row['prepaye'] == 1) {
+								$row['prepaye'] = "Oui";
+							};
+							$temps_restant = $row['temps_souscrit'] - $row['timeused'];
+							$temps_souscrit = hour_min($row['temps_souscrit']);
+							$temps_conso = hour_min($row['timeused']);
+							if ($temps_restant == 0) {
+								$temps_restant = "Terminé";
+							} else {
+								$temps_restant = hour_min($temps_restant);
+							}
+							if ($row['timeused'] <> "") {
+								$tarif = $row['timeused'] * $row['tarif'];
+								$tarif = $tarif / 60;
+								$tarif = round($tarif, 2);
+							}
+							?>
+									<tr bgcolor=<?php echo $color; ?>>
+										<td><?php echo $row['id']; ?></td>
+										<td><?php echo $row['firstname'];
+													echo "&nbsp;";
+													echo $row['lastname']; ?> </td>
+										<td><?php echo $row['status']; ?></td>
+										<td><?php echo $row['nomtype']; ?></td>
+										<td><?php echo $row['nomcontrat']; ?></td>
+										<td><?php echo $row['nomperiode']; ?></td>
+										<?php if ($view == 1 || $view == 4) {
+										echo "<td>";
+										echo $row['prepaye'];
+										echo "</td>";
+									} ?>
+										<td><?php echo $row['date_souscription']; ?></td>
+										<td><?php echo $row['date_fin']; ?></td>
+										<?php if ($view == 1 || $view == 4) {
+										echo "<td>";
+										if ($row['prepaye'] == "Oui") {
+											echo $temps_souscrit;
+										} else {
+											echo "--";
+										}
+										echo "</td>";
+										echo "<td>";
+										echo $temps_conso;
+										echo "</td>";
+										echo "<td>";
+										if ($row['prepaye'] == "Oui") {
+											echo $temps_restant;
+										} else {
+											echo "--";
+										}
+										echo "</td>";
+									} ?>
+										<td><?php if ($view == 1 || $view == 4) {
+														echo $tarif;
+														echo "€";
+													} else {
+														echo $row['tarifcontrat'];
+														echo "€";
+													} ?> </td>
+										<td><?php if (!empty($row['facturelink'])) { ?> <a href="<?php echo $row['facturelink']; ?>" target=_blank>
 												<button type="submit" name="formSubmitdelete" value="Clore" class="btn btn-sm btn-success">
 													<i class="icon-file icon-on-right bigger-110"></i>
 													&nbsp;Voir
 												</button></a><?php
-											}
-											else {echo "Non disponible";}?>
+
+																							} else {
+																								echo "Non disponible";
+																							} ?>
 										</td>
 										<td>
 											<form id="myForm" method="POST" action="">
-												<input type="hidden" name="peer-id" value="<?php echo $row['id'];?>" >
+												<input type="hidden" name="peer-id" value="<?php echo $row['id']; ?>" >
 												<button type="submit" name="formSubmitdelete" value="Clore" class="btn btn-sm btn-danger">
 													<i class="icon-remove icon-on-right bigger-110"></i>
 													&nbsp;Clore
@@ -628,9 +670,10 @@ if ($rright['admin_contrat']!=0)
 										</td>
 									</tr>
 							<?php
-							}
-							$query->closecursor();
-							?>
+
+					}
+					$query->closecursor();
+					?>
 						</tbody>
 						</table>
 					</div>
@@ -638,7 +681,9 @@ if ($rright['admin_contrat']!=0)
 			</div>
 
 
-<?php }} ?>
+<?php 
+}
+} ?>
 <script>
 // Get the modal
 var modal = document.getElementById('myModal');
@@ -687,20 +732,20 @@ jQuery(function($) {
 			showMeridian: false
 		});
 		<?php
-		echo '
+	echo '
 			$.datepicker.setDefaults( $.datepicker.regional["fr"] );
 			jQuery(function($){
 			   $.datepicker.regional["fr"] = {
 				  closeText: "Fermer",
-				  prevText: "'.T_('<Préc').'",
-				  nextText: "'.T_('Suiv>').'",
+				  prevText: "' . T_('<Préc') . '",
+				  nextText: "' . T_('Suiv>') . '",
 				  currentText: "Courant",
-				  monthNames: ["'.T_('Janvier').'","'.T_('Février').'","'.T_('Mars').'","'.T_('Avril').'","'.T_('Mai').'","'.T_('Juin').'","'.T_('Juillet').'","'.T_('Août').'","'.T_('Septembre').'","'.T_('Octobre').'","'.T_('Novembre').'","'.T_('Décembre').'"],
+				  monthNames: ["' . T_('Janvier') . '","' . T_('Février') . '","' . T_('Mars') . '","' . T_('Avril') . '","' . T_('Mai') . '","' . T_('Juin') . '","' . T_('Juillet') . '","' . T_('Août') . '","' . T_('Septembre') . '","' . T_('Octobre') . '","' . T_('Novembre') . '","' . T_('Décembre') . '"],
 				  monthNamesShort: ["Jan","Fév","Mar","Avr","Mai","Jun",
 				  "Jul","Aoû","Sep","Oct","Nov","Déc"],
 				  dayNames: ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"],
 				  dayNamesShort: ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"],
-				  dayNamesMin: ["'.T_('Di').'","'.T_('Lu').'","'.T_('Ma').'","'.T_('Me').'","'.T_('Je').'","'.T_('Ve').'","'.T_('Sa').'"],
+				  dayNamesMin: ["' . T_('Di') . '","' . T_('Lu') . '","' . T_('Ma') . '","' . T_('Me') . '","' . T_('Je') . '","' . T_('Ve') . '","' . T_('Sa') . '"],
 				  weekHeader: "Sm",
 				  dateFormat: "dd/mm/yy",
 				  timeFormat:  "hh:mm:ss",
@@ -713,20 +758,20 @@ jQuery(function($) {
 		';
 
 
-				echo '
+	echo '
 				$( "#date_debut" ).datepicker({
 					dateFormat: \'dd/mm/yy\'
 				});
 				';
 
 
-				echo '
+	echo '
 				$( "#date_fin" ).datepicker({
 					dateFormat: \'dd/mm/yy\'
 				});
 				';
 
-		?>
+	?>
 		$( "#start_availability_d" ).datepicker({
 			dateFormat: 'dd/mm/yy'
 		});

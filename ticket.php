@@ -37,6 +37,7 @@ if(!isset($userid)) $userid = '';
 if(!isset($u_service)) $u_service = '';
 if(!isset($date_hope_error)) $date_hope_error = '';
 if(!isset($selected_time)) $selected_time = '';
+if(!isset($contrats)) $contrats = '';
 
 if(!isset($_POST['mail'])) $_POST['mail'] = '';
 if(!isset($_POST['upload'])) $_POST['upload'] = '';
@@ -70,6 +71,7 @@ if(!isset($_POST['asset_id'])) $_POST['asset_id'] = '';
 if(!isset($_POST['asset'])) $_POST['asset'] = '';
 if(!isset($_POST['u_agency]'])) $_POST['u_agency]'] = '';
 if(!isset($_POST['sender_service'])) $_POST['sender_service'] = '';
+if(!isset($_POST['contrats'])) $_POST['contrats'] = '';
 
 if(!isset($_GET['id'])) $_GET['id'] = '';
 if(!isset($_GET['action'])) $_GET['action'] = '';
@@ -88,6 +90,7 @@ if(!isset($globalrow['time'])) $globalrow['time'] = '';
 include('./core/ticket.php');
 
 //defaults values for new tickets
+if(!isset($globalrow['contrats'])) $globalrow['contrats'] = '';
 if(!isset($globalrow['creator'])) $globalrow['creator'] = '';
 if(!isset($globalrow['t_group'])) $globalrow['t_group'] = '';
 if(!isset($globalrow['u_group'])) $globalrow['u_group'] = '';
@@ -1196,6 +1199,96 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 						</div>
 						
 						<!-- END time hope part -->
+							<!-- START Contrat ADMIN part -->
+<?php
+if ($rright['admin_contrat']!=0)
+{	?>
+<div class="form-group">
+<label class="col-sm-2 control-label no-padding-right" for="contrats">
+<?php echo T_('Contrat'); ?>:
+</label>
+<div class="col-sm-8">			<?php
+if($_GET['action']=='new')
+
+{?>
+
+<select autofocus <?php if($mobile==0) {echo 'class="chosen-select"';}  else {echo ' style="max-width: 225px;" ';} ?> id="contrats" name="contrats" onchange="loadVal(); submit();" <?php if(($rright['ticket_user']==0 && $_GET['action']!='new') || ($rright['ticket_new_user']==0 && $_GET['action']=='new')) echo ' disabled="disabled" ';?> >									<option value="0" selected>Aucun</option>
+		<?php
+		$query = $db->query("SELECT * FROM `tcontrats` WHERE user ='$_POST[user]' AND status='1' ORDER BY nom ASC");
+		while ($row = $query->fetch())
+		{
+			if ($_POST['contrats']!=''){if ($_POST['contrats']==$row['id']) echo '<option value="'.$row['id'].'" selected>'.$row['nom'].'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['nom']).'</option>';}
+			else
+			{if ($globalrow['contrats']==$row['id']) echo '<option value="'.$row['id'].'" selected>'.T_($row['nom']).'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['nom']).'</option>';}
+		}
+		$query->closeCursor();
+	?>
+	</select>
+	<?php
+}
+
+else {
+?>
+
+<select autofocus <?php if($mobile==0) {echo 'class="chosen-select"';}  else {echo ' style="max-width: 225px;" ';} ?> id="contrats" name="contrats" onchange="loadVal(); submit();" <?php if(($rright['ticket_user']==0 && $_GET['action']!='new') || ($rright['ticket_new_user']==0 && $_GET['action']=='new')) echo ' disabled="disabled" ';?> >									<option value="0" selected>Aucun</option>
+
+
+		<?php
+		$query = $db->query("SELECT * FROM `tcontrats` WHERE user ='$globalrow[user]' AND status='1' ORDER BY nom ASC");
+		while ($row = $query->fetch())
+		{
+if ($_POST['contrats']!=''){if ($_POST['contrats']==$row['id']) echo '<option value="'.$row['id'].'" selected>'.$row['nom'].'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['nom']).'</option>';}
+			else
+			{if ($globalrow['contrats']==$row['id']) echo '<option value="'.$row['id'].'" selected>'.T_($row['nom']).'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['nom']).'</option>';}
+?>
+
+		<?php
+
+
+		} 										$query->closeCursor();
+
+}
+	?>									</select>
+
+</div>
+</div>
+<?php }?>
+
+					<!-- END Contratadmin part -->
+					<!-- Start Contratuser part -->
+
+
+											<?php
+if ($rright['contrat_displayuser']!=0)	{
+if($_GET['action']=='new') {}
+else {	 ?>
+
+
+
+<div class="form-group">
+<label class="col-sm-2 control-label no-padding-right" for="contrats">
+<?php echo T_('Contrat'); ?>:
+</label>
+<div class="col-sm-8">
+
+
+
+
+		<?php
+		$query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'");
+		$row = $query->fetch();
+		$query->closeCursor();
+		echo $row['nom'];
+		$selected_contrats = $globalrow['contrats'];
+		echo '<input type="hidden" name="contrats" value="'.$selected_contrats.'" />';
+
+		}
+
+		?>
+</div>
+</div>
+		<?php }?>
+
 						<!-- START priority part -->
 						<?php if($rright['ticket_priority_mandatory']!=0) {if(($_POST['priority']=="" && $_GET['action']=='new') || ($globalrow['priority']=="" && $_GET['action']!='new') || ($globalrow['criticality']=="0")) {$priority_error="has-error";} else {$priority_error="";}}  else {$priority_error="";} ?>
 						<div class="form-group <?php echo $priority_error; if($rright['ticket_priority_disp']==0) echo 'hide';?>">
