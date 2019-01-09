@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 03/09/2013
-# @Update : 07/09/2018
-# @Version : 3.1.35
+# @Update : 11/10/2018
+# @Version : 3.1.36 p1
 ################################################################################
 
 //initialize variables 
@@ -81,6 +81,8 @@ if ($_GET['action']=='add' && $rright['procedure_add']!=0)
 		if (!file_exists('./upload/procedure')) {
 			mkdir('./upload/procedure', 0777, true);
 		}
+		
+	
 		//secure string
 		$_POST['name']=strip_tags($_POST['name']);
 		$_POST['category']=strip_tags($_POST['category']);
@@ -95,6 +97,45 @@ if ($_GET['action']=='add' && $rright['procedure_add']!=0)
 			'subcat' => $_POST['subcat'],
 			'company_id' => $_POST['company']
 			));
+			
+		$ticket_id=$db->lastInsertId();
+		
+		//upload file in /upload/procedure directory
+		if($_FILES['procedure_file']['name'])
+		{
+			$filename = $_FILES['procedure_file']['name'];
+			//change special character in filename
+			$a = array('à', 'á', 'â', 'ã', 'ä', 'å', 'æ', 'ç', 'è', 'é', 'ê', 'ë', 'ì', 'í', 'î', 'ï', 'ñ', 'ò', 'ó', 'ô', 'õ', 'ö', 'ø', 'œ', 'ù', 'ú', 'û', 'ü', 'ý', 'ÿ', 'š', 'ž', "'", " ", "/", "%", "?", ":", "!", "’", ",",">","<");
+			$b = array("a", "a", "a", "a", "a", "a", "ae", "c", "e", "e", "e", "e", "i", "i", "i", "i", "n", "o", "o", "o", "o", "o", "o", "oe", "u", "u", "u", "u", "y", "y", "s", "z", "-", "-", "-", "-", "", "-", "", "-", "-", "", "");
+			$file_rename = str_replace($a,$b,$_FILES['procedure_file']['name']);
+			//secure upload excluding certain extension files
+			$whitelist =  array('pdf','doc','docx','png','jpg','jpeg' ,'gif' ,'bmp' , 'rar','zip','7z','ace','arj','bz2','cab','gz','iso','jar','lz','lzh','tar','uue','xz','z','zipx','001');
+			//black list exclusion for extension
+			$blacklist =  array('php', 'php1', 'php2','php3' ,'php4' ,'php5', 'php6', 'php7', 'php8', 'php9', 'php10', 'js', 'htm', 'html', 'phtml', 'exe', 'jsp' ,'pht', 'shtml', 'asa', 'cer', 'asax', 'swf', 'xap', 'phphp', 'inc', 'htaccess', 'sh', 'py', 'pl', 'jsp', 'asp', 'cgi', 'json', 'svn', 'git', 'lock', 'yaml', 'com', 'bat', 'ps1', 'cmd', 'vb', 'hta', 'reg', 'ade', 'adp', 'app', 'asp', 'bas', 'bat', 'cer', 'chm', 'cmd', 'com', 'cpl', 'crt', 'csh', 'der', 'exe', 'fxp', 'gadget', 'hlp', 'hta', 'inf', 'ins', 'isp', 'its', 'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt', 'mdw', 'mdz', 'msc', 'msh', 'msh1', 'msh2', 'mshxml', 'msh1xml', 'msh2xml', 'msi', 'msp', 'mst', 'ops', 'pcd', 'pif', 'plg', 'prf', 'prg', 'pst', 'reg', 'scf', 'scr', 'sct', 'shb', 'shs', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'tmp', 'url', 'vb', 'vbe', 'vbs', 'vsmacros', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xnk');
+			//default value
+			$blacklistedfile=0;
+			$ext=explode('.',$filename);
+			foreach ($ext as &$value) {
+				$value=strtolower($value);
+				if(in_array($value,$blacklist) ) {
+					$blacklistedfile=1;
+				} 
+			}
+			if(in_array(end($ext),$whitelist) && $blacklistedfile==0 ) {
+				//create procedure directory if not exist
+				if (!file_exists('./upload/procedure/'.$ticket_id.'/')) {
+					mkdir('./upload/procedure/'.$ticket_id.'', 0777, true);
+				}
+				$dest_folder = './upload/procedure/'.$ticket_id.'/';
+				if (move_uploaded_file($_FILES['procedure_file']['tmp_name'], $dest_folder.$file_rename)) 
+				{
+				} else {
+				echo T_('Erreur de transfert vérifier le chemin').' '.$dest_folder;
+				}
+			} else {
+				echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').':</strong> '.T_('Fichier interdit').'.<br></div>';
+			}
+		}
 		
 		//display action message
 		echo '
@@ -207,6 +248,9 @@ if ($_GET['action']=='add' && $rright['procedure_add']!=0)
 						$qry2->closeCursor();
 					    echo '
 					</select>
+					<br /><br />
+					<label for="procedure_file">'.T_('Joindre un fichier').':</label>
+					<input name="procedure_file"  type="file" style="display:inline" />
 					<br /><br />
 					<div id="editor" class="wysiwyg-editor"></div>
 					<input type="hidden" name="text" />
@@ -559,7 +603,7 @@ elseif ($_GET['action']=='edit')
 					if($rright['procedure_list_company_only'])
 					{
 						$masterquery = $db->prepare("SELECT * FROM `tprocedures` WHERE `company_id`=:company_id AND `disable`='0' ORDER BY `category`,`subcat` ASC");
-						$masterquery->execute(array('company_id' => $ruser['company'],'disable' => 0));
+						$masterquery->execute(array('company_id' => $ruser['company']));
 					} else {
 						$masterquery = $db->prepare("SELECT * FROM `tprocedures` WHERE `disable`=:disable ORDER BY `category`,`subcat` ASC");
 						$masterquery->execute(array('disable' => 0));

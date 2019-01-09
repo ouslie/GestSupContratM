@@ -6,8 +6,8 @@
 # @parameters : keywords
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 04/12/2017
-# @Version : 3.1.28
+# @Update : 25/09/2018
+# @Version : 3.1.36
 ################################################################################
 
 //initialize session variables
@@ -29,7 +29,30 @@ $nbkeyword= sizeof($keyword);
 //case meta state detect
 if($_GET['state']=='meta'){$state="AND	(tincidents.state=1 OR tincidents.state=2 OR tincidents.state=6)";} else {$state='';}
 
-$select= "DISTINCT tincidents.*";
+$select= "
+		DISTINCT 
+		tincidents.id,
+		tincidents.type,
+		tincidents.technician,
+		tincidents.t_group,
+		tincidents.title,
+		tincidents.user,
+		tincidents.u_group,
+		tincidents.u_service,
+		tincidents.u_agency,
+		tincidents.sender_service,
+		tincidents.date_create,
+		tincidents.date_hope,
+		tincidents.date_res,
+		tincidents.state,
+		tincidents.priority,
+		tincidents.criticality,
+		tincidents.category,
+		tincidents.subcat,
+		tincidents.techread,
+		tincidents.place,
+		tincidents.asset_id
+		";
 $join='';
 
 //special case limit service, with user agency and service

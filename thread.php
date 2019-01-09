@@ -1,15 +1,15 @@
 <?php
 ################################################################################
 # @Name : thread.php
-# @Call: ticket.php
+# @Call : ticket.php
 # @Description : display tickets thread
 # @Author : Flox
 # @Create : 27/01/2013
-# @Update : 28/08/2018
-# @Version : 3.1.35
+# @Update : 25/10/2018
+# @Version : 3.1.36
 ################################################################################
 
-// initialize variables 
+//initialize variables 
 if(!isset($_GET['threaddelete'])) $_GET['threaddelete'] = ''; 
 if(!isset($_GET['threadedit'])) $_GET['threadedit'] = ''; 
 if(!isset($rcreator['firstname'])) $rcreator['firstname']= ''; 
@@ -19,12 +19,11 @@ $db_threaddelete=strip_tags($db->quote($_GET['threaddelete']));
 $db_threadedit=strip_tags($db->quote($_GET['threadedit']));
 $db_id=strip_tags($db->quote($_GET['id']));
 
-///// actions for threads
-
 //thread delete
 if ($_GET['threaddelete']!='' && $rright['ticket_thread_delete']!=0)
 {
-	$db->exec("DELETE FROM tthreads WHERE id=$db_threaddelete");
+	$qry=$db->prepare("DELETE FROM `tthreads` WHERE id=:id");
+	$qry->execute(array('id' => $_GET['threaddelete']));
 } 
 
 //call date conversion function from index
@@ -33,9 +32,10 @@ $date_start=date_convert($globalrow['date_create']);
 //find firstname et lastname of creator
 if ($globalrow['creator']!='')
 {
-    $query = $db->query('SELECT * FROM tusers WHERE id='.$globalrow['creator'].' AND disable=0');
-    $rcreator=$query->fetch();
-	$query->closeCursor();
+	$qry=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id AND disable=0");
+	$qry->execute(array('id' => $globalrow['creator']));
+	$rcreator=$qry->fetch();
+	$qry->closeCursor();
 }
 
 //display time line
@@ -70,28 +70,31 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 												</span>
 											</div>
 										<div class="timeline-items">';
-											$query = $db->query('SELECT * FROM tthreads WHERE ticket='.$db_id.' ORDER BY date');
-											while ($row = $query->fetch()) 
+											//for each type of thread display line
+											$qry=$db->prepare("SELECT * FROM `tthreads` WHERE ticket=:ticket ORDER BY date");
+											$qry->execute(array('ticket' => $_GET['id']));
+											while($row=$qry->fetch()) 
 											{
-												////for each type of thread display line
-												
 												//call date conversion function
 												$date_thread=date_convert($row['date']);
 												
-												//author name
-												$query2=$db->query("SELECT * FROM tusers WHERE id='$row[author]'");
-												$ruser=$query2->fetch();
-												$query2->closeCursor(); 
+												//get author name
+												$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
+												$qry2->execute(array('id' => $row['author']));
+												$ruser=$qry2->fetch();
+												$qry2->closeCursor();
 												
 												//state name
-												$query2=$db->query("SELECT name FROM tstates WHERE id='$row[state]'");
-												$rstate=$query2->fetch();
-												$query2->closeCursor(); 
+												$qry2=$db->prepare("SELECT `name` FROM `tstates` WHERE id=:id");
+												$qry2->execute(array('id' => $row['state']));
+												$rstate=$qry2->fetch();
+												$qry2->closeCursor();
 												
-												//find author profile
-												$query2=$db->query("SELECT tprofiles.img FROM tprofiles,tusers WHERE tusers.profile=tprofiles.level and tusers.id=$row[author]");
-												$ruserprofile=$query2->fetch();
-												$query2->closeCursor(); 
+												//find author profile avatar
+												$qry2=$db->prepare("SELECT `tprofiles`.`img` FROM `tprofiles`,`tusers` WHERE `tusers`.`profile`=`tprofiles`.`level` AND `tusers`.`id`=:id");
+												$qry2->execute(array('id' => $row['author']));
+												$ruserprofile=$qry2->fetch();
+												$qry2->closeCursor();
 												
 												//if it's text message
 												if ($row['type']==0)
@@ -99,7 +102,7 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 													//check if user have right to read thread case of private message
 													if ($row['private']==0 || $rright['ticket_thread_private']!=0)
 													{
-													echo '
+														echo '
 														<div class="timeline-item clearfix">
 															<div class="timeline-info">
 																<img title="'.$ruser['firstname'].' '.$ruser['lastname'].'" alt="avatar" src="./images/avatar/'.$ruserprofile[0].'">
@@ -109,11 +112,7 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 																<div class="widget-header widget-header-small">
 																	<h5 class="smaller">
 																		<a href="#" class="blue"><i class="icon-user bigger-110"></i> '; if($mobile==0) {echo $ruser['firstname'];} echo ' '.$ruser['lastname'].'</a>';
-																			//compress text for mobile display
-																			if($mobile==0)
-																			{
-																			echo '&nbsp;<span class="grey"><i class="icon-time bigger-110"></i> '.$date_thread.'</span>';
-																			}
+																			if($mobile==0){echo '&nbsp;<span class="grey"><i class="icon-time bigger-110"></i> '.$date_thread.'</span>';} //compress text for mobile display
 																			echo '
 																	</h5>
 																	<span class="widget-toolbar">
@@ -121,11 +120,11 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 																		&nbsp;
 																		';
 																		//private message actions
-																		if ($rright['ticket_thread_private']!=0) {
-																			if ($row['private']==1)
+																		if($rright['ticket_thread_private']!=0) {
+																			if($row['private']==1)
 																			{
 																				echo '<a href="./index.php?page=ticket&id='.$_GET['id'].'&userid='.$_GET['userid'].'&unlock_thread='.$row['id'].'#down"><i title="'.T_('Message non visible pour le demandeur').'" class="icon-eye-close red bigger-130"></i></a>&nbsp;';
-																			} else {
+																			}else{
 																				echo '<a href="./index.php?page=ticket&id='.$_GET['id'].'&userid='.$_GET['userid'].'&lock_thread='.$row['id'].'#down"><i title="'.T_('Message visible pour le demandeur').'" class="icon-eye-open green bigger-130"></i></a>&nbsp;';																			
 																			}
 																		} 
@@ -143,7 +142,7 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 																';
 																//detect <br> for wysiwyg transition from 2.9 to 3.0
 																$findbr=stripos($row['text'], '<br>');
-																if ($findbr === false) {$threadtext=nl2br($row['text']);} else {$threadtext=$row['text'];}
+																if($findbr===false) {$threadtext=nl2br($row['text']);} else {$threadtext=$row['text'];}
 																//insert html link if http is detected in text
 																if((preg_match('#http://#',$threadtext) || preg_match('#https://#',$threadtext)) && !preg_match('#href#',$threadtext))
 																{
@@ -165,15 +164,19 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 													if ($row['group1'])
 													{
 														//find group name 
-														$query2=$db->query("SELECT * FROM tgroups WHERE id='$row[group1]'");
-														$rgroup=$query2->fetch();
-														$query2->closeCursor();
+														$qry2=$db->prepare("SELECT `name` FROM `tgroups` WHERE id=:id");
+														$qry2->execute(array('id' => $row['group1']));
+														$rgroup=$qry2->fetch();
+														$qry2->closeCursor();
+														
 														$name=T_('au groupe').' <b>'.$rgroup['name'].'</b>';
 													} else {
 														//find technician name 
-														$query2=$db->query("SELECT * FROM tusers WHERE id='$row[tech1]'");
-														$rtech=$query2->fetch();
-														$query2->closeCursor(); 
+														$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
+														$qry2->execute(array('id' => $row['tech1']));
+														$rtech=$qry2->fetch();
+														$qry2->closeCursor();
+														
 														if ($rtech['lastname']!='')
 														{
 															$name=T_('au technicien ').' <b>'.$rtech['firstname'].' '.T_($rtech['lastname']).'</b>';
@@ -186,12 +189,8 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 														<span class="label label-purple arrowed-in-right label-lg">
 															';
 															//compress text for mobile display
-															if($mobile==1)
-															{
-																echo'<i class="icon-user"></i> '.$date_thread.': <b>'.T_('Attribution').'</b>';
-															} else {	
-																echo'<i class="icon-user"></i> '.$date_thread.': <b>'.T_('Attribution').'</b> '.T_('du ticket').' '.T_($name).'  <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';
-															}
+															if($mobile==1){echo'<i class="icon-user"></i> '.$date_thread.': <b>'.T_('Attribution').'</b>';}
+															else {echo'<i class="icon-user"></i> '.$date_thread.': <b>'.T_('Attribution').'</b> '.T_('du ticket').' '.T_($name).' <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';}
 															echo '
 														</span>
 													</div>
@@ -201,33 +200,36 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 												if ($row['type']==2)
 												{
 													//find technician group name 
-													$query2=$db->query("SELECT * FROM tgroups WHERE id='$row[group1]'");
-													$rgroup1=$query2->fetch();
-													$query2->closeCursor(); 
-													$query2=$db->query("SELECT * FROM tgroups WHERE id='$row[group2]'");
-													$rgroup2=$query2->fetch();
-													$query2->closeCursor(); 
+													$qry2=$db->prepare("SELECT `name` FROM `tgroups` WHERE id=:id");
+													$qry2->execute(array('id' => $row['group1']));
+													$rgroup1=$qry2->fetch();
+													$qry2->closeCursor();
+													
+													$qry2=$db->prepare("SELECT `name` FROM `tgroups` WHERE id=:id");
+													$qry2->execute(array('id' => $row['group2']));
+													$rgroup2=$qry2->fetch();
+													$qry2->closeCursor();
+													
 													//find technicians name
-													$query2=$db->query("SELECT CONCAT_WS('. ', left(tusers.firstname, 1),  tusers.lastname) as name FROM tusers WHERE id='$row[tech1]' AND id!='0'");
-													$rtech1=$query2->fetch();
-													$query2->closeCursor();
-													$query2=$db->query("SELECT CONCAT_WS('. ', left(tusers.firstname, 1),  tusers.lastname) as name FROM tusers WHERE id='$row[tech2]' AND id!='0'");
-													$rtech2=$query2->fetch();
-													$query2->closeCursor();
+													$qry2=$db->prepare("SELECT CONCAT_WS('. ', left(tusers.firstname, 1),  tusers.lastname) AS name FROM tusers WHERE id=:id AND id!='0'");
+													$qry2->execute(array('id' => $row['tech1']));
+													$rtech1=$qry2->fetch();
+													$qry2->closeCursor();
+													
+													$qry2=$db->prepare("SELECT CONCAT_WS('. ', left(tusers.firstname, 1),  tusers.lastname) AS name FROM tusers WHERE id=:id AND id!='0'");
+													$qry2->execute(array('id' => $row['tech2']));
+													$rtech2=$qry2->fetch();
+													$qry2->closeCursor();
+													
 													$dispname=T_('de').' <b>'.$rtech1['name'].$rgroup1['name'].'</b> '.T_('vers').' <b>'.$rtech2['name'].$rgroup2['name'].'</b>';
 													echo '
 													<div class="timeline-label">
 														<span class="label label-yellow arrowed-in-right label-lg">
 															';
 															//compress text for mobile display
-															if($mobile==1)
-															{
-																echo'<i class="icon-exchange"></i> '.$date_thread.': <b>'.T_('Transfert').'</b>';
-															} else {	
-																echo '<i class="icon-exchange"></i> '.$date_thread.': <b>'.T_('Transfert').'</b> '.T_('du ticket').' '.$dispname.'  <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';
-															}
+															if($mobile==1){echo'<i class="icon-exchange"></i> '.$date_thread.': <b>'.T_('Transfert').'</b>';}
+															else {echo '<i class="icon-exchange"></i> '.$date_thread.': <b>'.T_('Transfert').'</b> '.T_('du ticket').' '.$dispname.'  <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';}
 															echo '
-															
 														</span>
 													</div>
 													';
@@ -235,24 +237,13 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 												//if it's mails type
 												if ($row['type']==3)
 												{
-													//find technicians name 
-													$query2=$db->query("SELECT * FROM tusers WHERE id='$row[tech1]'");
-													$rtech1=$query2->fetch();
-													$query2->closeCursor();
-													$query2=$db->query("SELECT * FROM tusers WHERE id='$row[tech2]'");
-													$rtech2=$query2->fetch();
-													$query2->closeCursor();
 													echo '
 													<div class="timeline-label">
 														<span class="label label-grey arrowed-in-right label-lg">
 														';
 															//compress text for mobile display
-															if($mobile==1)
-															{
-																echo '<i class="icon-envelope"></i> '.$date_thread.': <b>'.T_('Envoi de mail').'</b>';
-															} else {
-																echo '<i class="icon-envelope"></i> '.$date_thread.': <b>'.T_('Envoi de mail').'</b> <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';
-															}
+															if($mobile==1){echo '<i class="icon-envelope"></i> '.$date_thread.': <b>'.T_('Envoi de mail').'</b>';} 
+															else {echo '<i class="icon-envelope"></i> '.$date_thread.': <b>'.T_('Envoi de mail').'</b> <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';}
 															echo '
 														</span>
 													</div>
@@ -266,12 +257,8 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 														<span class="label label-success arrowed-in-right label-lg">
 														';
 															//compress text for mobile display
-															if($mobile==1)
-															{
-																echo '<i class="icon-ok"></i> '.$date_thread.': <b>'.T_('Clôture').'</b>';
-															} else {
-																echo '<i class="icon-ok"></i> '.$date_thread.': <b>'.T_('Clôture').'</b> <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';
-															}
+															if($mobile==1){echo '<i class="icon-ok"></i> '.$date_thread.': <b>'.T_('Clôture').'</b>';
+															} else {echo '<i class="icon-ok"></i> '.$date_thread.': <b>'.T_('Clôture').'</b> <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';}
 															echo '
 														</span>
 													</div>
@@ -285,25 +272,20 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 														<span class="label label-light arrowed-in-right label-lg">
 														';
 															//compress text for mobile display
-															if($mobile==1)
-															{
-																echo '<i class="icon-adjust"></i> '.$date_thread.': <b>'.T_('Modif. état').'</b>';
-															} else {
-																echo '<i class="icon-adjust"></i> '.$date_thread.': <b>'.T_('Changement d\'état').'</b> '.T_($rstate['name']).' <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';
-															}
+															if($mobile==1){echo '<i class="icon-adjust"></i> '.$date_thread.': <b>'.T_('Modif. état').'</b>';
+															} else {echo '<i class="icon-adjust"></i> '.$date_thread.': <b>'.T_('Changement d\'état').'</b> '.T_($rstate['name']).' <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';}
 															echo '
 														</span>
 													</div>
 													';
 												}
 											}
+											$qry->closeCursor();
 											echo '
 										</div>
-										
 									</div><!-- /.timeline-items -->	
 								</div><!-- /.timeline-items -->
 							</div><!-- /.timeline-container -->
-					
 					</div>
 				</div>
 				';
@@ -313,9 +295,10 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 					//display text input
 					if($_GET['action']!='new') //query only in edit ticket mode to display new ticket faster
 					{
-						$query=$db->query("SELECT text FROM `tthreads` WHERE id=$db_threadedit");
-						$row=$query->fetch();
-						$query->closeCursor();
+						$qry=$db->prepare("SELECT `text` FROM `tthreads` WHERE id=:id");
+						$qry->execute(array('id' => $_GET['threadedit']));
+						$row=$qry->fetch();
+						$qry->closeCursor();
 					}
 					//find name for submit button
 					if ($mobile==0)
@@ -324,7 +307,7 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 					} else {$button='';}
 					//detect <br> for wysiwyg transition from 2.9 to 3.0
 					$findbr=stripos($row[0], '<br>');
-					if ($findbr === false) {$text=nl2br($row[0]);} else {$text=$row[0];}
+					if($findbr===false) {$text=nl2br($row[0]);} else {$text=$row[0];}
 					echo '
 					<table border="0" width="';if($mobile==0) {echo '732';} else {echo '250';} echo '" >
 						<tr>
@@ -332,7 +315,7 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 								<table border="1" style="border: 1px solid #D8D8D8;" >
 									<tr>
 										<td>
-											<div id="editor2" class="wysiwyg-editor" style="min-height:80px;">';
+											<div id="editor2" class="wysiwyg-editor" style="min-height:80px;  max-width:575px;">';
 										    	if($_POST['text2']!='') {echo $_POST['text2'];} elseif($text) {echo "	$text";} else {echo "";}
 											echo '</div>
 											<input type="hidden" name="text2" />

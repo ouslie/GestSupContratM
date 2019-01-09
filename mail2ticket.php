@@ -6,12 +6,9 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 07/04/2013
-# @Update : 18/09/2018
-# @Version : 3.1.35
+# @Update : 25/10/2018
+# @Version : 3.1.36
 ################################################################################
-
-//functions
-require_once('core/crypt.php');
 
 //initialize variables 
 if(!isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) $_SERVER['HTTP_ACCEPT_LANGUAGE'] = '';
@@ -44,6 +41,8 @@ use PhpImap\Mailbox as ImapMailbox;
 use PhpImap\IncomingMail;
 use PhpImap\IncomingMailAttachment;
 
+//functions
+require_once('core/crypt.php');
 
 //function to add attachment in image on ticket
 function func_attachement($c_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox,$count)
@@ -125,8 +124,6 @@ require "connect.php";
 //switch SQL MODE to allow empty values with lastest version of MySQL
 $db->exec('SET sql_mode = ""');
 
-
-
 //load parameters table
 $qry=$db->prepare("SELECT * FROM `tparameters`");
 $qry->execute();
@@ -197,7 +194,10 @@ foreach ($mailboxes as $mailbox)
 		if (!$row['password']) {
 			if(preg_match('/gs_en/',$rparameters['imap_password'])) {$rparameters['imap_password']=gs_crypt($rparameters['imap_password'], 'd' , $rparameters['server_private_key']);}
 			$mailbox_password=$rparameters['imap_password'];
-		} else {$mailbox_password=$row['password'];}
+		} else {
+			if(preg_match('/gs_en/',$row['password'])) {$row['password']=gs_crypt($row['password'], 'd' , $rparameters['server_private_key']);}
+			$mailbox_password=$row['password'];
+		}
 	}
 	
 	//connect to mailbox
@@ -393,9 +393,10 @@ foreach ($mailboxes as $mailbox)
 						if($rparameters['mail_auto_user_newticket'])
 						{
 							$send=1;
+							$from_mail2ticket=1;
 							$_GET['id']=$c_ticket_number;
 							include('core/mail.php');
-							echo "SEND mail";
+							echo '['.$mailbox.'] [mail '.$count.'] SEND Mail to sender: <span style="color:green">OK (mail_auto_user_newticket parameter enable)</span><br />';
 						}
 					}
 					//post treatment actions

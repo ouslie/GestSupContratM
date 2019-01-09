@@ -1,12 +1,12 @@
 <?php
 ################################################################################
 # @Name : ./ticket_template.php
-# @Description : select template incident
+# @Description : select and apply template ticket
 # @Call : /core/ticket.php
 # @Author : Flox
 # @Update : 21/10/2014
-# @Update : 04/09/2017
-# @Version : 3.1.25
+# @Update : 24/10/2018
+# @Version : 3.1.36
 ################################################################################
 
 //initialize variables 
@@ -25,51 +25,137 @@ if(!isset($row['technician'])) $row['technician'] = '';
 if(!isset($row['criticality'])) $row['criticality'] = '';
 if(!isset($row['type'])) $row['type'] = '';
 
-if($_POST['duplicate'])
+if($_POST['duplicate'] && $rright['ticket_template'])
 {
-	$query= $db->query("SELECT * FROM `tincidents` WHERE id='$_POST[template]'");
-	$row=$query->fetch();
-	$query->closecursor();
-	//escape special char to sql query
-	$row['description']=$db->quote($row['description']);
-	$row['title']=$db->quote($row['title']);
-
-	if ($_SESSION['profile_id']==2 || $_SESSION['profile_id']==1)	
+	//get data from source ticket
+	$qry=$db->prepare("SELECT * FROM `tincidents` WHERE id=:id");
+	$qry->execute(array('id' => $_POST['template']));
+	$row=$qry->fetch();
+	$qry->closeCursor();
+	
+	if ($_SESSION['profile_id']==2 || $_SESSION['profile_id']==1) //case for powerusers or users	 
 	{
-		//case for powerusers or users
-		$query= "
-		INSERT INTO tincidents (
-		user,title,description,priority,state,time,category,subcat,date_create,technician,criticality,creator,place,type
+		$qry=$db->prepare("
+		INSERT INTO `tincidents` 
+		(
+		`user`,
+		`title`,
+		`description`,
+		`priority`,
+		`state`,
+		`time`,
+		`category`,
+		`subcat`,
+		`date_create`,
+		`technician`,
+		`criticality`,
+		`creator`,
+		`place`,
+		`type`
 		) VALUES (
-		'$_SESSION[user_id]',$row[title],$row[description],'$row[priority]','$row[state]','$row[time]','$row[category]','$row[subcat]','$datetime','$row[technician]','$row[criticality]','$_SESSION[user_id]','$row[place]','$row[type]'
+		:user,
+		:title,
+		:description,
+		:priority,
+		:state,
+		:time,
+		:category,
+		:subcat,
+		:date_create,
+		:technician,
+		:criticality,
+		:creator,
+		:place,
+		:type
 		)
-		";
-	} else {
-		//case for technician
-		$query= "
-		INSERT INTO tincidents (
-		user,title,description,priority,state,time,category,subcat,date_create,technician,criticality,creator,place,type
+		");
+		$qry->execute(array(
+			'user' => $_SESSION['user_id'],
+			'title' => $row['title'],
+			'description' => $row['description'],
+			'priority' => $row['priority'],
+			'state' => $row['state'],
+			'time' => $row['time'],
+			'category' => $row['category'],
+			'subcat' => $row['subcat'],
+			'date_create' => $datetime,
+			'technician' => $row['technician'],
+			'criticality' => $row['criticality'],
+			'creator' => $_SESSION['user_id'],
+			'place' => $row['place'],
+			'type' => $row['type']
+			));
+	} else { //case for other profile
+		$qry=$db->prepare("
+		INSERT INTO `tincidents` 
+		(
+		`user`,
+		`title`,
+		`description`,
+		`priority`,
+		`state`,
+		`time`,
+		`category`,
+		`subcat`,
+		`date_create`,
+		`technician`,
+		`criticality`,
+		`creator`,
+		`place`,
+		`type`
 		) VALUES (
-		'$row[user]',$row[title],$row[description],'$row[priority]','$row[state]','$row[time]','$row[category]','$row[subcat]','$datetime','$row[technician]','$row[criticality]','$_SESSION[user_id]','$row[place]','$row[type]'
+		:user,
+		:title,
+		:description,
+		:priority,
+		:state,
+		:time,
+		:category,
+		:subcat,
+		:date_create,
+		:technician,
+		:criticality,
+		:creator,
+		:place,
+		:type
 		)
-		";
+		");
+		$qry->execute(array(
+			'user' => $row['user'],
+			'title' => $row['title'],
+			'description' => $row['description'],
+			'priority' => $row['priority'],
+			'state' => $row['state'],
+			'time' => $row['time'],
+			'category' => $row['category'],
+			'subcat' => $row['subcat'],
+			'date_create' => $datetime,
+			'technician' => $row['technician'],
+			'criticality' => $row['criticality'],
+			'creator' => $_SESSION['user_id'],
+			'place' => $row['place'],
+			'type' => $row['type']
+			));
 	}
-	
-	$db->exec("$query");
-	
-	////threads insert
-	//find id of new ticket
-	$query= $db->query("SELECT MAX(id) FROM `tincidents`");
-	$newticketid=$query->fetch();
-	//find tickets from source ticket
-	$query= $db->query("SELECT * FROM `tthreads` WHERE ticket='$_POST[template]'");
-	while ($row=$query->fetch()) {
-		//escape special char to sql query
-		$row['text']=$db->quote($row['text']);
+	//threads insert
+	$newticketid=$db->lastInsertId(); //get id of created ticket
+	//find threads of source ticket
+	$qry=$db->prepare("SELECT `text`,`type` FROM `tthreads` WHERE ticket=:ticket");
+	$qry->execute(array('ticket' => $_POST['template']));
+	while($row=$qry->fetch()) 
+	{
 		//insert new threads
-		$db->exec("INSERT INTO tthreads (ticket,date,author,text,type) VALUES ('$newticketid[0]','$datetime','$_SESSION[user_id]',$row[text],'$row[type]')");
+		$qry2=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`text`,`type`) VALUES (:ticket,:date,:author,:text,:type)");
+		$qry2->execute(array(
+			'ticket' => $newticketid,
+			'date' => $datetime,
+			'author' => $_SESSION['user_id'],
+			'text' => $row['text'],
+			'type' => $row['type']
+	));
 	}
-	$query->closecursor();
+	$qry->closeCursor();
+	
 	$boxtext= '<div class="alert alert-block alert-success"><center><i class="icon-ok green"></i>	'.T_('Le modèle à été appliqué au ticket en cours').'.</center></div>';
 	echo "<SCRIPT LANGUAGE='JavaScript'>
 			<!--
@@ -80,7 +166,7 @@ if($_POST['duplicate'])
 			setTimeout('redirect()',$rparameters[time_display_msg]);
 			-->
 	</SCRIPT>";
-} else {
+} elseif($rright['ticket_template']) {
 	//display form
 	$boxtext=' 
 	<form name="form" method="POST" action="" id="form">
@@ -88,11 +174,13 @@ if($_POST['duplicate'])
 		<label for="template">
 		<select id="template" name="template">
 			';
-			$query= $db->query("SELECT * FROM `ttemplates` order by name ASC");
-			while ($row=$query->fetch()) {
+			$qry=$db->prepare("SELECT `incident`,`name` FROM `ttemplates` ORDER BY `name` ASC");
+			$qry->execute(array('id' => $_GET['id']));
+			while($row=$qry->fetch()) 
+			{
 				$boxtext=$boxtext.'<option value="'.$row['incident'].'">'.$row['name'].'</option>';
-			} 
-			$query->closecursor();
+			}
+			$qry->closeCursor();
 			$boxtext=$boxtext.'
 		</select>
 	</form>

@@ -4,9 +4,9 @@
 # @Description : page to edit ticket
 # @Call : /ticket.php
 # @Author : Flox
-# @Version : 3.1.33
+# @Version : 3.1.36
 # @Create : 09/02/2014
-# @Update : 08/06/2018
+# @Update : 22/10/2018
 ################################################################################
 
 //initialize variables 
@@ -22,17 +22,19 @@ $db->exec('SET sql_mode = ""');
 $_SESSION['user_id']=$_GET['user_id'];
 
 $db_id=strip_tags($db->quote($_GET['id']));
-$db_session_user_id=strip_tags($db->quote($_GET['user_id']));
+$db_session_user_id=strip_tags($_GET['user_id']);
 
 //load user table
-$quser=$db->query("SELECT * FROM tusers WHERE id=$db_session_user_id");
-$ruser=$quser->fetch();
-$quser->closeCursor(); 
+$qry=$db->prepare("SELECT * FROM tusers WHERE id=:id");
+$qry->execute(array('id' => $_GET['user_id']));
+$ruser=$qry->fetch();
+$qry->closeCursor();
 
 //load parameter table
-$query=$db->query("SELECT * FROM tparameters");
-$rparameters=$query->fetch();
-$query->closeCursor(); 
+$qry=$db->prepare("SELECT * FROM tparameters");
+$qry->execute();
+$rparameters=$qry->fetch();
+$qry->closeCursor();
 
 //define current language
 require "localization.php";
@@ -45,67 +47,73 @@ if(!isset($_POST['user'])) $_POST['user'] = '';
 if(!isset($_POST['technician'])) $_POST['technician'] = ''; 
 
 //master query
-$globalquery = $db->query("SELECT * FROM tincidents WHERE id LIKE $db_id");
-$globalrow=$globalquery->fetch(); 
-$globalquery->closeCursor();
+$qry=$db->prepare("SELECT * FROM `tincidents` WHERE id=:id");
+$qry->execute(array('id' => $_GET['id']));
+$globalrow=$qry->fetch();
+$qry->closeCursor();
 
 //get last token
-$query = $db->query("SELECT token FROM `ttoken` WHERE action='ticket_print' ORDER BY id DESC LIMIT 1");
-$token=$query->fetch(); 
-$query->closeCursor();
+$qry=$db->prepare("SELECT token FROM `ttoken` WHERE action='ticket_print' ORDER BY id DESC LIMIT 1");
+$qry->execute();
+$token=$qry->fetch();
+$qry->closeCursor();
 
 //delete token
-$query = $db->query("DELETE FROM `ttoken` WHERE action='ticket_print'");
+$qry=$db->prepare("DELETE FROM `ttoken` WHERE action='ticket_print'");
+$qry->execute();
 
 //secure connect
 if ($_GET['token'] && $token['token']==$_GET['token'])
 {
-	
 	//database queries to find values for create print
-	$query = $db->query("SELECT * FROM tusers WHERE id LIKE '$globalrow[user]'");
-	$userrow=$query->fetch();
-	$query->closeCursor();	
+	$qry=$db->prepare("SELECT * FROM `tusers` WHERE id=:id");
+	$qry->execute(array('id' => $globalrow['user']));
+	$userrow=$qry->fetch();
+	$qry->closeCursor();
 		
-	$query = $db->query("SELECT * FROM tusers WHERE id LIKE '$globalrow[technician]'");
-	$techrow=$query->fetch();
-	$query->closeCursor();
+	$qry=$db->prepare("SELECT * FROM `tusers` WHERE id=:id");
+	$qry->execute(array('id' => $globalrow['technician']));
+	$techrow=$qry->fetch();
+	$qry->closeCursor();
 
 	if ($globalrow['t_group']!=0)
 	{
-		$query = $db->query("SELECT name FROM tgroups WHERE id LIKE '$globalrow[t_group]'");
-		$grouptech=$query->fetch();
-		$query->closeCursor();
+		$qry=$db->prepare("SELECT name FROM `tgroups` WHERE id=:id");
+		$qry->execute(array('id' => $globalrow['t_group']));
+		$grouptech=$qry->fetch();
+		$qry->closeCursor();
 	}
 
 	if ($globalrow['u_group']!=0)
 	{
-		$query = $db->query("SELECT name FROM tgroups WHERE id LIKE '$globalrow[u_group]'");
-		$groupuser=$query->fetch();
-		$query->closeCursor();
+		$qry=$db->prepare("SELECT name FROM `tgroups` WHERE id=:id");
+		$qry->execute(array('id' => $globalrow['u_group']));
+		$groupuser=$qry->fetch();
+		$qry->closeCursor();
 	}
-		
-	$query = $db->query("SELECT * FROM tusers WHERE id LIKE '$_SESSION[user_id]'");
-	$creatorrow=$query->fetch();
-	$query->closeCursor();
-		
-	$query = $db->query("SELECT name FROM tstates WHERE id LIKE '$globalrow[state]'");
-	$staterow=$query->fetch();
-	$query->closeCursor();
-		
-	$query = $db->query("SELECT * FROM tcategory WHERE id LIKE '$globalrow[category]'");
-	$catrow=$query->fetch();
-	$query->closeCursor();
-		
-	$query = $db->query("SELECT * FROM tsubcat WHERE id LIKE '$globalrow[subcat]'");
-	$subcatrow=$query->fetch();
-	$query->closeCursor();
 
+	$qry=$db->prepare("SELECT name FROM `tstates` WHERE id=:id");
+	$qry->execute(array('id' => $globalrow['state']));
+	$staterow=$qry->fetch();
+	$qry->closeCursor();
+		
+	$qry=$db->prepare("SELECT * FROM `tcategory` WHERE id=:id");
+	$qry->execute(array('id' => $globalrow['category']));
+	$catrow=$qry->fetch();
+	$qry->closeCursor();
+		
+	$qry=$db->prepare("SELECT * FROM `tsubcat` WHERE id=:id");
+	$qry->execute(array('id' => $globalrow['subcat']));
+	$subcatrow=$qry->fetch();
+	$qry->closeCursor();
 	
 	if ($rparameters['ticket_places']==1)
 	{
-		$query=$db->query("SELECT * FROM tplaces WHERE id LIKE '$globalrow[place]'");
-		$placerow=$query->fetch();	
-		$query->closeCursor();
+		$qry=$db->prepare("SELECT `id`,`name` FROM `tplaces` WHERE id=:id");
+		$qry->execute(array('id' => $globalrow['place']));
+		$placerow=$qry->fetch();
+		$qry->closeCursor();
+		
 		if($placerow['id']!=0)
 		{
 			$place='
@@ -117,9 +125,15 @@ if ($_GET['token'] && $token['token']==$_GET['token'])
 	} else {$place='';}
 
 	//generate resolution
-	if($rparameters['mail_order']==1) {$mail_order='DESC';} else {$mail_order='ASC';}
-	$query = $db->query("SELECT * FROM tthreads WHERE ticket=$db_id AND private='0' ORDER BY date $mail_order");
-	while ($row = $query->fetch())
+	if($rparameters['mail_order']==1)
+	{
+		$qry=$db->prepare("SELECT * FROM `tthreads` WHERE ticket=:ticket AND private='0' ORDER BY date DESC");
+		$qry->execute(array('ticket' => $_GET['id']));
+	} else {
+		$qry=$db->prepare("SELECT * FROM `tthreads` WHERE ticket=:ticket AND private='0' ORDER BY date ASC");
+		$qry->execute(array('ticket' => $_GET['id']));
+	}
+	while($row = $qry->fetch())
 	{
 		//remove display date from old post 
 		$find_old=explode(" ", $row['date']);
@@ -135,9 +149,11 @@ if ($_GET['token'] && $token['token']==$_GET['token'])
 			if ($row['author']!=$globalrow['technician'])
 			{
 				//find author name
-				$query2 = $db->query("SELECT * FROM tusers WHERE id='$row[author]'");
-				$rauthor=$query2->fetch();
-				$query2->closeCursor();
+				$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
+				$qry2->execute(array('id' => $row['author']));
+				$rauthor=$qry2->fetch();
+				$qry2->closeCursor();
+				
 				$resolution="$resolution <b> $date_thread $rauthor[firstname] $rauthor[lastname]: </b><br /> $text  <hr />";
 			} else {
 				if ($date_thread!='')
@@ -153,47 +169,60 @@ if ($_GET['token'] && $token['token']==$_GET['token'])
 			//generate attribution thread
 			if ($row['group1']!=0)
 			{
-				$query2=$db->query("SELECT name FROM tgroups WHERE id='$row[group1]'");
-				$rtechgroup=$query2->fetch();
-				$query2->closeCursor();
+			
+				$qry2=$db->prepare("SELECT `name` FROM `tgroups` WHERE id=:id");
+				$qry2->execute(array('id' => $row['group1']));
+				$rtechgroup=$qry2->fetch();
+				$qry2->closeCursor();
+				
 				$resolution=$resolution.' <b>'.$date_thread.':</b> '.T_('Attribution du ticket au groupe').' '.$rtechgroup['name'].'.<br /><br />';
 			} else {
-				$query2=$db->query("SELECT * FROM tusers WHERE id='$row[tech1]'");
-				$rtech3=$query2->fetch();
-				$query2->closeCursor();
+				$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
+				$qry2->execute(array('id' => $row['tech1']));
+				$rtech3=$qry2->fetch();
+				$qry2->closeCursor();
+				
 				$resolution=$resolution.' <b>'.$date_thread.':</b> '.T_('Attribution du ticket à').' '.$rtech3['firstname'].' '.$rtech3['lastname'].'.<br /><br />';
 			}
 		}
 		if ($row['type']==4)
 		{
 			//find author name
-			$query2 = $db->query("SELECT * FROM tusers WHERE id='$row[author]'");
-			$rauthor=$query2->fetch();
-			$query2->closeCursor();
+			$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
+			$qry2->execute(array('id' => $row['author']));
+			$rauthor=$qry2->fetch();
+			$qry2->closeCursor();
+			
 			$resolution=$resolution.' <b>'.$date_thread.':</b> '.T_('Clôture du ticket').' par '.$rauthor['firstname'].' '.$rauthor['lastname'].'.<br /><br />';
 		}
 		if ($row['type']==5 && $row['state']==2)
 		{
 			//find author name
-			$query2 = $db->query("SELECT * FROM tusers WHERE id='$row[author]'");
-			$rauthor=$query2->fetch();
-			$query2->closeCursor();
+			$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
+			$qry2->execute(array('id' => $row['author']));
+			$rauthor=$qry2->fetch();
+			$qry2->closeCursor();
+			
 			$resolution=$resolution.' <b>'.$date_thread.':</b> '.T_("Changement d'état en cours").' par '.$rauthor['firstname'].' '.$rauthor['lastname'].'.<br /><br />';
 		}
 		if ($row['type']==6)
 		{
 			//find author name
-			$query2 = $db->query("SELECT * FROM tusers WHERE id='$row[author]'");
-			$rauthor=$query2->fetch();
-			$query2->closeCursor();
+			$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
+			$qry2->execute(array('id' => $row['author']));
+			$rauthor=$qry2->fetch();
+			$qry2->closeCursor();
+			
 			$resolution=$resolution.' <b>'.$date_thread.':</b> '.T_('Ticket facturable').' par '.$rauthor['firstname'].' '.$rauthor['lastname'].'.<br /><br />';
 		}
 		if ($row['type']==7)
 		{
 			//find author name
-			$query2 = $db->query("SELECT * FROM tusers WHERE id='$row[author]'");
-			$rauthor=$query2->fetch();
-			$query2->closeCursor();
+			$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
+			$qry2->execute(array('id' => $row['author']));
+			$rauthor=$qry2->fetch();
+			$qry2->closeCursor();
+			
 			$resolution=$resolution.' <b>'.$date_thread.':</b> '.T_('Ticket non facturable').' par '.$rauthor['firstname'].' '.$rauthor['lastname'].'.<br /><br />';
 		}
 		if($row['type']==2)
@@ -201,47 +230,59 @@ if ($_GET['token'] && $token['token']==$_GET['token'])
 			//generate transfert thread
 			if ($row['group1']!=0 && $row['group2']!=0) //case group to group 
 			{
-				$query2=$db->query("SELECT name FROM tgroups WHERE id='$row[group1]'");
-				$rtechgroup1=$query2->fetch();
-				$query2->closeCursor();
-				$query2=$db->query("SELECT name FROM tgroups WHERE id='$row[group2]'");
-				$rtechgroup2=$query2->fetch();
-				$query2->closeCursor();
+				$qry2=$db->prepare("SELECT `name` FROM `tgroups` WHERE id=:id");
+				$qry2->execute(array('id' => $row['group1']));
+				$rtechgroup1=$qry2->fetch();
+				$qry2->closeCursor();
+				
+				$qry2=$db->prepare("SELECT `name` FROM `tgroups` WHERE id=:id");
+				$qry2->execute(array('id' => $row['group2']));
+				$rtechgroup2=$qry2->fetch();
+				$qry2->closeCursor();
+				
 				$resolution=$resolution.' <b>'.$date_thread.':</b> '.T_('Transfert du ticket du groupe').' '.$rtechgroup1['name'].' '.T_('au groupe ').' '.$rtechgroup2['name'].'. <br /><br />';
 			} elseif(($row['tech1']==0 || $row['tech2']==0) && ($row['group1']==0 || $row['group2']==0)) { //case group to tech
 				if ($row['tech1']!=0) {
-					$query2=$db->query("SELECT * FROM tusers WHERE id='$row[tech1]'");
-					$rtech4=$query2->fetch();
-					$query2->closeCursor();
+					$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
+					$qry2->execute(array('id' => $row['tech1']));
+					$rtech4=$qry2->fetch();
+					$qry2->closeCursor();
 				}
 				if ($row['tech2']!=0) {
-					$query2=$db->query("SELECT * FROM tusers WHERE id='$row[tech2]'");
-					$rtech5=$query2->fetch();
-					$query2->closeCursor();
+					$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
+					$qry2->execute(array('id' => $row['tech2']));
+					$rtech5=$qry2->fetch();
+					$qry2->closeCursor();
 				}
 				if ($row['group1']!=0) {
-					$query2=$db->query("SELECT name FROM tgroups WHERE id='$row[group1]'");
-					$rtechgroup4=$query2->fetch();
-					$query2->closeCursor();
+					$qry2=$db->prepare("SELECT `name` FROM `tgroups` WHERE id=:id");
+					$qry2->execute(array('id' => $row['group1']));
+					$rtechgroup4=$qry2->fetch();
+					$qry2->closeCursor();
 				}
 				if ($row['group2']!=0) {
-					$query2=$db->query("SELECT name FROM tgroups WHERE id='$row[group2]'");
-					$rtechgroup5=$query2->fetch();
-					$query2->closeCursor();
+					$qry2=$db->prepare("SELECT `name` FROM `tgroups` WHERE id=:id");
+					$qry2->execute(array('id' => $row['group2']));
+					$rtechgroup5=$qry2->fetch();
+					$qry2->closeCursor();
 				}
 				$resolution=$resolution.' <b>'.$date_thread.':</b> '.T_('Transfert du ticket de').' '.$rtechgroup4['name'].$rtech4['firstname'].' '.$rtech4['lastname'].' '.T_('à ').' '.$rtechgroup5['name'].$rtech5['firstname'].' '.$rtech5['lastname'].'. <br /><br />';
 		}elseif($row['tech1']!=0 && $row['tech2']!=0) { //case tech to tech
-				$query2 = $db->query("SELECT * FROM tusers WHERE id='$row[tech1]'");
-				$rtech1=$query2->fetch();
-				$query2->closeCursor();
-				$query2=$db->query("SELECT * FROM tusers WHERE id='$row[tech2]'");
-				$rtech2=$query2->fetch();
-				$query2->closeCursor();
+				$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
+				$qry2->execute(array('id' => $row['tech1']));
+				$rtech1=$qry2->fetch();
+				$qry2->closeCursor();
+				
+				$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
+				$qry2->execute(array('id' => $row['tech2']));
+				$rtech2=$qry2->fetch();
+				$qry2->closeCursor();
+				
 				$resolution=$resolution.' <b>'.$date_thread.':</b> '.T_('Transfert du ticket de').' '.$rtech1['firstname'].' '.$rtech1['lastname'].' à '.$rtech2['firstname'].' '.$rtech2['lastname'].'. <br /><br />';
 			}
 		}
 	}	
-		
+	$qry->closeCursor();	
 	$description = $globalrow['description'];
 
 	//dates conversions
@@ -270,7 +311,7 @@ if ($_GET['token'] && $token['token']==$_GET['token'])
 						<table  border="1" bordercolor="'.$rparameters['mail_color_title'].'" cellspacing="0"  cellpadding="5">
 							<tr>
 								<td><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Titre').':</b></b> '.$globalrow['title'].'</font></td>
-								<td><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Catégorie').':</b></b> '.$catrow['name'].' - '.$subcatrow['name'].'</td>
+								<td><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Catégorie').':</b></b> '.$catrow['name'].' - '.$subcatrow['name'].'</font></td>
 							</tr>
 							<tr>
 								';

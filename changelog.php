@@ -1,17 +1,46 @@
 <meta charset="UTF-8" />
 #################################<br />
 # @Name : GestSup Release Notes  <br />
+# @Date : 07/11/2018             <br />
+# @Version : 3.1.36     	 	 <br />
+#################################<br />
+<br />
+<u>Update:</u><br />
+- Liste des tickets et équipement: Augmentation de la performance d'affichage des listes, sur les grosses bases de données (./dashboard.php)<br />
+- Composant : Highcharts 6.2.0 (./components/Highcharts/*)<br />
+- Connecteur LDAP : Affichage de la date lors de synchronisation (./core/ldap.php)<br />
+- Système : Ajout de la taille de la base de données (./system.php)<br />
+- Droits : Nouveaux droits permettant la désactivation de l'insertion d'image sur les champs description et résolution d'un ticket ticket_description_insert_image, ticket_resolution_insert_image (./wisiwyg.php)<br />
+- Login : Suite à une erreur de saisie de l'identifiant ou du mot de passe, la fenêtre de login ne s'affiche plus (./login.php)<br />
+- Fiche utilisateur : Ajout de contrôle sur la formation du domaine de messagerie (./admin/user.php)<br />
+<br />
+<br />
+<u>Bugfix:</u><br />
+- Ticket : La taille des éditeurs est limitée en largeur (./ticket.php)<br />
+- Ticket : Erreur lors de la saisie manuel de date sans heures. (./ticket.php)<br />
+- Ticket : En utilisant les champs de saisie obligatoire, lors de la modification de l'état en résolu avec une obligation de saisie un drapeau de cloture était inséré dans le fil de résolution (./core/ticket.php)<br />
+- Ticket impression: Erreur syntaxe HTML (./ticket_print.php)<br />
+- Administration : Lors de la création d'utilisateur avec une agence et un service un défaut pouvait apparaitre dans l'enregistrement de l'agence (./admin/user.php)<br />
+- Liste des tickets : Sur le filtre de date de création certaines valeurs pouvaient provoquer une erreur (./dashboard.php)<br />
+- Liste des tickets : la recherche avec apostrophe ne fonctionnait pas (./dashboard.php)<br />
+- Procédure : Ajout de la fonction d'ajout de pièce jointe lors de la création d'une nouvelle procédure (./procedure.php)<br />
+- Mail : Sur la notification automatique d'attribution d'un ticket à un technicien, défaut lors de l'utilisation d'un groupe de technicien (./core/auto_mail.php ./core/message.php)<br />
+- Mail : Erreur syntaxe HTML (./core/mail.php)<br />
+- Connecteur IMAP : La notification automatique à l'utilisateur lors de l'ouverture d'un ticket par un utilisateur ne fonctionnait pas lors de l'import de mail en ligne de commande. (./core/mail.php ./mail2ticket.php)<br />
+<br />
+#################################<br />
+# @Name : GestSup Release Notes  <br />
 # @Date : 24/09/2018             <br />
 # @Version : 3.1.35     	 	 <br />
 #################################<br />
 <br />
 <u>Notice:</u><br />
-- Système: L'extenstion PHP curl est désormais requise<br />
+- Système: L'extension PHP curl est désormais requise<br />
 <br />
 <u>Update:</u><br />
 - Connecteur IMAP : La date de création du ticket correspond à la date du mail (./mail2ticket.php ./components/PHPImap/mailbox.php)<br />
-- Composant : Highcharts 6.1.3 (./components/Highcharts/*)<br />
-- Adminisration : des nouveaux styles sont disponible dans la liste des états des tickets (./admin/list.php)<br />
+- Composant : Highcharts 6.1.4 (./components/Highcharts/*)<br />
+- Administration : des nouveaux styles sont disponible dans la liste des états des tickets (./admin/list.php)<br />
 - Système : Ajout d'un contrôle sur le listing des répertoires. (./system.php)<br />
 <br />
 <br />
@@ -20,20 +49,20 @@
 - Paramètres : Une erreur SQL pouvait apparaitre lors de la validation des paramètres de la fonction disponibilité (plugin/availability/admin/parameters.php)<br />
 - Liste des tickets : Dans certains cas le filtre utilisateur était vide (SQL)<br />
 - Fil d'Ariane : Dans certains une erreur de redirection était observée (./index.php)<br />
-- Ticket : Les libellé d'identation des éditeurs de texte était inversé (./wisiwyg.php)<br />
-- Ticket : Lors de la saisie d'un titre possèdant des guillemets, si un changement de catégorie était réalisée le texte était tronqué (./tidecket.php)<br />
-- Ticket : Lors d'une copie de lien hypertext possèdant une balise href dans la résolution, erreur d'affichage du lien. (./thread.php)<br />
+- Ticket : Les libellé d'indentation des éditeurs de texte était inversé (./wisiwyg.php)<br />
+- Ticket : Lors de la saisie d'un titre possédant des guillemets, si un changement de catégorie était réalisée le texte était tronqué (./ticket.php)<br />
+- Ticket : Lors d'une copie de lien hypertext possédant une balise href dans la résolution, erreur d'affichage du lien. (./thread.php)<br />
 - Ticket : Des erreurs pouvait apparaitre avec l'utilisation du droit ticket_date_hope_disp (./ticket.php)<br />
-- Ticket : Désactivation de la mémorisation des champs date qui masquaient les datepickers (./ticket.php)<br />
-- Ticket : Lors de la création de ticket avec la planification sans enregistrelement des problèmes apparaissaient (./ticket.php)<br />
+- Ticket : Désactivation de la mémorisation des champs date qui masquaient les datepicker (./ticket.php)<br />
+- Ticket : Lors de la création de ticket avec la planification sans enregistrement des problèmes apparaissaient (./ticket.php)<br />
 - Liste des tickets : Certains tickets caractère dans le titre des tickets entrainait des défaut d'affichage dans la liste (./dashboard.php)<br />
 - Équipement : Désactivation de la mémorisation des champs date qui masquaient les datepicker (./asset.php)<br />
-- Statistques : Erreur de prise en compte du filtre agence sur l'export CSV sur certaines configurations. (./core/export_ticket.php)<br />
+- Statistiques : Erreur de prise en compte du filtre agence sur l'export CSV sur certaines configurations. (./core/export_ticket.php)<br />
 - Calendrier : Erreur de double chargement des styles fullcalendar. (./index.php)<br />
 - Administration : Ajout d'un contrôle sur la verification de la formation des adresses mails sur la fiche utilisateur. (./admin/user.php)<br />
-- Administration : Ajout d'un controle sur l'existance du login lors de l'ajout ou la modification d'un utilisateur. (./admin/user.php)<br />
+- Administration : Ajout d'un contrôle sur l'existence du login lors de l'ajout ou la modification d'un utilisateur. (./admin/user.php)<br />
 - Fiche utilisateur : La section "Membre du groupe" de l'onglet paramètre conservait les groupes supprimés. (./admin/user.php)<br />
-- Mail : La notification automatique d'attribution au technicien ne fonctionnait pas lorsque toutes les notificiations automatiques étaient activées. (./core/auto_mail.php)<br />
+- Mail : La notification automatique d'attribution au technicien ne fonctionnait pas lorsque toutes les notifications automatiques étaient activées. (./core/auto_mail.php)<br />
 - Mail : Contrôle de la présence d'une adresse mail de destination avant d'envoyer le mail. (./core/mail.php)<br />
 - Sauvegardes : Sur certaines configurations une erreur lors du dump SQL se produisait (./admin/backup.php)<br />
 - Connecteur LDAP : Gestion des comptes AD avec les valeurs UserAccountControl à 544, 546, 66080, 66082 (./core/ldap.php)<br />

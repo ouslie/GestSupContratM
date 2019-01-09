@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 07/03/2010
-# @Update : 21/09/2018
-# @Version : 3.1.35
+# @Update : 15/10/2018
+# @Version : 3.1.36
 ################################################################################
 
 //initialize variables 
@@ -21,6 +21,7 @@ if(!isset($salt)) $salt= '';
 if(!isset($dcgen)) $dcgen= '';
 if(!isset($ldap_type)) $ldap_type= '';
 if(!isset($message)) $message= '';
+if(!isset($login_error)) $login_error= '';
 if(!isset($_SESSION['user_id'])) $_SESSION['user_id'] = '';
 if(!isset($_SESSION['login'])) $_SESSION['login'] = ''; 
 if(!isset($_GET['page'])) $_GET['page'] = ''; 
@@ -247,6 +248,7 @@ if($_GET['state']=='') $_GET['state'] = '%';
 						</strong>
 						'.T_('Votre nom d\'utilisateur ou mot de passe, n\'est pas correct.').'
 					</div>';
+				$login_error=1;	
 				$www = "./index.php";
 				session_destroy();
 				//web redirection to login page
@@ -256,7 +258,7 @@ if($_GET['state']=='') $_GET['state'] = '%';
 						{
 						window.location='$www'
 						}
-						setTimeout('redirect()',$rparameters[time_display_msg]+1000);
+						setTimeout('redirect()',$rparameters[time_display_msg]+1500);
 						-->
 					</SCRIPT>";
 			}
@@ -276,6 +278,7 @@ if($_GET['state']=='') $_GET['state'] = '%';
 						<br>
 				</div>';
 			$www = "./index.php";
+			$login_error=1;
 			session_destroy();
 			//web redirection to login page
 			echo "<SCRIPT LANGUAGE='JavaScript'>
@@ -284,7 +287,7 @@ if($_GET['state']=='') $_GET['state'] = '%';
 						{
 						window.location='$www'
 						}
-						setTimeout('redirect()',$rparameters[time_display_msg]+1000);
+						setTimeout('redirect()',$rparameters[time_display_msg]+1500);
 						-->
 					</SCRIPT>";
 		}
@@ -329,67 +332,74 @@ if($_GET['state']=='') $_GET['state'] = '%';
 								echo '
 							</div>
 							<br />
-							'.$message.'
-							<div class="space-6"></div>
-							<div class="position-relative">
-								<div id="login-box" class="login-box visible widget-box no-border">
-									<div class="widget-body">
-										<div class="widget-main">
-											<h4 class="header blue lighter bigger">
-												<i class="icon-lock green"></i>
-												'.T_('Saisissez vos identifiants').'
-												'.$info.'
-											</h4>
-											
-											<div class="space-6"></div>
-											<form id="conn" method="post" action="">	
-												<fieldset>
-													<label class="block clearfix">
-														<span class="block input-icon input-icon-right">
-															<input class="form-control" type="text" id="login" name="login" class="span12" placeholder="'.T_('Nom d\'utilisateur').'" />
-															<i class="icon-user"></i>
-														</span>
-													</label>
-													<label class="block clearfix">
-														<span class="block input-icon input-icon-right">
-															<input class="form-control" type="password" id="pass" name="pass" class="span12" placeholder="'.T_('Mot de passe').'" />
-															<i class="icon-lock"></i>
-														</span>
-													</label>
-													<div class="space"></div>
-													<div class="clearfix">
-														<button onclick="submit()" type="submit" id="submit" name="submit" class="pull-right btn btn-sm btn-primary">
-															<i class="icon-ok"></i>
-															'.T_('Connexion').'
-														</button>
+							'.$message;
+							//display login if no error
+							if($login_error==0)
+							{
+								echo '
+								<div class="space-6"></div>
+								<div class="position-relative">
+									<div id="login-box" class="login-box visible widget-box no-border">
+										<div class="widget-body">
+											<div class="widget-main">
+												<h4 class="header blue lighter bigger">
+													<i class="icon-lock green"></i>
+													'.T_('Saisissez vos identifiants').'
+													'.$info.'
+												</h4>
+												
+												<div class="space-6"></div>
+												<form id="conn" method="post" action="">	
+													<fieldset>
+														<label class="block clearfix">
+															<span class="block input-icon input-icon-right">
+																<input class="form-control" type="text" id="login" name="login" class="span12" placeholder="'.T_('Nom d\'utilisateur').'" />
+																<i class="icon-user"></i>
+															</span>
+														</label>
+														<label class="block clearfix">
+															<span class="block input-icon input-icon-right">
+																<input class="form-control" type="password" id="pass" name="pass" class="span12" placeholder="'.T_('Mot de passe').'" />
+																<i class="icon-lock"></i>
+															</span>
+														</label>
+														<div class="space"></div>
+														<div class="clearfix">
+															<button onclick="submit()" type="submit" id="submit" name="submit" class="pull-right btn btn-sm btn-primary">
+																<i class="icon-ok"></i>
+																'.T_('Connexion').'
+															</button>
+														</div>
+														<div class="space-4"></div>
+													</fieldset>
+												</form>
+											</div><!--/widget-main-->
+											';
+											if ($rparameters['user_register']==1)
+											{
+												echo '
+												<div class="toolbar clearfix">
+												   
+													<div>
+														<a href="#" onclick="show_box(\'forgot-box\'); return false;" class="forgot-password-link">
+														
+														</a>
 													</div>
-													<div class="space-4"></div>
-												</fieldset>
-											</form>
-										</div><!--/widget-main-->
-										';
-										if ($rparameters['user_register']==1)
-										{
-    										echo '
-    										<div class="toolbar clearfix">
-    										   
-    											<div>
-    												<a href="#" onclick="show_box(\'forgot-box\'); return false;" class="forgot-password-link">
-    												
-    												</a>
-    											</div>
-    											<div>
-    												<a href="./register.php"  class="user-signup-link">
-    													'.T_('S\'enregistrer').'
-    													<i class="icon-arrow-right"></i>
-    												</a>
-    											</div>
-    										</div';
-										}
-									echo '	
-									</div><!--/widget-body-->
-								</div><!--/login-box-->
-							</div><!--/position-relative-->
+													<div>
+														<a href="./register.php"  class="user-signup-link">
+															'.T_('S\'enregistrer').'
+															<i class="icon-arrow-right"></i>
+														</a>
+													</div>
+												</div';
+											}
+										echo '	
+										</div><!--/widget-body-->
+									</div><!--/login-box-->
+								</div><!--/position-relative-->
+								';
+							}
+							echo '
 						</div>
 					</div><!--/.span-->
 				</div><!--/.row-fluid-->

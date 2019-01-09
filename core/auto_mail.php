@@ -5,12 +5,13 @@
 # @Call : ./core/ticket.php
 # @Parameters : ticket id 
 # @Author : Flox
-# @Update : 11/09/2018
-# @Version : 3.1.35
+# @Update : 31/10/2018
+# @Version : 3.1.36
 ################################################################################
 
 //initialize variables 
 if(!isset($send)) $send = ''; 
+if(!isset($usermail['mail'])) $usermail['mail'] = ''; 
 
 //secure string
 $db_id=strip_tags($db->quote($_GET['id']));
@@ -55,20 +56,30 @@ if($mail_u_group['u_group']!=0)
 if($rparameters['debug']==1) {echo "<b>AUTO MAIL VAR:</b> SESSION[profile_id]=$_SESSION[profile_id] mail_auto_user_modify=$rparameters[mail_auto_user_modify] _POST[resolution]=$_POST[resolution] _POST[private]=$_POST[private] <br />";}
 
 //case send auto mail to tech when technician attribution
-if(($rparameters['mail_auto_tech_attribution']==1) && ($_POST['modify'] || $_POST['quit']) && $globalrow['technician']==0 && $_POST['technician']!=0 && ($_POST['technician']!=$_SESSION['user_id']))
+if(($rparameters['mail_auto_tech_attribution']==1) && ($_POST['modify'] || $_POST['quit']) && $globalrow['technician']==0 && ($_POST['technician']!=0 || $t_group) && ($_POST['technician']!=$_SESSION['user_id']))
 {
 	//debug
 	if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b>  FROM system TO tech  (Reason: mail_auto_tech_attribution ticket technician attribution is detected)<br> ";}
 	
 		if($rparameters['mail_from_adr']){$from=$rparameters['mail_from_adr'];} else {$from=$ruser['mail'];}
 		
-		//get tech mail 
-		$qry = $db->prepare("SELECT * FROM tusers WHERE id=:id");
-		$qry->execute(array('id' => $_POST['technician']));
-		$techrow=$qry->fetch();
-		$qry->closeCursor();
+		//technican group detection
+		if($t_group) 
+		{
+			$to='';
+			$qry=$db->prepare("SELECT `tusers`.mail FROM `tusers`,`tgroups_assoc` WHERE `tusers`.id=`tgroups_assoc`.user and `tgroups_assoc`.group=:group");
+			$qry->execute(array('group' => $t_group));
+			while($row=$qry->fetch()) {$to.=$row['mail'].';';}
+			$qry->closeCursor();
+		} else {
+			//get tech mail 
+			$qry = $db->prepare("SELECT * FROM tusers WHERE id=:id");
+			$qry->execute(array('id' => $_POST['technician']));
+			$techrow=$qry->fetch();
+			$qry->closeCursor();
+			$to=$techrow['mail'];
+		}
 		
-		$to=$techrow['mail'];
 		//check if tech have mail
 		if($to) 
 		{

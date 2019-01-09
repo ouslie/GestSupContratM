@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 14/09/2018
-# @Version : 3.1.35
+# @Update : 25/10/2018
+# @Version : 3.1.36
 ################################################################################
 
 //functions
@@ -443,6 +443,24 @@ if($_POST['submit_connector'] || $_POST['test_ldap'])
 				'service_id' => $_POST['mailbox_service_id']
 				));
 		}
+		
+		//crypt password
+		$qry=$db->prepare("SELECT `id`,`password` FROM `tparameters_imap_multi_mailbox` WHERE password NOT LIKE '%gs_en%'");
+		$qry->execute();
+		while($row=$qry->fetch()) 
+		{
+			echo "crypt $row[id]";
+			//crypt password
+			$enc_mailbox_password = gs_crypt($row['password'], 'e', $rparameters['server_private_key']);
+			//update tparameters
+			$qry2=$db->prepare("UPDATE `tparameters_imap_multi_mailbox` SET `password`=:mail_password WHERE `id`=:id");
+			$qry2->execute(array(
+				'mail_password' => $enc_mailbox_password,
+				'id' => $row['id']
+				));
+		}
+		$qry->closeCursor();
+		
 	}
 	
 	//crypt connector password

@@ -3,23 +3,23 @@
 # @Name : ticket.php
 # @Description : page to display create and edit ticket
 # @call : dashboard
-# @parameters :
+# @parameters : 
 # @Author : Flox
 # @Create : 07/01/2007
-# @Update : 20/09/2018
-# @Version : 3.1.35
+# @Update : 15/11/2018
+# @Version : 3.1.36 p2
 ################################################################################
 
-//initialize variables
-if(!isset($userreg)) $userreg = '';
-if(!isset($category)) $category = '';
-if(!isset($subcat)) $subcat = '';
-if(!isset($title)) $title = '';
-if(!isset($date_hope)) $date_hope = '';
-if(!isset($date_create)) $date_create = '';
-if(!isset($state)) $state = '';
-if(!isset($description)) $description = '';
-if(!isset($resolution)) $resolution = '';
+//initialize variables 
+if(!isset($userreg)) $userreg = ''; 
+if(!isset($category)) $category = ''; 
+if(!isset($subcat)) $subcat = ''; 
+if(!isset($title)) $title = ''; 
+if(!isset($date_hope)) $date_hope = ''; 
+if(!isset($date_create)) $date_create = ''; 
+if(!isset($state)) $state = ''; 
+if(!isset($description)) $description = ''; 
+if(!isset($resolution)) $resolution = ''; 
 if(!isset($priority)) $priority = '';
 if(!isset($percentage)) $percentage = '';
 if(!isset($id)) $id = '';
@@ -37,8 +37,6 @@ if(!isset($userid)) $userid = '';
 if(!isset($u_service)) $u_service = '';
 if(!isset($date_hope_error)) $date_hope_error = '';
 if(!isset($selected_time)) $selected_time = '';
-if(!isset($contrats)) $contrats = '';
-
 
 if(!isset($_POST['mail'])) $_POST['mail'] = '';
 if(!isset($_POST['upload'])) $_POST['upload'] = '';
@@ -72,8 +70,6 @@ if(!isset($_POST['asset_id'])) $_POST['asset_id'] = '';
 if(!isset($_POST['asset'])) $_POST['asset'] = '';
 if(!isset($_POST['u_agency]'])) $_POST['u_agency]'] = '';
 if(!isset($_POST['sender_service'])) $_POST['sender_service'] = '';
-if(!isset($_POST['contrats'])) $_POST['contrats'] = '';
-
 
 if(!isset($_GET['id'])) $_GET['id'] = '';
 if(!isset($_GET['action'])) $_GET['action'] = '';
@@ -92,7 +88,6 @@ if(!isset($globalrow['time'])) $globalrow['time'] = '';
 include('./core/ticket.php');
 
 //defaults values for new tickets
-if(!isset($globalrow['contrats'])) $globalrow['contrats'] = '';
 if(!isset($globalrow['creator'])) $globalrow['creator'] = '';
 if(!isset($globalrow['t_group'])) $globalrow['t_group'] = '';
 if(!isset($globalrow['u_group'])) $globalrow['u_group'] = '';
@@ -105,7 +100,7 @@ if(!isset($globalrow['date_hope'])) $globalrow['date_hope'] = '';
 if(!isset($globalrow['date_res'])) $globalrow['date_res'] = '';
 if(!isset($globalrow['time_hope'])) $globalrow['time_hope'] = '5';
 if(!isset($globalrow['time'])) $globalrow['time'] = '';
-if(!isset($globalrow['priority'])) $globalrow['priority'] = '';
+if(!isset($globalrow['priority'])) $globalrow['priority'] = ''; 
 if(!isset($globalrow['state'])) $globalrow['state'] = '1';
 if($rparameters['user_limit_service']==1 && $rright['dashboard_service_only']!=0)
 {
@@ -158,7 +153,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 									echo T_('Édition du ticket').' '.$_GET['id'].' '.$percentage.':  '.$title.'';
 								}
 							}
-    						//display clock if alarm
+    						//display clock if alarm 
 							$query=$db->query('SELECT * FROM tevents WHERE incident='.$db_id.' and disable=0 and type=1');
 							$alarm=$query->fetch();
 							$query->closeCursor();
@@ -171,7 +166,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 						?>
 					</h4>
 					<span class="widget-toolbar">
-						<?php
+						<?php 
 							if($rparameters['asset']==1 && $rparameters['asset_vnc_link']==1 && $_POST['user'] ){
 								//check if user have asset with IP
 								$query=$db->query("SELECT tassets_iface.ip FROM tassets_iface,tassets WHERE tassets_iface.asset_id=tassets.id AND user='$_POST[user]'");
@@ -181,13 +176,13 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 							}
 							if ($rright['ticket_next']!=0)
 							{
-								if($previous[0]!='') echo'<a href="./index.php?page=ticket&amp;id='.$previous[0].'&amp;state='.$globalrow['state'].'&amp;userid='.$_GET['userid'].'"><i title="'.T_('Ticket précédent de cet état').'" class="icon-circle-arrow-left bigger-130"></i>&nbsp;';
+								if($previous[0]!='') echo'<a href="./index.php?page=ticket&amp;id='.$previous[0].'&amp;state='.$globalrow['state'].'&amp;userid='.$_GET['userid'].'"><i title="'.T_('Ticket précédent de cet état').'" class="icon-circle-arrow-left bigger-130"></i>&nbsp;'; 
 								if($next[0]!='') echo'<a href="./index.php?page=ticket&amp;id='.$next[0].'&amp;state='.$globalrow['state'].'&amp;userid='.$_GET['userid'].' "><i title="'.T_('Ticket suivant de cet état').'" class="icon-circle-arrow-right bigger-130"></i></a>';
 							}
 							if ($rright['ticket_print']!=0 && $_GET['action']!='new')
 							{
 								//generate token
-								$token=uniqid();
+								$token=uniqid(); 
 								$db->exec("DELETE FROM ttoken WHERE action='ticket_print'");
 								$db->exec("INSERT INTO ttoken (token,action) VALUES ('$token','ticket_print')");
 								echo "&nbsp;";
@@ -203,7 +198,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								echo "&nbsp;&nbsp;";
 								echo'<i onclick="parent.location=\'./index.php?page=ticket&id='.$_GET['id'].'&userid='.$_GET['userid'].'&state='.$_GET['state'].'&action=addevent&technician='.$_SESSION['user_id'].'\'" title="'.T_('Créer un rappel pour ce ticket').'" class="icon-bell-alt bigger-130 orange"></i>';
 							}
-							if (($rright['planning']!=0) && ($rparameters['planning']==1) && ($rright['ticket_calendar']!=0) && $_GET['action']!='new')
+							if (($rright['planning']!=0) && ($rparameters['planning']==1) && ($rright['ticket_calendar']!=0) && $_GET['action']!='new') 
 							{
 								echo "&nbsp;&nbsp;";
 								echo'<i onclick="parent.location=\'./index.php?page=ticket&id='.$_GET['id'].'&userid='.$_GET['userid'].'&state='.$_GET['state'].'&action=addcalendar&technician='.$_SESSION['user_id'].'\'" title="'.T_('Planifier une intervention dans le calendrier').'" class="icon-calendar bigger-130 green"></i>';
@@ -225,7 +220,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 				</div>
 				<div class="widget-body">
 					<div class="widget-main">
-						<!-- START sender part -->
+						<!-- START sender part -->	
 						<div class="form-group <?php if(($rright['ticket_user_disp']==0 && $_GET['action']!='new') || ($rright['ticket_new_user_disp']==0 && $_GET['action']=='new')) echo 'hide';?>" >
 							<label class="col-sm-2 control-label no-padding-right" for="user">
 								<?php if (($_POST['user']==0) && ($globalrow['user']==0) && ($u_group=='')) echo '<i title="'.T_('Sélectionner un demandeur').'" class="icon-warning-sign red bigger-130"></i>&nbsp;'; ?>
@@ -244,34 +239,34 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 										$query = $db->query("SELECT * FROM `tusers` WHERE (lastname!='' OR firstname!='')  ORDER BY lastname ASC, firstname ASC");
 									}
 									//display user list and keep selected an disable user
-									while ($row = $query->fetch())
+									while ($row = $query->fetch()) 
 									{
 										if($rright['ticket_user_company']!=0 && $row['company']!=0)
 										{
 											//get company name of this user to display if exist
-											$query2=$db->query("SELECT name FROM tcompany WHERE id='$row[company]'");
+											$query2=$db->query("SELECT name FROM tcompany WHERE id='$row[company]'"); 
 											$user_company=$query2->fetch();
 											$query2->closeCursor();
 											$user_company='['.$user_company[0].'] ';
 										} else {$user_company='';}
-										if ($_POST['user']==$row['id']) {$selected='selected';} elseif (($_POST['user']=='') && ($globalrow['user']==$row['id'])) {$selected='selected';} else {$selected='';}
+										if ($_POST['user']==$row['id']) {$selected='selected';} elseif (($_POST['user']=='') && ($globalrow['user']==$row['id'])) {$selected='selected';} else {$selected='';} 
 										if ($row['id']==0) {echo '<option '.$selected.' value="'.$row['id'].'">'.T_(" $row[lastname]").' '.$row['firstname'].'</option>';} //case no user
 										if ($row['disable']==0) {echo '<option '.$selected.' value="'.$row['id'].'">'.$user_company.$row['lastname'].' '.$row['firstname'].'</option>';} //all enable users and technician
 										if (($row['disable']==1) && ($selected=='selected') && $row['id']!=0) {echo '<option '.$selected.' value="'.$row['id'].'">'.$row['lastname'].' '.$row['firstname'].'</option>';} //case disable user always attached to this ticket
 									}
-									$query->closeCursor();
+									$query->closeCursor(); 
 									//display group list and keep selected an disable group
 									$query = $db->query("SELECT * FROM `tgroups` WHERE type='0' ORDER BY name");
-									while ($row = $query->fetch())
+									while ($row = $query->fetch()) 
 									{
 										if ($row['id']==$u_group) {$selected='selected';} else {$selected='';}
 										if ($row['disable']==0) {echo '<option '.$selected.' value="G_'.$row['id'].'">[G] '.T_(" $row[name]").'</option>';}
 										if (($row['disable']==1) && ($selected=='selected')) {echo '<option '.$selected.' value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
 									}
-									$query->closeCursor();
+									$query->closeCursor(); 
 									?>
 								</select>
-
+								
 								<?php if(($rright['ticket_user']==0 && $_GET['action']!='new') || ($rright['ticket_new_user']==0 && $_GET['action']=='new')) echo ' <input type="hidden" name="user" value='.$globalrow['user'].' /> '; //send data in disabled case?>
 								<!-- END sender list part -->
 								<!-- START sender actions part -->
@@ -291,7 +286,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 										//hide modify link when none user selected
 										if ($selecteduser!=0){echo '<i class="icon-pencil orange bigger-130" title="'.T_('Modifier un utilisateur').'" onclick="loadVal(); document.forms[\'myform\'].action.value=\'edituser\';document.forms[\'myform\'].edituser.value=\''.$selecteduser.'\';document.forms[\'myform\'].submit();"></i>';}
 									}
-								}
+								}	
 								?>
 								<!-- END sender actions part -->
 								<!-- START user info part -->
@@ -299,24 +294,24 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 									//Display asset tel fax department if exist
 									if ($u_group=='')
 									{
-										if ($_POST['user'])
+										if ($_POST['user']) 
 										{
-											$query = $db->query("SELECT * FROM `tusers` WHERE id LIKE '$_POST[user]'");
+											$query = $db->query("SELECT * FROM `tusers` WHERE id LIKE '$_POST[user]'"); 
 										}
 										else
 										{
-											$query = $db->query("SELECT * FROM `tusers` WHERE id LIKE '$globalrow[user]'");
+											$query = $db->query("SELECT * FROM `tusers` WHERE id LIKE '$globalrow[user]'"); 
 										}
 										$row=$query->fetch();
-										$query->closeCursor();
+										$query->closeCursor(); 
 										if($mobile==0) {echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";} else {echo '<p></p>';}
 										if ($row['phone']!="") echo '<a href="tel:'.$row['phone'].'"><i title="'.T_('Téléphoner au').' '.$row['phone'].'" class="icon-phone-sign blue bigger-130"></i></a> <b>'; if($mobile==0) {echo $row['phone'];} echo'</b>';
 										if ($row['mobile']!="") echo '&nbsp;&nbsp;&nbsp;<a href="tel:'.$row['mobile'].'"><i title="'.T_('Téléphoner au').' '.$row['mobile'].'" class="icon-mobile-phone blue bigger-150"></i></a> <b>'; if($mobile==0) {echo $row['mobile'];} echo'</b>';
 										if ($row['mail']!="") echo '&nbsp;&nbsp;&nbsp;<a href="mailto:'.$row['mail'].'"><i title="'.T_("Envoyer un mail à l'adresse").' '.$row['mail'].'" class="icon-envelope blue bigger-130"></i></a>';
 										if ($row['function']!="") echo '&nbsp;&nbsp;&nbsp;<i title="'.T_('Fonction').'" class="icon-user blue bigger-130"></i> '; if($mobile==0) {echo $row['function'];}
-										if ($row['company']!=0)
+										if ($row['company']!=0) 
 										{
-											$query=$db->query("SELECT * FROM tcompany WHERE id='$row[company]'");
+											$query=$db->query("SELECT * FROM tcompany WHERE id='$row[company]'"); 
 											$g_company_name=$query->fetch();
 											$query->closeCursor();
 											echo '&nbsp;&nbsp;&nbsp;<i title="'.T_('Société').': '.$g_company_name['name'].' '.$g_company_name['address'].' '.$g_company_name['zip'].' '.$g_company_name['city'].'" class="icon-building blue bigger-130"></i> '.$g_company_name['name'];
@@ -331,7 +326,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 											$query2->closeCursor();
 											if($service_name){echo '&nbsp;&nbsp;&nbsp;<i title="'.T_('Service').'" class="icon-group blue bigger-120"></i> '.$service_name;}
 										}
-
+										
 										if($rparameters['user_agency']==1)
 										{
 											//get agency from user and display it
@@ -345,7 +340,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 										if ($_POST['user']) {$query = $db->query("SELECT id,netbios FROM `tassets` WHERE user='$_POST[user]' AND state='2' AND user!='0' ORDER BY id DESC");} else {$query = $db->query("SELECT id,netbios FROM `tassets` WHERE user='$globalrow[user]' AND state='2' AND user!='0' ORDER BY id DESC");}
 										$row=$query->fetch();
 										if ($row['netbios']!='') {echo '&nbsp;&nbsp;&nbsp;<a target="_blank" href="./index.php?page=asset&id='.$row['id'].'"><i title="'.T_('Équipement associé').'" class="icon-desktop blue bigger-120"></i></a> '.$row['netbios'];}
-										$query->closeCursor();
+										$query->closeCursor(); 
 									}
 									if($mobile==0)
 									{
@@ -366,13 +361,13 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 											$rnn=$rn[0];
 											if ($rnn!=0) echo '&nbsp;&nbsp; <i title="'.T_('Autres tickets de cet utilisateur').'" class="icon-ticket blue bigger-130"></i> ';
 											$c=0;
-											$q = $db->query("SELECT id,title FROM `tincidents` WHERE $usergroup LIKE '$umodif' and (state='1' OR state='2' OR state='6' OR state='5') and id NOT LIKE $db_id and disable=0 ORDER BY id DESC");
-											while (($r=$q->fetch()) && ($c<2)) {
+											$q = $db->query("SELECT id,title FROM `tincidents` WHERE $usergroup LIKE '$umodif' and (state='1' OR state='2' OR state='6' OR state='5') and id NOT LIKE $db_id and disable=0 ORDER BY id DESC"); 
+											while (($r=$q->fetch()) && ($c<2)) {	
 												$c=$c+1;
 												echo "<a title=\"$r[title]\" href=\"./index.php?page=ticket&amp;id=$r[id]\">#$r[id]</a>";
 												if ($c<$rnn) echo ", ";
 												if ($c==2) echo "...";
-											}
+											}  
 											$query->closeCursor();
 											if ($rnn!=0) echo "";
 										}
@@ -393,7 +388,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 				                <div class="form-group '; if ($rright['ticket_new_service_disp']==0 && $_GET['action']=='new') {echo 'hide';} echo ' '.$service_mandatory.'" >
         							<label class="col-sm-2 control-label no-padding-right" for="u_service">
         							    ';
-											if (($_POST['u_service']==0) && ($globalrow['u_service']==0)) {if($rright['ticket_service_mandatory']!=0) {echo '<i title="'.T_('La saisie du service est obligatoire').'"';} else {echo '<i title="'.T_('Sélectionner un service').'"';} echo 'class="icon-warning-sign red bigger-130"></i>&nbsp;';}
+											if (($_POST['u_service']==0) && ($globalrow['u_service']==0)) {if($rright['ticket_service_mandatory']!=0) {echo '<i title="'.T_('La saisie du service est obligatoire').'"';} else {echo '<i title="'.T_('Sélectionner un service').'"';} echo 'class="icon-warning-sign red bigger-130"></i>&nbsp;';} 
 										echo'
         							    '.T_('Service').':
         							</label>
@@ -404,11 +399,11 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
         									{
 												$query2=$db->query("SELECT * FROM `tservices` WHERE id='$_POST[u_service]'");
 												$row2=$query2->fetch();
-												$query2->closeCursor();
+												$query2->closeCursor(); 
         										echo '<option value="'.$_POST['u_service'].'" selected >'.T_($row2['name']).'</option>';
         										$query2 = $db->query("SELECT * FROM `tservices` WHERE id!='$_POST[u_service]' AND disable='0' ORDER BY id!=0, name");
         							    		while ($row2 = $query2->fetch()) echo '<option value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
-												$query2->closeCursor();
+												$query2->closeCursor(); 
         									}
         									else
         									{
@@ -418,13 +413,13 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
         										echo '<option value="'.$globalrow['u_service'].'" selected >'.T_($row2['name']).'</option>';
         										$query2 = $db->query("SELECT * FROM `tservices` WHERE id!='$globalrow[u_service]' AND disable='0' ORDER BY id!=0, name");
         								    	while ($row2 = $query2->fetch()) echo '<option value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
-												$query2->closeCursor();
+												$query2->closeCursor(); 
         									}
-        									echo'
+        									echo'			
         								</select>
 										';
 										//send data in disabled case
-										if($rright['ticket_service']==0 && $_POST['u_service']==0 && $globalrow['u_service']!=0) echo '<input type="hidden" name="u_service" value="'.$globalrow['u_service'].'" />';
+										if($rright['ticket_service']==0 && $_POST['u_service']==0 && $globalrow['u_service']!=0) echo '<input type="hidden" name="u_service" value="'.$globalrow['u_service'].'" />'; 
 										echo '
         							</div>
     					    	</div>
@@ -440,13 +435,13 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 				                <div class="form-group '; if(($rright['ticket_type_disp']==0 && $_GET['action']!='new') || ($rright['ticket_new_type_disp']==0 && $_GET['action']=='new')) {echo 'hide';} echo'">
         							<label class="col-sm-2 control-label no-padding-right" for="type">
         							    ';
-											if ((($_POST['type']==0) && ($globalrow['type']==0))) {echo '<i title="'.T_('Sélectionner un type').'" class="icon-warning-sign red bigger-130"></i>&nbsp;';}
+											if ((($_POST['type']==0) && ($globalrow['type']==0))) {echo '<i title="'.T_('Sélectionner un type').'" class="icon-warning-sign red bigger-130"></i>&nbsp;';} 
 										echo'
         							    '.T_('Type').' :
         							</label>
         							<div class="col-sm-8">
         							    <select  id="type" name="type"'; if(($rright['ticket_type']==0 && $_GET['action']!='new') || ($rright['ticket_new_type']==0 && $_GET['action']=='new')) {echo 'disabled="disabled"';} echo'>';
-
+        									
 											//limit service type
 											if($rparameters['user_limit_service']==1 && $rright['ticket_type_service_limit']!=0)
 											{
@@ -456,19 +451,19 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 												while ($row2 = $query2->fetch()) {
 													//select entry
 													$selected='';
-													if($_POST['type'] && $row2['id']==$_POST['type'])
+													if($_POST['type'] && $row2['id']==$_POST['type']) 
 													{$selected='selected';}
-													elseif($globalrow['type'] && $row2['id']==$globalrow['type'])
+													elseif($globalrow['type'] && $row2['id']==$globalrow['type']) 
 													{$selected='selected'; }
 													if($globalrow['type']==$row2['id']) {$old_type=0;}
 													echo '<option '.$selected.' value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
 												}
-												$query2->closeCursor();
+												$query2->closeCursor(); 
 												//keep old data
 												if($old_type==1 && $_GET['action']!='new') {
 													$query2=$db->query("SELECT * FROM `ttypes` WHERE id='$globalrow[type]'");
 													$row2=$query2->fetch();
-													$query2->closeCursor();
+													$query2->closeCursor(); 
 													echo '<option selected value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
 												}
 											} else {
@@ -476,11 +471,11 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 												{
 													$query2=$db->query("SELECT * FROM `ttypes` WHERE id='$_POST[type]'");
 													$row2=$query2->fetch();
-													$query2->closeCursor();
+													$query2->closeCursor(); 
 													echo '<option value="'.$_POST['type'].'" selected >'.T_($row2['name']).'</option>';
 													$query2 = $db->query("SELECT * FROM `ttypes` WHERE id!='$_POST[type]' ORDER BY name");
 													while ($row2 = $query2->fetch()) echo '<option value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
-													$query2->closeCursor();
+													$query2->closeCursor(); 
 												}
 												else
 												{
@@ -490,21 +485,21 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 													echo '<option value="'.$globalrow['type'].'" selected >'.T_($row2['name']).'</option>';
 													$query2 = $db->query("SELECT * FROM `ttypes` WHERE id!='$globalrow[type]' ORDER BY name");
 													while ($row2 = $query2->fetch()) echo '<option value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
-													$query2->closeCursor();
+													$query2->closeCursor(); 
 												}
 											}
-        									echo'
+        									echo'			
         								</select>
 										';
 										//send data in disabled case
-										if($rright['ticket_type']==0 && $_GET['action']!='new') echo '<input type="hidden" name="type" value="'.$globalrow['type'].'" />';
+										if($rright['ticket_type']==0 && $_GET['action']!='new') echo '<input type="hidden" name="type" value="'.$globalrow['type'].'" />'; 
 										echo '
         							</div>
     					    	</div>
     					    	';
 				            }
 				        ?>
-					    <!-- END type part -->
+					    <!-- END type part -->	
 						<!-- START technician part -->
 						<?php
 						//display mandatory field if right is configured
@@ -513,7 +508,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								if(($_POST['technician']!='' && ($_POST['technician']==0 || $globalrow['technician']==0)) || ($_GET['action']=='new' && $_POST['technician']==0)){$ticket_tech_mandatory='has-error'; } else {$ticket_tech_mandatory='has-success';} //case gl
 							}else{$ticket_tech_mandatory='';}
 						} else {$ticket_tech_mandatory='';}
-
+						
 						//lock technician field if technician open ticket for another service and limit service is enable
 						if($rparameters['user_limit_service']==1 && $rright['ticket_tech_service_lock']!=0)
 						{
@@ -532,15 +527,15 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 						?>
 						<div class="form-group <?php if(($rright['ticket_tech_disp']==0 && $_GET['action']!='new') || ($rright['ticket_new_tech_disp']==0 && $_GET['action']=='new')) {echo 'hide';} echo $ticket_tech_mandatory; ?>">
 							<label class="col-sm-2 control-label no-padding-right" for="technician">
-							<?php
-								if ($lock_tech==0) //case lock field
+							<?php 
+								if ($lock_tech==0) //case lock field 
 								{
-									if(($_POST['technician']==0 && $_POST['technician']!='') || ($_POST['technician']=='' && $globalrow['technician']==0) && $globalrow['t_group']==0)
+									if(($_POST['technician']==0 && $_POST['technician']!='') || ($_POST['technician']=='' && $globalrow['technician']==0) && $globalrow['t_group']==0) 
 									{
 										echo '<i title="'.T_('Aucun technicien associé à ce ticket').'" class="icon-warning-sign red bigger-130"></i>&nbsp;';
 									}
 								}
-								echo T_('Technicien').' :';
+								echo T_('Technicien').' :'; 
 							?>
 							</label>
 							<div class="col-sm-8 ">
@@ -570,11 +565,11 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 											$query="SELECT * FROM `tusers` WHERE profile='0' OR id='0' ORDER BY lastname ASC, firstname ASC";
 										}
 									}
-
+									
 									//display technician list
 									$query = $db->query($query);
 									$tech_selected='0';
-									while ($row = $query->fetch())
+									while ($row = $query->fetch()) 
 									{
 										//select technician
 										if ($_POST['technician']==$row['id']) {
@@ -590,8 +585,8 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 										if ($row['id']==0) {echo '<option '.$selected.' value="'.$row['id'].'">'.T_($row['lastname']).' '.$row['firstname'].'</option>';} //case no technician TEMP 3.1.20 && (($_POST['technician']==0) && ($globalrow['technician']!=$row['id']))
 										if ($row['disable']==0) {echo '<option '.$selected.' value="'.$row['id'].'">'.$row['lastname'].' '.$row['firstname'].'</option>';} //all enable technician
 										if (($row['disable']==1) && ($selected=='selected') && $row['id']!=0) {echo '<option '.$selected.' value="'.$row['id'].'">'.$row['lastname'].' '.$row['firstname'].'</option>';} //case disable technician always attached to this ticket
-									}
-									$query->closeCursor();
+									} 
+									$query->closeCursor(); 
 									//display technician group list
 									$query = $db->query("SELECT * FROM `tgroups` WHERE type='1' ORDER BY name");
 									while ($row = $query->fetch()) {
@@ -600,20 +595,27 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 										if ($row['disable']==0) {echo '<option '.$selected.' value="G_'.$row['id'].'">[G] '.T_($row['name']).'</option>';}
 										if (($row['disable']==1) && ($selected=='selected')) {echo '<option '.$selected.' value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
 									}
-									$query->closeCursor();
+									$query->closeCursor(); 
 									?>
 								</select>
-								<?php
+								<?php 
 								//send data in disabled case
-								if($rright['ticket_tech']==0) echo '<input type="hidden" name="technician" value="'.$globalrow['technician'].'" />';
-								if($lock_tech==1) echo '<input type="hidden" name="technician" value="'.$tech_selected.'" />';
+								if($rright['ticket_tech']==0) {
+									if($globalrow['t_group'])
+									{
+										echo '<input type="hidden" name="technician" value="G_'.$globalrow['t_group'].'" />';
+									} else {
+										echo '<input type="hidden" name="technician" value="'.$globalrow['technician'].'" />';
+									}
+								}
+								if($lock_tech==1) echo '<input type="hidden" name="technician" value="'.$tech_selected.'" />'; 
 								//display open user
 								if (($globalrow['creator']!=$globalrow['technician']) && ($globalrow['creator']!="0") && $_GET['action']!='new' && $mobile==0)
 								{
 									//select creator name
 									$query = $db->query("SELECT * FROM `tusers` WHERE id LIKE '$globalrow[creator]'");
 									$row=$query->fetch();
-									$query->closeCursor();
+									$query->closeCursor(); 
 									echo '&nbsp;<i class="icon-user blue bigger-130"></i>&nbsp;'.T_('Ouvert par').' '.$row['firstname'].' '.$row['lastname'];
 								}
 								?>
@@ -633,7 +635,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 									<div class="form-group '; if (($rright['ticket_new_asset_disp']==0 && $_GET['action']=='new') || ($rright['ticket_asset_disp']==0 && $_GET['action']!='new')) {echo 'hide';} echo ' '.$asset_mandatory.'" >
 										<label class="col-sm-2 control-label no-padding-right" for="asset">
 											';
-												if (($_POST['asset_id']==0) && ($globalrow['asset_id']==0)) {if($rright['ticket_asset_mandatory']!=0) {echo '<i title="'.T_("La saisie de l'équipement est obligatoire").'"';} else {echo '<i title="'.T_('Sélectionner un équipement').'"';} echo 'class="icon-warning-sign red bigger-130"></i>&nbsp;';}
+												if (($_POST['asset_id']==0) && ($globalrow['asset_id']==0)) {if($rright['ticket_asset_mandatory']!=0) {echo '<i title="'.T_("La saisie de l'équipement est obligatoire").'"';} else {echo '<i title="'.T_('Sélectionner un équipement').'"';} echo 'class="icon-warning-sign red bigger-130"></i>&nbsp;';} 
 											echo'
 											'.T_('Équipement').':
 										</label>
@@ -644,7 +646,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 												{
 													$query2=$db->query("SELECT * FROM `tassets` WHERE id='$_POST[asset_id]'");
 													$row2=$query2->fetch();
-													$query2->closeCursor();
+													$query2->closeCursor(); 
 													echo '<option value="'.$row2['id'].'" selected >'.T_($row2['netbios']).'</option>';
 													if(($globalrow['asset_id'] && $globalrow['user']) || ($_SESSION['profile_id']==3 || $_SESSION['profile_id']==2))
 													{
@@ -653,7 +655,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 														$query2 = $db->query("SELECT * FROM `tassets` WHERE netbios!='' AND disable='0'  ORDER BY id!=0, netbios");
 													}
 													while ($row2 = $query2->fetch()) echo '<option value="'.$row2['id'].'">'.T_($row2['netbios']).'</option>';
-													$query2->closeCursor();
+													$query2->closeCursor(); 
 												}
 												else
 												{
@@ -661,11 +663,11 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 													$query2=$db->query("SELECT * FROM `tassets` WHERE id='$globalrow[asset_id]' ORDER BY id");
 													$row2=$query2->fetch();
 													$query2->closeCursor();
-													//select none if new ticket
+													//select none if new ticket 
 													if ($_GET['action']=='new')
 													{
 														echo '<option value="0">'.T_('Aucun').'</option>';
-
+														
 													} else {
 														echo '<option value="'.$row2['id'].'" selected>'.$row2['netbios'].'</option>';
 													}
@@ -681,13 +683,13 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 														$query2 = $db->query("SELECT * FROM `tassets` WHERE id!='$globalrow[asset_id]' AND netbios!='' AND disable='0' ORDER BY id!=0, netbios");
 													}
 													while ($row2 = $query2->fetch()) echo '<option value="'.$row2['id'].'">'.T_($row2['netbios']).'</option>';
-													$query2->closeCursor();
+													$query2->closeCursor(); 
 												}
-												echo'
+												echo'			
 											</select>
 											';
 											//send data in disabled case
-											if($rright['ticket_asset']==0 && $_GET['action']!='new') echo '<input type="hidden" name="asset_id" value="'.$globalrow['asset_id'].'" />';
+											if($rright['ticket_asset']==0 && $_GET['action']!='new') echo '<input type="hidden" name="asset_id" value="'.$globalrow['asset_id'].'" />'; 
 											echo '
 										</div>
 									</div>
@@ -722,7 +724,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 									echo "SELECT * FROM tcategory $where ORDER BY id!=0, name";
 									*/
 									$query= $db->query("SELECT * FROM `tcategory` $where ORDER BY id!='0', number,name"); //order to display none in first
-									while ($row = $query->fetch())
+									while ($row = $query->fetch()) 
 									{
 										if ($row['id']==0) {$row['name']=T_($row['name']);} //translate only none
 										if ($_POST['category']!=''){if ($_POST['category']==$row['id']) echo '<option value="'.$row['id'].'" selected>'.T_($row['name']).'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';}
@@ -739,8 +741,8 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 									{$query= $db->query("SELECT * FROM `tsubcat` WHERE cat LIKE '$_POST[category]' ORDER BY name ASC");}
 									else
 									{$query= $db->query("SELECT * FROM `tsubcat` WHERE cat LIKE '$globalrow[category]' ORDER BY name ASC");}
-
-									while ($row = $query->fetch())
+									
+									while ($row = $query->fetch()) 
 									{
 										if ($row['id']==0) {$row['name']=T_($row['name']);}
 										if ($_POST['subcat'])
@@ -751,7 +753,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 										{
 											if ($globalrow['subcat']==$row['id']) echo '<option value="'.$row['id'].'" selected>'.T_($row['name']).'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';
 										}
-									}
+									} 
 									$query->closeCursor();
 									if ($globalrow['subcat']==0 && $_POST['subcat']==0) echo "<option value=\"\" selected></option>";
 								?>
@@ -777,12 +779,12 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 							if ($rright['ticket_agency_mandatory']!=0 && ($_SESSION["profile_id"]==1 || $_SESSION["profile_id"]==2)) {
 								if (($_POST['u_agency']==0) && ($globalrow['u_agency']==0)){$agency_mandatory='has-error';}elseif($_GET['action']=='new'){$agency_mandatory='has-success';}else{$agency_mandatory='';}
 							} else {$agency_mandatory='';}
-
+							
 							//check if current user have multiple agencies to display select, else no display select and get value of agency
 							$query2=$db->query("SELECT count(*) FROM `tusers_agencies` WHERE user_id='$_SESSION[user_id]'");
 							$row2=$query2->fetch();
 							$query2->closeCursor();
-
+							
 							if (($row2[0]==0 && ($_SESSION['profile_id']==1 || $_SESSION['profile_id']==2) || $rright['ticket_agency']==0)) //case no agency for current user
 							{
 								echo '<input type="hidden" name="u_agency" value="'.$globalrow['u_agency'].'" />'; //send data without display
@@ -800,7 +802,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 				                <div class="form-group '.$agency_mandatory.'">
         							<label class="col-sm-2 control-label no-padding-right" for="u_agency">
 										';
-										if (($_POST['u_agency']==0) && ($globalrow['u_agency']==0) && ($_SESSION["profile_id"]==1 || $_SESSION["profile_id"]==2)) {if($rright['ticket_agency_mandatory']!=0) {echo '<i title="'.T_("La saisie de l'agence est obligatoire").'"';} else {echo '<i title="'.T_('Sélectionner une agence').'"';} echo 'class="icon-warning-sign red bigger-130"></i>&nbsp;';}
+										if (($_POST['u_agency']==0) && ($globalrow['u_agency']==0) && ($_SESSION["profile_id"]==1 || $_SESSION["profile_id"]==2)) {if($rright['ticket_agency_mandatory']!=0) {echo '<i title="'.T_("La saisie de l'agence est obligatoire").'"';} else {echo '<i title="'.T_('Sélectionner une agence').'"';} echo 'class="icon-warning-sign red bigger-130"></i>&nbsp;';} 
 										echo'
         							    '.T_('Agence').':
         							</label>
@@ -811,15 +813,15 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 											if ($_SESSION['profile_id']==1 || $_SESSION['profile_id']==2) //display list of agency of current user if it's a user or poweruser
 											{
 												$query3=$db->query("SELECT agency_id FROM `tusers_agencies` WHERE user_id='$_SESSION[user_id]' AND agency_id IN (SELECT id AS agency_id FROM `tagencies` WHERE disable=0)");
-											} elseif(($_SESSION['profile_id']==0 || $_SESSION['profile_id']==3) && $_POST['user']) { //case display only user agencies for technician or supervisor profile
-												$query3=$db->query("SELECT agency_id FROM `tusers_agencies` WHERE user_id='$_POST[user]' AND agency_id IN (SELECT id AS agency_id FROM `tagencies` WHERE disable=0)");
+											} elseif(($_SESSION['profile_id']==0 || $_SESSION['profile_id']==3) && $_POST['user']) { //case display only user agencies for technician or supervisor profile 
+												$query3=$db->query("SELECT agency_id FROM `tusers_agencies` WHERE user_id='$_POST[user]' AND agency_id IN (SELECT id AS agency_id FROM `tagencies` WHERE disable=0)");												
 											} elseif (($_SESSION['profile_id']==0 || $_SESSION['profile_id']==3) && $globalrow['user']) {
-												$query3=$db->query("SELECT agency_id FROM `tusers_agencies` WHERE user_id='$globalrow[user]' AND agency_id IN (SELECT id AS agency_id FROM `tagencies` WHERE disable=0)");
+												$query3=$db->query("SELECT agency_id FROM `tusers_agencies` WHERE user_id='$globalrow[user]' AND agency_id IN (SELECT id AS agency_id FROM `tagencies` WHERE disable=0)");												
 											} else {
 												$query3=$db->query("SELECT id AS agency_id FROM `tagencies` WHERE disable=0 ORDER BY name");
 											}
 											$count = $query3->rowCount();
-
+											
 											while ($row3 = $query3->fetch())
 											{
 												//get agency name
@@ -842,7 +844,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 											//case for no agency selected
 											if($globalrow['u_agency']==0 && $find_agency_id==0 && $_POST['u_agency']==0) {echo '<option value="0" selected >'.T_("Aucune").'</option>';}
 											$query3->closeCursor();
-        									echo'
+        									echo'			
         								</select>
         							</div>
     					    	</div>
@@ -852,7 +854,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 						}
 						?>
 						<!-- END agency part -->
-
+						
 						<!-- START sender service part -->
 						<?php
 				            if($rright['ticket_sender_service_disp']!=0 && ($_SESSION['profile_id']=='0' || $_SESSION['profile_id']=='3' || $_SESSION['profile_id']=='4'))
@@ -861,7 +863,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								if($_POST['user']) {
 									$query2=$db->query("SELECT id,name FROM tservices WHERE id IN (SELECT service_id FROM tusers_services WHERE user_id=$_POST[user])");
 									$cnt_sender_svc=$query2->rowCount();
-
+									
 								} elseif($globalrow['user'])
 								{
 									$query2=$db->query("SELECT id,name FROM tservices WHERE id IN (SELECT service_id FROM tusers_services WHERE user_id=$globalrow[user])");
@@ -869,7 +871,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								} else {
 									$cnt_sender_svc=0;
 								}
-
+								
 								if ($cnt_sender_svc>=1)
 								{
 									echo'
@@ -882,7 +884,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 												<option value="0">'.T_('Aucun').'</option>
 												';
 													//echo '<option value="'.$globalrow['sender_service'].'" selected >'.T_($row2['name']).'</option>';
-													while ($row2 = $query2->fetch())
+													while ($row2 = $query2->fetch()) 
 													{
 														if ($_POST['sender_service']==$row2['id'])
 														{
@@ -895,7 +897,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 															echo '<option value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
 														}
 													}
-												echo'
+												echo'			
 											</select>
 											';
 											//send data in disabled case
@@ -906,8 +908,8 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								} else {
 									if($globalrow['sender_service']!=0) //if value exist keep value
 									{
-										echo '<input type="hidden" name="sender_service" value="'.$globalrow['sender_service'].'" />';
-									}
+										echo '<input type="hidden" name="sender_service" value="'.$globalrow['sender_service'].'" />'; 
+									} 
 								}
 								$query2->closeCursor();
 				            } else { //single user case
@@ -933,19 +935,19 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 							<div class="form-group">
 								<label class="col-sm-2 control-label no-padding-right" for="ticket_places">'.T_('Lieu').' :</label>
 								<div class="col-sm-8">
-									<select class="textfield" id="ticket_places" name="ticket_places" '; if($rright['ticket_place']==0 && $_GET['action']!='new') {echo 'disabled="disabled"';} echo' >
+									<select class="textfield" id="ticket_places" name="ticket_places" '; if($rright['ticket_place']==0 && $_GET['action']!='new') {echo 'disabled="disabled"';} echo' > 
 										';
 										if($_POST['ticket_places'])
 										{
 										    $query = $db->query("SELECT * FROM `tplaces` ORDER BY name ASC");
-    										while ($row = $query->fetch())
+    										while ($row = $query->fetch()) 
     										{
     											if ($_POST['ticket_places']==$row['id']) echo '<option selected value="'.$row['id'].'">'.T_($row['name']).'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';
     										}
 											$query->closeCursor();
 										} else {
     										$query = $db->query("SELECT * FROM `tplaces` ORDER BY name ASC");
-    										while ($row = $query->fetch())
+    										while ($row = $query->fetch()) 
     										{
     											if ($globalrow['place']==$row['id']) echo '<option selected value="'.$row['id'].'">'.T_($row['name']).'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';
     										}
@@ -975,7 +977,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 							<label class="col-sm-2 control-label no-padding-right" for="title">
 							<?php
 							if($rright['ticket_title_mandatory']!=0 && $ticket_title_mandatory=='has-error') {echo '<i title="'.T_("La saisie du champ titre est obligatoire.").'" class="icon-warning-sign red bigger-130"></i>&nbsp;';}
-							echo T_('Titre');
+							echo T_('Titre'); 
 							?> :
 							</label>
 							<div class="col-sm-8">
@@ -995,9 +997,9 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 						?>
 						<div class="form-group <?php if($rright['ticket_description_disp']==0) {echo 'hide';} echo $ticket_description_mandatory; ?>">
 							<label class="col-sm-2 control-label no-padding-right" for="text">
-							<?php
+							<?php 
 							if($rright['ticket_description_mandatory']!=0 && $ticket_description_mandatory=='has-error') {echo '<i title="'.T_("La saisie du champ description est obligatoire.").'" class="icon-warning-sign red bigger-130"></i>&nbsp;';}
-							echo T_('Description');
+							echo T_('Description'); 
 							?> :
 							</label>
 							<div class="col-sm-8">
@@ -1006,10 +1008,10 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 										<td>
 											<?php
 											if ($rright['ticket_description']!=0 || $_GET['action']=='new')
-											{
+											{	
 												//display editor
 												echo '
-												<div id="editor" class="wysiwyg-editor" style="min-height:80px; ">';
+												<div id="editor" class="wysiwyg-editor" style="min-height:80px;">';
 											    	if ($_POST['text'] && $_POST['text']!='') echo "$_POST[text]"; else echo $globalrow['description'];
 										            if ($_GET['action']=='new' && !$_POST['user']) {echo '';}	 echo'
 												</div>
@@ -1029,8 +1031,8 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 						<!-- START resolution part -->
 						<div class="form-group <?php if(($rright['ticket_resolution_disp']==0 && $_GET['action']!='new') || ($rright['ticket_new_resolution_disp']==0 && $_GET['action']=='new')) echo 'hide';?>" >
 							<label class="col-sm-2 control-label no-padding-right" for="resolution"><?php echo T_('Résolution'); ?> :</label>
-							<div class="col-sm-8">
-							<?php include "./thread.php";?>
+							<div class="col-sm-8">	
+							<?php include "./thread.php";?>	
 							</div>
 						</div>
 						<a id="down"></a>
@@ -1070,7 +1072,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 							<div class="col-sm-8">
 								<input type="hidden" name="hide" id="hide" value="1"/>
 								<input autocomplete="off" type="text" name="date_create" id="date_create" value="<?php if ($_POST['date_create']) echo $_POST['date_create']; else echo $globalrow['date_create']; ?>" <?php if($rright['ticket_date_create']==0) echo 'readonly="readonly"';?> >
-							</div>
+							</div> 
 						</div>
 						<!-- END create date part -->
 						<!-- START hope date part -->
@@ -1096,9 +1098,9 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								<?php
 									//display warning if hope date is passed
 									$date_hope=$globalrow['date_hope'];
-									$querydiff=$db->query("SELECT DATEDIFF(NOW(), '$date_hope') ");
+									$querydiff=$db->query("SELECT DATEDIFF(NOW(), '$date_hope') "); 
 									$resultdiff=$querydiff->fetch();
-									$query->closeCursor();
+									$query->closeCursor(); 
 									if ($resultdiff[0]>0 && ($globalrow['state']!="3" && $globalrow['state']!="4")) echo "<i title=\"Date de résolution dépassée de $resultdiff[0] jours\" class=\"icon-warning-sign orange bigger-130\" ></i>";
 								?>
 							</div>
@@ -1130,7 +1132,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								<select  id="time" name="time" <?php if($rright['ticket_time']==0) echo 'disabled';?> >
 								<?php
 									$query = $db->query("SELECT * FROM `ttime` ORDER BY min ASC");
-									while ($row = $query->fetch())
+									while ($row = $query->fetch()) 
 									{
 										if (($_POST['time']==$row['min'])||($globalrow['time']==$row['min']))
 										{
@@ -1144,12 +1146,12 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 									//special case when time entry was modify or delete from admin time list
 									$query=$db->query("SELECT * FROM `ttime` WHERE min='$globalrow[time]'");
 									$row=$query->fetch();
-									$query->closeCursor();
+									$query->closeCursor(); 
 									if(!$row && $_GET['action']!='new') { echo '<option selected value="'.$globalrow['time'].'">'.$globalrow['time'].'m</option>';}
 								?>
 								</select>
 								<?php
-								//send value in lock select case
+								//send value in lock select case 
 								if($rright['ticket_time']==0) {echo '<input type="hidden" name="time" value="'.$selected_time.'" />';}
 								?>
 							</div>
@@ -1165,22 +1167,22 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								<select  id="time_hope" name="time_hope" <?php if($rright['ticket_time_hope']==0) echo 'disabled';?> >
 									<?php
 									$query = $db->query("SELECT * FROM `ttime` ORDER BY min ASC");
-									while ($row = $query->fetch())
+									while ($row = $query->fetch()) 
 									{
 										if (($_POST['time_hope']==$row['min']) || ($globalrow['time_hope']==$row['min']))
 										{
-											echo '<option selected value="'.$row['min'].'">'.$row['name'].'</option>';
+											echo '<option selected value="'.$row['min'].'">'.$row['name'].'</option>'; 
 											$selected_time_hope=$row['min'];
 										} else {
 											echo '<option value="'.$row['min'].'">'.$row['name'].'</option>';
 											$selected_time_hope=$row['min'];
 										}
 									}
-									$query->closeCursor();
+									$query->closeCursor(); 
 									//special case when time entry was modify or delete from admin time list
 									$query=$db->query("SELECT * FROM `ttime` WHERE min='$globalrow[time_hope]'");
 									$row=$query->fetch();
-									$query->closeCursor();
+									$query->closeCursor(); 
 									if(!$row) { echo '<option selected value="'.$globalrow['time_hope'].'">'.$globalrow['time_hope'].'m</option>';}
 									?>
 								</select>
@@ -1192,98 +1194,8 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								?>
 							</div>
 						</div>
-
+						
 						<!-- END time hope part -->
-						<!-- START Contrat ADMIN part -->
-<?php
-if ($rright['admin_contrat']!=0)
-{	?>
-<div class="form-group">
-<label class="col-sm-2 control-label no-padding-right" for="contrats">
-<?php echo T_('Contrat'); ?>:
-</label>
-<div class="col-sm-8">			<?php
-if($_GET['action']=='new')
-
-{?>
-
-<select autofocus <?php if($mobile==0) {echo 'class="chosen-select"';}  else {echo ' style="max-width: 225px;" ';} ?> id="contrats" name="contrats" onchange="loadVal(); submit();" <?php if(($rright['ticket_user']==0 && $_GET['action']!='new') || ($rright['ticket_new_user']==0 && $_GET['action']=='new')) echo ' disabled="disabled" ';?> >									<option value="0" selected>Aucun</option>
-		<?php
-		$query = $db->query("SELECT * FROM `tcontrats` WHERE user ='$_POST[user]' AND status='1' ORDER BY nom ASC");
-		while ($row = $query->fetch())
-		{
-			if ($_POST['contrats']!=''){if ($_POST['contrats']==$row['id']) echo '<option value="'.$row['id'].'" selected>'.$row['nom'].'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['nom']).'</option>';}
-			else
-			{if ($globalrow['contrats']==$row['id']) echo '<option value="'.$row['id'].'" selected>'.T_($row['nom']).'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['nom']).'</option>';}
-		}
-		$query->closeCursor();
-	?>
-	</select>
-	<?php
-}
-
-else {
-?>
-
-<select autofocus <?php if($mobile==0) {echo 'class="chosen-select"';}  else {echo ' style="max-width: 225px;" ';} ?> id="contrats" name="contrats" onchange="loadVal(); submit();" <?php if(($rright['ticket_user']==0 && $_GET['action']!='new') || ($rright['ticket_new_user']==0 && $_GET['action']=='new')) echo ' disabled="disabled" ';?> >									<option value="0" selected>Aucun</option>
-
-
-		<?php
-		$query = $db->query("SELECT * FROM `tcontrats` WHERE user ='$globalrow[user]' AND status='1' ORDER BY nom ASC");
-		while ($row = $query->fetch())
-		{
-if ($_POST['contrats']!=''){if ($_POST['contrats']==$row['id']) echo '<option value="'.$row['id'].'" selected>'.$row['nom'].'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['nom']).'</option>';}
-			else
-			{if ($globalrow['contrats']==$row['id']) echo '<option value="'.$row['id'].'" selected>'.T_($row['nom']).'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['nom']).'</option>';}
-?>
-
-		<?php
-
-
-		} 										$query->closeCursor();
-
-}
-	?>									</select>
-
-</div>
-</div>
-<?php }?>
-
-					<!-- END Contratadmin part -->
-					<!-- Start Contratuser part -->
-
-
-											<?php
-if ($rright['contrat_displayuser']!=0)	{
-if($_GET['action']=='new') {}
-else {	 ?>
-
-
-
-<div class="form-group">
-<label class="col-sm-2 control-label no-padding-right" for="contrats">
-<?php echo T_('Contrat'); ?>:
-</label>
-<div class="col-sm-8">
-
-
-
-
-		<?php
-		$query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'");
-		$row = $query->fetch();
-		$query->closeCursor();
-		echo $row['nom'];
-		$selected_contrats = $globalrow['contrats'];
-		echo '<input type="hidden" name="contrats" value="'.$selected_contrats.'" />';
-
-		}
-
-		?>
-</div>
-</div>
-		<?php }?>
-
 						<!-- START priority part -->
 						<?php if($rright['ticket_priority_mandatory']!=0) {if(($_POST['priority']=="" && $_GET['action']=='new') || ($globalrow['priority']=="" && $_GET['action']!='new') || ($globalrow['criticality']=="0")) {$priority_error="has-error";} else {$priority_error="";}}  else {$priority_error="";} ?>
 						<div class="form-group <?php echo $priority_error; if($rright['ticket_priority_disp']==0) echo 'hide';?>">
@@ -1303,19 +1215,19 @@ else {	 ?>
 										while ($row2 = $query2->fetch()) {
 											//select entry
 											$selected='';
-											if($_POST['priority'] && $row2['id']==$_POST['priority'])
+											if($_POST['priority'] && $row2['id']==$_POST['priority']) 
 											{$selected='selected';}
-											elseif($globalrow['priority'] && $row2['id']==$globalrow['priority'])
+											elseif($globalrow['priority'] && $row2['id']==$globalrow['priority']) 
 											{$selected='selected';}
 											if($globalrow['priority']==$row2['id']) {$old_priority=0;}
 											echo '<option '.$selected.' value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
 										}
-										$query2->closeCursor();
+										$query2->closeCursor(); 
 										//keep old data
 										if($old_priority==1 && $_GET['action']!='new') {
 											$query2=$db->query("SELECT * FROM `tpriority` WHERE id='$globalrow[priority]'");
 											$row2=$query2->fetch();
-											$query2->closeCursor();
+											$query2->closeCursor(); 
 											echo '<option selected value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
 										}
 									} else { //case no limit service
@@ -1324,41 +1236,41 @@ else {	 ?>
 											//find row to select
 											$query = $db->query("SELECT * FROM `tpriority` WHERE id='$_POST[priority]' ORDER BY number DESC");
 											$row=$query->fetch();
-											$query->closeCursor();
+											$query->closeCursor(); 
 											echo '<option value="'.$_POST['priority'].'" selected >'.T_($row['name']).'</option>';
 											//display all entries without selected
 											$selected_priority=$_POST['priority'];
 											$query = $db->query("SELECT DISTINCT(id),name FROM `tpriority` WHERE id!='$_POST[priority]' ORDER BY number DESC");
-											while ($row = $query->fetch()) echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';
-											$query->closeCursor();
-
+											while ($row = $query->fetch()) echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>'; 
+											$query->closeCursor(); 
+											
 										} else {
 											if($globalrow['priority'])
 											{
 												//find row to select
 												$query = $db->query("SELECT DISTINCT(id),name FROM `tpriority` WHERE id LIKE '$globalrow[priority]' ORDER BY number DESC ");
 												$row=$query->fetch();
-												$query->closeCursor();
+												$query->closeCursor(); 
 												echo '<option value="'.$globalrow['priority'].'" selected >'.T_($row['name']).'</option>';
 												$selected_priority=$globalrow['priority'];
 											} else {$selected_priority='';}
-
+											
 											$query = $db->query("SELECT * FROM `tpriority` WHERE id!='$globalrow[priority]' ORDER BY number DESC");
 											while ($row = $query->fetch()) echo '<option value="'.$row['id'].'" >'.T_($row['name']).'</option>';
-											$query->closeCursor();
+											$query->closeCursor(); 
 										}
 									}
-									?>
+									?>			
 								</select>
 								<?php
-								//send value in lock select case
+								//send value in lock select case 
 								if($rright['ticket_priority']==0 || $rright['ticket_priority_disp']==0) {echo '<input type="hidden" name="priority" value="'.$globalrow['priority'].'" />';}
-
+								
 								//display priority icon
 								if($_POST['priority']) {$check_id=$_POST['priority'];} elseif($globalrow['priority']) {$check_id=$globalrow['priority'];} else {$check_id=6;}
 								$query = $db->query("SELECT * FROM `tpriority` WHERE id='$check_id'");
 								$row=$query->fetch();
-								$query->closeCursor();
+								$query->closeCursor(); 
 								if ($row['name']) {echo '<i title="'.T_($row['name']).'" class="icon-warning-sign bigger-130" style="color:'.T_($row['color']).'" ></i>';}
 								?>
 							</div>
@@ -1383,19 +1295,19 @@ else {	 ?>
 										while ($row2 = $query2->fetch()) {
 											//select entry
 											$selected='';
-											if($_POST['criticality'] && $row2['id']==$_POST['criticality'])
+											if($_POST['criticality'] && $row2['id']==$_POST['criticality']) 
 											{$selected='selected';}
-											elseif($globalrow['criticality'] && $row2['id']==$globalrow['criticality'])
+											elseif($globalrow['criticality'] && $row2['id']==$globalrow['criticality']) 
 											{$selected='selected';}
 											if($globalrow['criticality']==$row2['id']) {$old_criticality=0;}
 											echo '<option '.$selected.' value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
 										}
-										$query2->closeCursor();
+										$query2->closeCursor(); 
 										//keep old data
 										if($old_priority==1 && $_GET['action']!='new') {
 											$query2=$db->query("SELECT * FROM `tcriticality` WHERE id='$globalrow[criticality]'");
 											$row2=$query2->fetch();
-											$query2->closeCursor();
+											$query2->closeCursor(); 
 											echo '<option selected value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
 										}
 										$selected_criticality=''; //init var
@@ -1405,13 +1317,13 @@ else {	 ?>
 											//find row to select
 											$query = $db->query("SELECT * FROM `tcriticality` WHERE id='$_POST[criticality]' ORDER BY number DESC");
 											$row=$query->fetch();
-											$query->closeCursor();
+											$query->closeCursor(); 
 											echo '<option value="'.$_POST['criticality'].'" selected >'.T_($row['name']).'</option>';
 											//display all entries without selected
 											$selected_criticality=$_POST['criticality'];
 											$query = $db->query("SELECT DISTINCT(id),name FROM `tcriticality` WHERE id!='$_POST[criticality]'  ORDER BY number DESC");
-											while ($row = $query->fetch()) echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';
-											$query->closeCursor();
+											while ($row = $query->fetch()) echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>'; 
+											$query->closeCursor(); 
 										}
 										else
 										{
@@ -1420,28 +1332,28 @@ else {	 ?>
 												//find row to select
 												$query = $db->query("SELECT DISTINCT(id),name FROM `tcriticality` WHERE id LIKE '$globalrow[criticality]' ORDER BY number DESC ");
 												$row=$query->fetch();
-												$query->closeCursor();
+												$query->closeCursor(); 
 												echo '<option value="'.$globalrow['criticality'].'" selected >'.T_($row['name']).'</option>';
 												$selected_criticality=$globalrow['criticality'];
 											} else {$selected_criticality='';}
-
+											
 											//display all entries without selected
 											$query = $db->query("SELECT * FROM `tcriticality` WHERE id!='$globalrow[criticality]' ORDER BY number DESC");
-											while ($row = $query->fetch()) echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';
-											$query->closeCursor();
-										}
+											while ($row = $query->fetch()) echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>'; 
+											$query->closeCursor(); 
+										}			
 									}
-									?>
+									?>			
 								</select>
 								<?php
-								//send value in lock select case
+								//send value in lock select case 
 								if($rright['ticket_criticality']==0) {echo '<input type="hidden" name="criticality" value="'.$selected_criticality.'" />';}
-
+								
 								//display criticality icon
 								if($_POST['criticality']) {$check_id=$_POST['criticality'];} else { $check_id=$globalrow['criticality'];}
 								$query = $db->query("SELECT * FROM `tcriticality` WHERE id='$check_id'");
 								$row=$query->fetch();
-								$query->closeCursor();
+								$query->closeCursor(); 
 								if ($row['name']) {echo '<i title="'.T_($row['name']).'" class="icon-bullhorn bigger-130" style="color:'.$row['color'].'" ></i>';}
 								?>
 							</div>
@@ -1451,14 +1363,14 @@ else {	 ?>
 						<div class="form-group <?php if($rright['ticket_state_disp']==0) echo 'hide';?>">
 							<label class="col-sm-2 control-label no-padding-right" for="state"><?php echo T_('État'); ?> :</label>
 							<div class="col-sm-8">
-								<select  id="state"  name="state" <?php if($rright['ticket_state']==0 || $lock_tech==1) echo 'disabled';?> >
+								<select  id="state"  name="state" <?php if($rright['ticket_state']==0 || $lock_tech==1) echo 'disabled';?> >	
 									<?php
 									//selected value
 									if ($_POST['state'])
 									{
 										$query = $db->query("SELECT * FROM `tstates` WHERE id='$_POST[state]'");
 										$row=$query->fetch();
-										$query->closeCursor();
+										$query->closeCursor(); 
 										echo '<option value="'.$_POST['state'].'" selected >'.T_($row['name']).'</option>';
 										$selected_state=$_POST['state'];
 									}
@@ -1466,32 +1378,32 @@ else {	 ?>
 									{
 										$query = $db->query("SELECT * FROM `tstates` WHERE id='$globalrow[state]'");
 										$row=$query->fetch();
-										$query->closeCursor();
+										$query->closeCursor(); 
 										echo '<option value="'.$globalrow['state'].'" selected >'.T_($row['name']).'</option>';
 										$selected_state=$globalrow['state'];
-									}
+									}			
 							    	$query = $db->query("SELECT * FROM `tstates` WHERE id!='$_POST[state]' AND id!='$globalrow[state]' ORDER BY number");
 								    while ($row = $query->fetch()) {
 										if ($_SESSION['profile_id']==2 && $row['id']==3){}  //special case to hide resolve state for user only
 										else {echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';}
-									}
-									$query->closeCursor();
+									} 
+									$query->closeCursor(); 
 									?>
 								</select>
 								<?php
-								//send value in lock select case
+								//send value in lock select case 
 								if($rright['ticket_state']==0 || $lock_tech==1) {echo '<input type="hidden" name="state" value="'.$selected_state.'" />';}
-
+								
 								//display state icon
 								$query = $db->query("SELECT * FROM `tstates` WHERE id LIKE '$globalrow[state]'");
 								$row=$query->fetch();
-								$query->closeCursor();
+								$query->closeCursor(); 
 								echo '<span class="'.$row['display'].'" title="'.T_($row['description']).'">&nbsp;</span>';
 								?>
 							</div>
 						</div>
 						<!-- END state part -->
-						<!-- START availability part -->
+						<!-- START availability part --> 
 						<?php
 						//check if the availability parameter is on and condition parameter
 						if($rparameters['availability']==1)
@@ -1501,7 +1413,7 @@ else {	 ?>
 									||
 									($rparameters['availability_condition_type']=='types' && ($globalrow['type']==$rparameters['availability_condition_value'] || $_POST['type']==$rparameters['availability_condition_value']))
 								)
-						        {
+						        {    
 						        	//calculate time
         					    	if ($globalrow['start_availability']!='0000-00-00 00:00:00' && $globalrow['end_availability']!='0000-00-00 00:00:00')
         					    	{
@@ -1515,7 +1427,7 @@ else {	 ?>
         					    	{
         					    	    $start_availability_d=$_POST['start_availability_d'];
         					    	    $start_availability_h=$_POST['start_availability_h'];
-        					    	} elseif ($globalrow['start_availability']!='0000-00-00 00:00:00')
+        					    	} elseif ($globalrow['start_availability']!='0000-00-00 00:00:00') 
         					    	{
         					    	    $start_availability_d=date("d/m/Y",strtotime($globalrow['start_availability']));
         					    	    $start_availability_h=date("G:i:s",strtotime($globalrow['start_availability']));
@@ -1523,7 +1435,7 @@ else {	 ?>
         					    	    $start_availability_d=date("d/m/Y");
         					    	    $start_availability_h=date("H:i:s");
         					    	}
-
+        					    	
         					    	if ($_POST['end_availability_d'])
         					    	{
         					    	    $end_availability_d=$_POST['end_availability_d'];
@@ -1546,7 +1458,7 @@ else {	 ?>
                 							>
         						    	    <div class="bootstrap-timepicker">
 									        	<input id="start_availability_h" name="start_availability_h" value="'.$start_availability_h.'" type="text"  />
-							    	        </div>
+							    	        </div>	
         						    	</div>
         					    	</div>
         					    	<div class="form-group '; if($rright['ticket_availability_disp']==0) echo 'hide'; echo '">
@@ -1579,7 +1491,7 @@ else {	 ?>
 							{
 								echo '
 								<button title="ALT+SHIFT+s" accesskey="s" name="modify" id="modify" value="modify" type="submit" class="btn btn-sm btn-success">
-									<i class="icon-save icon-on-right bigger-110"></i>
+									<i class="icon-save icon-on-right bigger-110"></i> 
 									&nbsp;'.T_('Enregistrer').'
 								</button>
 								&nbsp;
@@ -1590,7 +1502,7 @@ else {	 ?>
 							{
 								echo '
 								<button title="ALT+SHIFT+f" accesskey="f" name="quit" id="quit" value="quit" type="submit" class="btn btn-sm btn-purple">
-									<i class="icon-save icon-on-right bigger-110"></i>
+									<i class="icon-save icon-on-right bigger-110"></i> 
 									&nbsp;'.T_('Enregistrer et Fermer').'
 								</button>
 								&nbsp;
@@ -1602,7 +1514,7 @@ else {	 ?>
 								echo '
 								<button name="send" id="send" value="send" type="submit" class="btn btn-sm btn-success">
 									'.T_('Envoyer').'
-									&nbsp;<i class="icon-arrow-right icon-on-right bigger-110"></i>
+									&nbsp;<i class="icon-arrow-right icon-on-right bigger-110"></i> 
 								</button>
 								&nbsp;
 								';
@@ -1612,7 +1524,7 @@ else {	 ?>
 							{
 								echo '
 								<button name="close" id="close" value="close" type="submit" class="btn btn-sm btn-grey">
-									<i class="icon-ok icon-on-right bigger-110"></i>
+									<i class="icon-ok icon-on-right bigger-110"></i> 
 									&nbsp;'.T_('Clôturer le ticket').'
 								</button>
 								&nbsp;
@@ -1623,7 +1535,7 @@ else {	 ?>
 							{
 								echo '
 								<button title="ALT+SHIFT+m" accesskey="m" name="mail" id="mail" value="mail" type="submit" class="btn btn-sm btn-primary">
-									<i class="icon-envelope icon-on-right bigger-110"></i>
+									<i class="icon-envelope icon-on-right bigger-110"></i> 
 									&nbsp;'.T_('Envoyer un mail').'
 								</button>
 								&nbsp;
@@ -1634,7 +1546,7 @@ else {	 ?>
 							{
 								echo '
 								<button title="ALT+SHIFT+c" accesskey="c" name="cancel" id="cancel" value="cancel" type="submit" class="btn btn-sm btn-danger">
-									<i class="icon-remove icon-on-right bigger-110"></i>
+									<i class="icon-remove icon-on-right bigger-110"></i> 
 									&nbsp;'.T_('Annuler').'
 								</button>
 								';
@@ -1657,7 +1569,7 @@ else {	 ?>
 <script src="template/assets/js/date-time/bootstrap-timepicker.min.js" charset="UTF-8"></script>
 <script type="text/javascript">
 jQuery(function($) {
-
+    
     	$('#start_availability_h').timepicker({
     	        minuteStep: 1,
 				showSeconds: true,
@@ -1697,7 +1609,7 @@ jQuery(function($) {
 			if($rright['ticket_date_create']!=0)
 			{
 				echo '
-				$( "#date_create" ).datepicker({
+				$( "#date_create" ).datepicker({ 
 				dateFormat: \'dd/mm/yy\',
 					onSelect: function(datetext){
 					var d = new Date(); // for now
@@ -1710,30 +1622,30 @@ jQuery(function($) {
 			if($rright['ticket_date_res']!=0)
 			{
 				echo '
-				$( "#date_res" ).datepicker({
+				$( "#date_res" ).datepicker({ 
 					dateFormat: \'dd/mm/yy\',
 					onSelect: function(datetext){
 					var d = new Date(); // for now
-					datetext=datetext+" "+(\'0\'+d.getHours()).slice(-2)+":"+(\'0\'+d.getMinutes()).slice(-2)+":"+(\'0\'+d.getSeconds()).slice(-2);
+					datetext=datetext+" "+(\'0\'+d.getHours()).slice(-2)+":"+(\'0\'+d.getMinutes()).slice(-2)+":"+(\'0\'+d.getSeconds()).slice(-2);  
 					$(\'#date_res\').val(datetext);
 					},
-				});
+				}); 
 				';
 			}
 			if($rright['ticket_date_hope']!=0)
 			{
 				echo '
-				$( "#date_hope" ).datepicker({
+				$( "#date_hope" ).datepicker({ 
 					dateFormat: \'dd/mm/yy\'
-				});
+				}); 
 				';
 			}
 		?>
-		$( "#start_availability_d" ).datepicker({
+		$( "#start_availability_d" ).datepicker({ 
 			dateFormat: 'dd/mm/yy'
 		});
-		$( "#end_availability_d" ).datepicker({
+		$( "#end_availability_d" ).datepicker({ 
 			dateFormat: 'dd/mm/yy'
 		});
-	});
-</script>
+	});		
+</script>		

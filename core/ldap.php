@@ -5,8 +5,8 @@
 # @call : /admin/user.php
 # @Author : Flox
 # @Create : 15/10/2012
-# @Update : 14/09/2018
-# @Version : 3.1.35
+# @Update : 01/10/2018
+# @Version : 3.1.36 p4
 ################################################################################
 
 //initialize variables
@@ -120,7 +120,7 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 				$data = array();
 				$data_temp = array();
 				foreach ($list_dn as $value) {
-					$ldap_url=utf8_decode("$value$dcgen");
+					$ldap_url="$value$dcgen";
 					//change query filter for OpenLDAP or AD
 					if ($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) {$filter="(&(objectClass=user)(objectCategory=person)(cn=*))";} else {$filter="(uid=*)";}	
 					
@@ -158,10 +158,12 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 				$cnt_gestsup=$qry->fetch();
 				$qry->closeCursor();
 				
+				$sync_date=date('d/m/Y H:i:s');
 				echo '<i class="icon-book green"></i> <b><u>'.T_('Vérification des Annuaires').'</u></b><br />';
-				echo '&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre d\'utilisateurs trouvés dans l\'annuaire').' '.$ldap_type.': '.$cnt_ldap.'<br />';
-				echo '&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre d\'utilisateurs actif trouvés dans GestSup').': '.$cnt_gestsup[0].'<br /><br />';
-				echo '<i class="icon-edit-sign red"></i> <b><u>'.T_('Modifications à apporter dans GestSup').':</u></b><br /><br />';
+				echo '&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre d\'utilisateurs trouvés dans l\'annuaire').' '.$ldap_type.' : '.$cnt_ldap.'<br />';
+				echo '&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre d\'utilisateurs actif trouvés dans GestSup').' : '.$cnt_gestsup[0].'<br />';
+				echo '&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Date').' : '.$sync_date.'<br /><br />';
+				echo '<i class="icon-edit-sign red"></i> <b><u>'.T_('Modifications à apporter dans GestSup').' :</u></b><br /><br />';
 				
 				//init counter
 				$cnt_maj=0;
@@ -578,7 +580,7 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 						$find2_login='';
 						for ($i=0; $i < $cnt_ldap; $i++) 
 						{
-							if ($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) {$samaccountname=utf8_encode($data[$i]['samaccountname'][0]);} else {$samaccountname=utf8_encode($data[$i]['uid'][0]);}
+							if ($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) {$samaccountname=$data[$i]['samaccountname'][0];} else {$samaccountname=utf8_encode($data[$i]['uid'][0]);}
 							if ($samaccountname==$row['login']) $find2_login=$row['login'];
 						}
 						if (($find2_login=='') && ($row['disable']=='0') && ($row['login']!='') && ($row['login']!=' ') && ($row['login']!='admin'))
@@ -587,10 +589,10 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 							if($_GET['action']=='run')
 							{
 								echo '<i class="icon-remove-sign icon-large red"></i><font color="red"> '.T_('Utilisateur').' <b>'.$row['firstname'].' '.$row['lastname'].'</b> ('.$row['login'].'), '.T_('désactivé').'.</font><br />';
-								$qry=$db->prepare("UPDATE `tusers` SET `disable`=:disable WHERE `login`=:login");
-								$qry->execute(array(
+								$qry2=$db->prepare("UPDATE `tusers` SET `disable`=:disable WHERE `login`=:login");
+								$qry2->execute(array(
 									'disable' => 1,
-									'login' => $rowlogin
+									'login' => $row['login']
 									));
 							} else {
 								echo '<i class="icon-remove-sign icon-large red"></i><font color="red"> '.T_('Désactivation de l\'utilisateur').' <b>'.$row['firstname'].' '.$row['lastname'].'</b> ('.$row['login'].'). <span style="font-size: x-small;">'.T_('Raison').': '.T_('Utilisateur non présent dans l\'annuaire LDAP').'.</span></font><br />';
@@ -603,12 +605,12 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 				if (($cnt_create=='0') && ($cnt_disable=='0') && ($cnt_maj=='0') && ($cnt_enable=='0')) echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i><font color="green"> '.T_('Aucune modification à apporter, les annuaires sont à jour').'.</font><br />';
 				echo'
 				<br />
-				&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à créer dans GestSup').': '.$cnt_create.' <br />
-				&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à mettre à jour dans GestSup').': '.$cnt_maj.' <br />
-				&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à désactiver dans GestSup').': '.$cnt_disable.' <br />
-				&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à activer dans GestSup').': '.$cnt_enable.' <br />
+				&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à créer dans GestSup').' : '.$cnt_create.' <br />
+				&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à mettre à jour dans GestSup').' : '.$cnt_maj.' <br />
+				&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à désactiver dans GestSup').' : '.$cnt_disable.' <br />
+				&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à activer dans GestSup').' : '.$cnt_enable.' <br />
 				<br />
-				<i class="icon-info-sign blue"></i> <b><u>'.T_('Informations de Synchronisation').':</u></b><br />
+				<i class="icon-info-sign blue"></i> <b><u>'.T_('Informations de Synchronisation').' :</u></b><br />
 				&nbsp;&nbsp;&nbsp;&nbsp;'.T_('La jointure inter-annuaires est réalisée sur le login, les comptes existant dans GestSup qui possèdent un login doivent être existant dans l\'annuaire LDAP').'.<br />
 				';
 		}

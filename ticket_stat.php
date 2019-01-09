@@ -2,12 +2,12 @@
 ################################################################################
 # @Name : ticket_stat.php
 # @Description : Display Tickets Statistics
-# @call : /stat.php
+# @Call : /stat.php
 # @parameters : 
 # @Author : Flox
 # @Create : 25/01/2016
-# @Update : 27/07/2017
-# @Version : 3.1.24
+# @Update : 26/10/2018
+# @Version : 3.1.36
 ################################################################################
 
 if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> where_service='.$where_service.' where_agency='.$where_agency.' POST_service='.$_POST['service'].' POST_agency='.$_POST['agency'].'';}
@@ -16,7 +16,7 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 <form method="post" action="" name="filter" >
 	<center>
 		<small><?php echo T_('Filtre global'); ?>:</small>
-		<select name="tech" onchange="submit()">
+		<select style="width:160px"name="tech" onchange="submit()">
 			<?php
 			if ($_POST['tech']=='%') {echo '<option value="%" selected >'.T_('Tous les techniciens').'</option>';} else {echo '<option value="%" >'.T_('Tous les techniciens').'</option>';}											
 			//case limit user service
@@ -28,7 +28,6 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 				if($cnt_service>1 && $cnt_agency!=0)
 				{
 					$where_service2=preg_replace('/OR/', '', $where_service2, 1); //case user have single service and agency
-					echo "CASE1";
 				} elseif($cnt_service==1) {
 					$where_service2=str_replace('OR', '', $where_service2); //case user have single service and agency
 				}
@@ -64,7 +63,7 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 			$query->closeCursor();
 			?>
 		</select>
-		<select name="service" onchange="submit()">
+		<select style="width:160px"name="service" onchange="submit()">
 			<?php
 			if ($_POST['service']=='%') {echo '<option value="%" selected>'.T_('Tous les services').'</option>';} else {echo '<option value="%" >'.T_('Tous les services').'</option>';}											
 			//case limit user service
@@ -75,7 +74,7 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 				$query = $db->query("SELECT id,name FROM tservices WHERE disable=0 ORDER BY name");
 			}
 			while ($row=$query->fetch()) {
-				if ($row['id'] == $_POST['service']) {$selected2='selected';} else {$selected2='';} 
+				if ($row['id']==$_POST['service']) {$selected2='selected';} else {$selected2='';} 
 				echo '<option value="'.$row['id'].'" '.$selected2.'>'.$row['name'].'</option>';
 			} 
 			$query->closeCursor();
@@ -85,7 +84,7 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 		if($rparameters['user_agency']==1)
 		{
 			echo ' 
-			<select style="width:150px;" name="agency" onchange="submit()">';
+			<select style="width:160px"name="agency" onchange="submit()">';
 				if ($_POST['agency']=='%') {echo '<option value="%" selected>'.T_('Toutes les agences').'</option>';} else {echo '<option value="%" >'.T_('Toutes les agences').'</option>';}											
 				$query = $db->query("SELECT id,name FROM tagencies WHERE disable=0 AND id!=0 ORDER BY name");				
 				while ($row=$query->fetch()) {
@@ -99,7 +98,7 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 		if($rparameters['ticket_type']==1)
 		{
 			echo ' 
-			<select name="type" onchange="submit()">';
+			<select style="width:160px"name="type" onchange="submit()">';
 				if ($_POST['type']=='%') {echo '<option value="%" selected>'.T_('Tous les types').'</option>';} else {echo '<option value="%" >'.T_('Tous les type').'</option>';}											
 				$query = $db->query("SELECT id,name FROM ttypes ORDER BY name");				
 				while ($row=$query->fetch()) {
@@ -111,7 +110,7 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 			</select>';
 		}
 		?>
-		<select name="criticality" onchange="submit()">
+		<select style="width:160px"name="criticality" onchange="submit()">
 			<?php
 			if ($_POST['criticality']=='%') {echo '<option value="%" selected>'.T_('Toutes les criticités').'</option>';} else {echo '<option value="%" >'.T_('Toutes les criticités').'</option>';}																					
 			//case limit user service
@@ -129,7 +128,7 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 			$query->closeCursor();
 			?>
 		</select> 
-		<select name="category" onchange="submit()">
+		<select style="width:160px"name="category" onchange="submit()">
 		<?php
 			if ($_POST['category']=='%') {echo '<option value="%" selected>'.T_('Toutes les catégories').'</option>';} else {echo '<option value="%" >'.T_('Toutes les catégories').'</option>';}	
 			//case limit user service
@@ -147,7 +146,7 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 			$query->closeCursor();																			
 			?>
 		</select> 
-		<select name="month" onchange="submit()">
+		<select style="width:160px"name="month" onchange="submit()">
 			<option value="%" <?php if ($_POST['month'] == '%')echo "selected" ?>><?php echo T_('Tous les mois'); ?></option>
 			<option value="01"<?php if ($_POST['month'] == '1')echo "selected" ?>><?php echo T_('Janvier'); ?></option>
 			<option value="02"<?php if ($_POST['month'] == '2')echo "selected" ?>><?php echo T_('Février'); ?></option>
@@ -162,7 +161,7 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 			<option value="11"<?php if ($_POST['month'] == '11')echo "selected" ?>><?php echo T_('Novembre'); ?></option>	
 			<option value="12"<?php if ($_POST['month'] == '12')echo "selected" ?>><?php echo T_('Décembre'); ?></option>	
 		</select>
-		<select name="year" onchange="submit()">
+		<select style="width:160px"name="year" onchange="submit()">
 			<?php
 			echo '<option value="%"'; if ($_POST['year'] == '%') {echo 'selected';} echo ' >'.T_('Toutes les années').'</option>';
 			$q1= $db->query("SELECT distinct year(date_create) as year FROM `tincidents` WHERE date_create not like '0000-00-00 00:00:00' ORDER BY year(date_create)");

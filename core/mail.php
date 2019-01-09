@@ -6,12 +6,9 @@
 # @Parameters : ticket id destinataires
 # @Author : Flox
 # @Create : 15/07/2014
-# @Update : 14/09/2018
-# @Version : 3.1.35
+# @Update : 23/10/2018
+# @Version : 3.1.36
 ################################################################################
-
-//functions
-require_once('./core/crypt.php');
 
 //initialize variables 
 if(!isset($_POST['usercopy'])) $_POST['usercopy'] = '';
@@ -36,6 +33,10 @@ if(!isset($rtech5['firstname'])) $rtech5['firstname'] = '';
 if(!isset($rtech5['lastname'])) $rtech5['lastname'] = '';
 if(!isset($rtechgroup4['name'])) $rtechgroup4['name'] = '';
 if(!isset($rtechgroup5['name'])) $rtechgroup5['name'] = '';
+if(!isset($from_mail2ticket)) $from_mail2ticket=0;
+
+//call crypt function if not call from mail2ticket
+if(!$from_mail2ticket){require_once('./core/crypt.php');}
 
 $db_id=strip_tags($_GET['id']);
 
@@ -295,7 +296,7 @@ $msg.='
 						<table  border="1" bordercolor="'.$rparameters['mail_color_title'].'" cellspacing="0"  cellpadding="5">
 							<tr>
 								<td><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Titre').' :</b> '.$globalrow['title'].'</font></td>
-								<td><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Catégorie').' :</b> '.$catrow['name'].' - '.$subcatrow['name'].'</td>
+								<td><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Catégorie').' :</b> '.$catrow['name'].' - '.$subcatrow['name'].'</font></td>
 							</tr>
 							<tr>
 								';
