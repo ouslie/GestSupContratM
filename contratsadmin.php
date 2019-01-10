@@ -85,8 +85,6 @@ $db->exec("INSERT INTO ttoken (token) VALUES ('$token_export')");
     <div class="modal-header">
       <span class="close">&times;</span>
       <h2>Ajouter un nouveau contrat</h2>
-<?php echo $_POST["id"];
-echo $_GET["id"]; ?>
     </div>
     <div class="modal-body">
 						<form  method="post">
@@ -579,6 +577,10 @@ if ($rright['admin_contrat'] != 0) {
 						}
 						$query = $db->query($query);
 						while ($row = $query->fetch()) {
+							if(!isset($row['timeused']))
+							{
+								$row['timeused'] = 0;
+							}
 							if ($row['status'] == 0) {
 								$row['status'] = "Inactif";
 								$color = "#d15b47";
