@@ -1,2 +1,11 @@
+# files
+.htaccess
 connect.php
-_SQL/update_3.1.35_to_3.1.36.sql
+
+# folder
+backup/
+upload/
+download/
+_SQL/
+images/
+sounds/
