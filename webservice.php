@@ -1,6 +1,6 @@
 <?php
 function WebserviceFacture($useridfacture,$nomcontrat,$date_debut,$date_fin,$tarif,$token){
-$url = 'https://gestion.arnaudguy.fr/comptabyme/webservice.php';
+$url = 'https://gestion.arnaudguy.fr/webservice.php';
 
     $data = array (
         'token' => $token,
