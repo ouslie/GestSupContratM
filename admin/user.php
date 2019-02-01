@@ -16,7 +16,6 @@ if(!isset($_POST['Ajouter'])) $_POST['Ajouter'] = '';
 if(!isset($_POST['cancel'])) $_POST['cancel'] = '';
 if(!isset($_POST['addview'])) $_POST['addview'] = '';
 if(!isset($_POST['profil'])) $_POST['profil'] = '';
-if(!isset($_POST['name'])) $_POST['name'] = '';
 if(!isset($_POST['company'])) $_POST['company'] = '';
 if(!isset($_POST['address1'])) $_POST['address1'] = '';
 if(!isset($_POST['address2'])) $_POST['address2'] = '';
@@ -48,6 +47,7 @@ if(!isset($_POST['limit_ticket_days'])) $_POST['limit_ticket_days'] = '';
 if(!isset($_POST['limit_ticket_date_start'])) $_POST['limit_ticket_date_start'] = '';
 if(!isset($_POST['mail'])) $_POST['mail'] = '';
 if(!isset($_POST['login'])) $_POST['login'] = '';
+if(!isset($_POST['useridfacture'])) $_POST['useridfacture'] = '';
 if(!isset($_POST['phone'])) $_POST['phone'] = '';
 if(!isset($_POST['mobile'])) $_POST['mobile'] = '';
 if(!isset($_POST['fax'])) $_POST['fax'] = '';
@@ -103,6 +103,7 @@ $_POST['lastname']=strip_tags($_POST['lastname']);
 $_POST['address1']=strip_tags($_POST['address1']);
 $_POST['address2']=strip_tags($_POST['address2']);
 $_POST['login']=strip_tags($_POST['login']);
+$_POST['useridfacture']=strip_tags($_POST['useridfacture']);
 $_POST['mail']=strip_tags($_POST['mail']);
 $_POST['phone']=strip_tags($_POST['phone']);
 $_POST['mobile']=strip_tags($_POST['mobile']);
@@ -216,6 +217,7 @@ if($_POST['Modifier'])
 		phone=:phone,
 		mobile=:mobile,
 		login=:login,
+		useridfacture=:useridfacture,
 		fax=:fax,
 		function=:function,
 		company=:company,
@@ -244,6 +246,7 @@ if($_POST['Modifier'])
 			'phone' => $_POST['phone'],
 			'mobile' => $_POST['mobile'],
 			'login' => $_POST['login'],
+			'useridfacture' => $_POST['useridfacture'],
 			'fax' => $_POST['fax'],
 			'function' => $_POST['function'],
 			'company' => $_POST['company'],
@@ -1035,7 +1038,10 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                     								echo'
                                             </div>
                                             <div id="infos" class="tab-pane'; if ($_GET['tab']=='infos' || $_GET['tab']=='') echo 'active'; echo '">
-                                    			<label for="firstname">'.T_('Prénom').':</label>
+												<label for="useridfacture">'.T_('useridfacture').':</label>
+												<input name="useridfacture" type="text" value="'; if($user1['useridfacture']) echo "$user1[useridfacture]"; else echo ""; echo'" />
+												<div class="space-4"></div>
+												<label for="firstname">'.T_('Prénom').':</label>
                 								<input name="firstname" type="text" value="'; if($user1['firstname']) echo "$user1[firstname]"; else echo ""; echo'" />
                 								<div class="space-4"></div>
                 								<label for="lastname">'.T_('Nom').':</label>
