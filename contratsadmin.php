@@ -378,8 +378,9 @@ if ($rright['admin_contrat'] != 0) {
             $subject = "Notifications de clôture contrat";
             $messages = "Bonjour,  </br> </br>";
             $messages .= "Votre contrat " . $nomcontrat . " " . $periode . " à été clôturé. </br>";
-            $messages .= "Vous trouverez ci-dessous le lien pour la facture :  </br>";
-            $messages .= " $facturelink  </br> </br>";
+			$messages .= "Vous trouverez ci-dessous le lien pour la facture :  </br>";
+			
+            $messages .= "<a href=$facturelink> Ma facture</a> </br> </br>";
             $messages .= "Je reste à votre disposition, </br> ";
             $messages .= "Arnaud GUY </br>";
             $messages .= "www.arnaudguy.fr </br>";
