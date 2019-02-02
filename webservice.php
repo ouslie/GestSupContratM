@@ -36,6 +36,4 @@ $url = 'https://gestion.arnaudguy.fr/webservice.php';
 
 
     }
-//    WebserviceFacture("4");
-
 ?>
