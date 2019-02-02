@@ -372,7 +372,7 @@ if ($rright['admin_contrat'] != 0) {
 			$id_facture = WebserviceFacture($useridfacture,$nomcontrat,$date_debut,$date_fin,$tarifcontrat,$row['token']);
 			$facturelink ='https://gestion.arnaudguy.fr/facture.php?id_fact=';
 			$facturelink.= $id_facture;
-			$query = "UPDATE tcontrats SET facturelink = $facturelink WHERE id='$var'";
+			$query = "UPDATE tcontrats SET facturelink = '$facturelink' WHERE id='$var'";
 			$query = $db->query($query);
 
             $subject = "Notifications de clôture contrat";
