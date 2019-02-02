@@ -369,9 +369,9 @@ if ($rright['admin_contrat'] != 0) {
 			$query = "SELECT * FROM webservice WHERE name = 'prod'";
 			$query = $db->query($query);
 			$row = $query->fetch();
-
 			$id_facture = WebserviceFacture($useridfacture,$nomcontrat,$date_debut,$date_fin,$tarifcontrat,$row['token']);
-			$facturelink =' https://gestion.arnaudguy.fr/facture.php?id_fact='.$id_facture;
+			$facturelink ='https://gestion.arnaudguy.fr/facture.php?id_fact=';
+			$facturelink.= $id_facture;
 			$query = "UPDATE tcontrats SET facturelink = $facturelink WHERE id='$var'";
 			$query = $db->query($query);
 
