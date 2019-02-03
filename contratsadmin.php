@@ -400,10 +400,7 @@ EOD;
 		{
 			if ($prepaye == 0) 
 			{
-                $query = "SELECT * FROM webservice WHERE name = 'prod'";
-                $query = $db->query($query);
-                $row = $query->fetch();
-
+            
                 $query = "SELECT sum(time) AS timeused, tcontrats.id FROM tincidents
 				INNER JOIN tcontrats ON (tincidents.contrats=tcontrats.id)
 				WHERE  tcontrats.id = $var
