@@ -380,7 +380,7 @@ if ($rright['admin_contrat'] != 0) {
 EOD;
 
 
-			$id_facture = WebserviceFacture($useridfacture, $designation, $tarifcontrat, $webservice['token'], 1,$webservice['url']);
+			$id_facture = WebserviceFacture($useridfacture, $designation, $tarifcontrat, $webservice['token'], 1,$webservice['url'],46);
 			echo "Facture ID :";
 			echo $id_facture;
             $facturelink .= $id_facture;
@@ -422,7 +422,7 @@ EOD;
 				<p> $nomcontrat $tarif €/H<br> $month 
 EOD;
 				
-				$id_facture = WebserviceFacture($useridfacture, $designation, $tarif, $webservice['token'], $quantity,$webservice['url']);
+				$id_facture = WebserviceFacture($useridfacture, $designation, $tarif, $webservice['token'], $quantity,$webservice['url'],44);
 				echo $id_facture;
             	$facturelink.= $id_facture;
                 $query = "UPDATE tcontrats SET facturelink = '$facturelink' WHERE id='$var'";

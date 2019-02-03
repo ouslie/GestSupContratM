@@ -1,11 +1,13 @@
 <?php
-function WebserviceFacture($useridfacture,$designation,$tarif,$token,$quantity,$url){
+function WebserviceFacture($useridfacture,$designation,$tarif,$token,$quantity,$url,$id_category){
     $data = array (
         'token' => $token,
         'useridfacture' => $useridfacture,
         'designation' => $designation,
         'tarif' => $tarif,
         'quantity' => $quantity,
+        'id_category' => $id_category,
+
         );
         
         $params = '';
