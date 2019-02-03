@@ -1,14 +1,11 @@
 <?php
-function WebserviceFacture($useridfacture,$nomcontrat,$date_debut,$date_fin,$tarif,$token){
-$url = 'https://gestion.arnaudguy.fr/webservice.php';
-
+function WebserviceFacture($useridfacture,$designation,$tarif,$token,$quantity,$url){
     $data = array (
         'token' => $token,
         'useridfacture' => $useridfacture,
-        'nomcontrat' => $nomcontrat,
-        'date_debut' => $date_debut,
-        'date_fin' => $date_fin,
+        'designation' => $designation,
         'tarif' => $tarif,
+        'quantity' => $quantity,
         );
         
         $params = '';
@@ -18,7 +15,7 @@ $url = 'https://gestion.arnaudguy.fr/webservice.php';
         $params = trim($params, '&');
 
     $ch = curl_init();
-
+    $url .="webservice.php";
     curl_setopt($ch, CURLOPT_URL, $url); //Remote Location URL
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); //Return data instead printing directly in Browser
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 7); //Timeout after 7 seconds
@@ -33,7 +30,5 @@ $url = 'https://gestion.arnaudguy.fr/webservice.php';
     $result = curl_exec($ch);
     curl_close($ch);
     return    $result;
-
-
     }
 ?>

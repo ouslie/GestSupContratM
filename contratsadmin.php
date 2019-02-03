@@ -1,4 +1,6 @@
 <?php
+include 'webservice.php';
+
 ################################################################################
 # @Name : stat.php
 # @Desc : Display Statistics
@@ -14,7 +16,6 @@
 $token_export = uniqid();
 $db->exec("INSERT INTO ttoken (token) VALUES ('$token_export')");
 ?>
-
 <style>
 	/* The Modal (background) */
 .modal {
@@ -93,8 +94,7 @@ $db->exec("INSERT INTO ttoken (token) VALUES ('$token_export')");
 						<?php echo T_('Demandeur'); ?>:</label>
 					</label>
 					<div class="col-sm-8">
-						<?php
-
+<?php
 $query = "SELECT * FROM tusers";
 $query = $db->query($query);
 $option = '';
@@ -102,9 +102,7 @@ while ($row = $query->fetch()) {
     $option .= '<option value = "' . $row['id'] . '">' . $row['firstname'] . '&nbsp;' . $row['lastname'] . '</option>';
 }
 ?>
-						<html>
 
-						<body>
 							<form>
 								<select id="demandeur" name="demandeur">
 									<?php echo $option; ?>
@@ -128,9 +126,7 @@ while ($row = $query->fetch()) {
     $option .= '<option value = "' . $row['id'] . '">' . $row['nom'] . '</option>';
 }
 ?>
-						<html>
-
-						<body>
+					
 							<form>
 								<select id="type" name="type">
 									<?php echo $option; ?>
@@ -144,9 +140,7 @@ while ($row = $query->fetch()) {
 					</label>
 					<div class="col-sm-8">
 
-						<html>
-
-						<body>
+						
 							<form>
 								<select id="service" name="service">
 									<option value="Webmastering"> Webmastering </option>
@@ -293,7 +287,8 @@ if ($rright['admin_contrat'] != 0) {
             $minutes = $minutes % 60;
             return sprintf("%02d", $hours) . 'h' . sprintf("%02d", $minutes) . 'min';
         }
-    }
+	}
+	
     function hour_min2($minutes)
     {
         if ($minutes == 0) {
@@ -303,7 +298,9 @@ if ($rright['admin_contrat'] != 0) {
             $minutes = $minutes % 60;
             return $hours . ',' . sprintf("%02d", $minutes) . '';
         }
-    }
+	}
+	
+	
     function nbrecontrattype($typecontrat, $status)
     {
         global $db;
@@ -342,11 +339,11 @@ if ($rright['admin_contrat'] != 0) {
         global $tomail;
         global $sujet;
         global $messages;
-        $var = $_POST['peer-id'];
-        $notificationmail = $_POST['notificationmail'];
+		$var = $_POST['peer-id'];
+        if (isset($_POST['notificationmail'])) {$notificationmail = $_POST['notificationmail'];} else { $notificationmail = null;}
         $query = "UPDATE tcontrats SET status='0' WHERE id='$var'";
         $query = $db->query($query);
-        $query = "SELECT tcontrats.user, tcontrats.id, tcontrats.date_souscription, tcontrats.date_fin, tcontrats.tarifcontrat, tusers.id, tusers.mail, tusers.useridfacture, tcontrats.type, tcontrats.nom,tcontrats.facturelink,tcontrats.prepaye,tcontrats.periode, tcontratstype.nom AS typecontrat  FROM tcontrats INNER JOIN tusers ON (tcontrats.user=tusers.id) INNER JOIN tcontratstype ON (tcontrats.type = tcontratstype.id) WHERE tcontrats.id='$var'";
+        $query = "SELECT tcontrats.user, tcontrats.id, tcontrats.date_souscription, tcontrats.date_fin,tcontrats.tarif, tcontrats.tarifcontrat, tusers.id, tusers.mail, tusers.useridfacture, tcontrats.type, tcontrats.nom,tcontrats.facturelink,tcontrats.prepaye,tcontrats.periode, tcontratstype.nom AS typecontrat  FROM tcontrats INNER JOIN tusers ON (tcontrats.user=tusers.id) INNER JOIN tcontratstype ON (tcontrats.type = tcontratstype.id) WHERE tcontrats.id='$var'";
         $query = $db->query($query);
         while ($row = $query->fetch()) {
             $mailuser = $row['mail'];
@@ -354,39 +351,86 @@ if ($rright['admin_contrat'] != 0) {
             $periode = $row['periode'];
             $typecontrat = $row['type'];
             $prepaye = $row['prepaye'];
-			$useridfacture = $row['useridfacture'];
-			$date_debut = $row['date_souscription'];
-			$date_fin = $row['date_fin'];
-			$tarifcontrat = $row['tarifcontrat'];
+            $useridfacture = $row['useridfacture'];
+            $date_debut = $row['date_souscription'];
+            $date_fin = $row['date_fin'];
+            $tarifcontrat = $row['tarifcontrat'];
+            $tarif = $row['tarif'];
+			$contratid = $row['id'];
 
             if (isset($facturelink)) {
             } else {
                 $facturelink = $row['facturelink'];
             }
 		}
-        if ($typecontrat == 2) {
-			include('webservice.php');
-			$query = "SELECT * FROM webservice WHERE name = 'prod'";
-			$query = $db->query($query);
-			$row = $query->fetch();
-			$id_facture = WebserviceFacture($useridfacture,$nomcontrat,$date_debut,$date_fin,$tarifcontrat,$row['token']);
-			$facturelink ='https://gestion.arnaudguy.fr/facture.php?id_fact=';
-			$facturelink.= $id_facture;
-			$query = "UPDATE tcontrats SET facturelink = '$facturelink' WHERE id='$var'";
-			$query = $db->query($query);
+		
+		$query = "SELECT * FROM webservice WHERE name = 'prod'";
+            $query = $db->query($query);
+			$webservice = $query->fetch();
+		$facturelink = $webservice['url'];
+		$facturelink .= "facture.php?id_fact=";
+		if ($typecontrat == 2) 
+		{			
+			
+			$date_debut = date("d-m-Y", strtotime($date_debut));
+			$date_fin = date("d-m-Y", strtotime($date_fin));
+
+			$designation = <<<EOD
+			<p> $nomcontrat <br> Du : $date_debut Au : $date_fin 
+EOD;
+
+
+			$id_facture = WebserviceFacture($useridfacture, $designation, $tarifcontrat, $webservice['token'], 1,$webservice['url']);
+			echo "Facture ID :";
+			echo $id_facture;
+            $facturelink .= $id_facture;
+            $query = "UPDATE tcontrats SET facturelink = '$facturelink' WHERE id='$var'";
+            $query = $db->query($query);
 
             $subject = "Notifications de clôture contrat";
             $messages = "Bonjour,  </br> </br>";
             $messages .= "Votre contrat " . $nomcontrat . " " . $periode . " à été clôturé. </br>";
-			$messages .= "Vous trouverez ci-dessous le lien pour la facture :  </br>";
-			
+            $messages .= "Vous trouverez ci-dessous le lien pour la facture :  </br>";
             $messages .= "<a href=$facturelink> Ma facture</a> </br> </br>";
             $messages .= "Je reste à votre disposition, </br> ";
             $messages .= "Arnaud GUY </br>";
             $messages .= "www.arnaudguy.fr </br>";
         }
-        if ($typecontrat == 1) {
-            if ($prepaye == 0) {
+		if ($typecontrat == 1) 
+		{
+			if ($prepaye == 0) 
+			{
+                $query = "SELECT * FROM webservice WHERE name = 'prod'";
+                $query = $db->query($query);
+                $row = $query->fetch();
+
+                $query = "SELECT sum(time) AS timeused, tcontrats.id FROM tincidents
+				INNER JOIN tcontrats ON (tincidents.contrats=tcontrats.id)
+				WHERE  tcontrats.id = $var
+				";
+                $query = $db->query($query);
+				$row = $query->fetch();
+	
+				$quantity = round($row['timeused']/60, 2);
+				
+				$formatter = new IntlDateFormatter('fr_FR',IntlDateFormatter::LONG,
+                IntlDateFormatter::NONE,
+                'Europe/Paris',
+				IntlDateFormatter::GREGORIAN );
+				$formatter->setPattern("MMMM y");
+				$date =new DateTime($date_debut);
+				
+				$month =  $formatter->format($date);//affiche 14 février 2012
+				$designation = <<<EOD
+				<p> $nomcontrat $tarif €/H<br> $month 
+EOD;
+				
+				$id_facture = WebserviceFacture($useridfacture, $designation, $tarif, $webservice['token'], $quantity,$webservice['url']);
+				echo $id_facture;
+            	$facturelink.= $id_facture;
+                $query = "UPDATE tcontrats SET facturelink = '$facturelink' WHERE id='$var'";
+                $query = $db->query($query);
+
                 $subject = "Notifications clôture décompte d'heure mensuel";
                 $messages = "Bonjour,  </br></br>";
                 $messages .= "Votre décompte d'heure mensuel à été cloturé.</br>";
@@ -395,8 +439,9 @@ if ($rright['admin_contrat'] != 0) {
                 $messages .= "Je reste à votre disposition,</br>";
                 $messages .= "Arnaud GUY</br>";
                 $messages .= "www.arnaudguy.fr</br>";
-
-            } else {
+			} 
+			else 
+			{
                 $subject = "Notifications de clôture contrat";
                 $messages = "Bonjour,  </br> </br>";
                 $messages .= "Votre contrat " . $nomcontrat . " " . $periode . " est arrivé à expiration et à donc été cloturé. </br> </br>";
@@ -453,7 +498,7 @@ if ($rright['admin_contrat'] != 0) {
         $mail->Subject = "$subject";
         $mail->Body = "$messages";
 
-        if ($notificationmail == on) {
+        if ($notificationmail == "on") {
             //mail($mailuser,$subject,$messages,implode("\r\n", $headers));
             if (!$mail->Send()) {
                 echo '<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>' . T_('Message non envoyé, vérifier la configuration de votre serveur de messagerie') . '.</b> (';
@@ -571,6 +616,8 @@ if (isset($_POST['formSubmitcloture'])) {
 				</button>
 			</a>
 </div>
+
+<!-- Affichage tableau contrats-->
 <div class="col-sm-12">
 	<div class="widget-body">
 		<div class="widget-main no-padding">
