@@ -183,7 +183,6 @@ cloturecontrat($var,$_POST['mail']);
   </div>
 </div>
 
-
 <div class="modal" id="my_modal">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -193,26 +192,25 @@ cloturecontrat($var,$_POST['mail']);
       </div>
       <div class="modal-body">
         <form id="myFormcloture" method="POST" action="index.php?page=plugins/contrats2/contratsadmin&type=2">
-        <div class="form-group row">
-              <label class="col-3 col-lg-2 col-form-label text-right">Contrat numéro </label>
-              <div class="col-9 col-lg-10">
-                <input type="text" class="form-control"  name="bookId">
-              </div>
+          <div class="form-group row">
+            <label class="col-3 col-lg-2 col-form-label text-right">Contrat numéro </label>
+            <div class="col-9 col-lg-10">
+              <input type="text" class="form-control" name="bookId">
             </div>
-            <div class="form-group row">
-              <label class="col-3 col-lg-2 col-form-label text-right">Mail ? </label>
-              <div class="col-9 col-lg-10">
-                <input type="checkbox" class="form-control"  name="mail">
-              </div>
+          </div>
+          <div class="form-group row">
+            <label class="col-3 col-lg-2 col-form-label text-right">Mail ? </label>
+            <div class="col-9 col-lg-10">
+              <input type="checkbox" class="form-control" name="mail">
             </div>
-          
+          </div>
       </div>
       <div class="modal-footer">
-<button type="submit" name="formSubmitcloture" value="Clore" class="btn btn-sm btn-danger">
-              <i class="icon-remove icon-on-right bigger-110"></i>
-              &nbsp;Clore
-            </button>             </form>
- </div>
+        <button type="submit" name="formSubmitcloture" value="Clore" class="btn btn-sm btn-danger">
+          <i class="icon-remove icon-on-right bigger-110"></i>
+          &nbsp;Clore
+        </button> </form>
+      </div>
     </div>
   </div>
 </div>
