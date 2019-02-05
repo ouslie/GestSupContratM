@@ -1,5 +1,5 @@
 <?php
-function cloturecontrat($id_contrat,$mail)
+function cloturecontrat($id_contrat,$notificationmail)
 {
     global $db;
     global $query;
@@ -10,8 +10,6 @@ function cloturecontrat($id_contrat,$mail)
     global $sujet;
     global $messages;
     $var = $id_contrat;
-    $notificationmail = $mail;
-
     $query = "UPDATE tcontrats SET status='0' WHERE id=$var";
     $query = $db->query($query);
     $query = "SELECT tcontrats.user,tcontrats.service, tcontrats.id, tcontrats.date_souscription, tcontrats.date_fin,tcontrats.tarif, tcontrats.tarifcontrat, tusers.id, tusers.mail, tusers.useridfacture, tcontrats.type, tcontrats.nom,tcontrats.facturelink,tcontrats.prepaye,tcontrats.periode, tcontratstype.nom AS typecontrat  FROM tcontrats INNER JOIN tusers ON (tcontrats.user=tusers.id) INNER JOIN tcontratstype ON (tcontrats.type = tcontratstype.id) WHERE tcontrats.id=$var";
@@ -90,6 +88,7 @@ EOD;
 EOD;
 
         $id_facture = WebserviceFacture($useridfacture, $designation, $tarif, $webservice['token'], $quantity, $webservice['url'], 44);
+         echo "Facture ID :";
         echo $id_facture;
         $facturelink .= $id_facture;
         $query = "UPDATE tcontrats SET facturelink = '$facturelink' WHERE id='$var'";
@@ -117,7 +116,6 @@ EOD;
         $messages .= "www.arnaudguy.fr </br>";
 
     }
-
 
     include 'components/PHPMailer/src/PHPMailer.php';
     include 'components/PHPMailer/src/SMTP.php';
@@ -164,7 +162,6 @@ EOD;
     $mail->AddCC('contact@arnaudguy.fr', 'Arnaud GUY | Notifications');
     $mail->Subject = "$subject";
     $mail->Body = "$messages";
-
     if ($notificationmail == "on") {
         if (!$mail->Send()) {
             echo '<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>' . T_('Message non envoyé, vérifier la configuration de votre serveur de messagerie') . '.</b> (';
