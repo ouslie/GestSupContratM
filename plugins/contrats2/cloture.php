@@ -14,13 +14,14 @@ function cloturecontrat($id_contrat,$mail)
 
     $query = "UPDATE tcontrats SET status='0' WHERE id=$var";
     $query = $db->query($query);
-    $query = "SELECT tcontrats.user, tcontrats.id, tcontrats.date_souscription, tcontrats.date_fin,tcontrats.tarif, tcontrats.tarifcontrat, tusers.id, tusers.mail, tusers.useridfacture, tcontrats.type, tcontrats.nom,tcontrats.facturelink,tcontrats.prepaye,tcontrats.periode, tcontratstype.nom AS typecontrat  FROM tcontrats INNER JOIN tusers ON (tcontrats.user=tusers.id) INNER JOIN tcontratstype ON (tcontrats.type = tcontratstype.id) WHERE tcontrats.id=$var";
+    $query = "SELECT tcontrats.user,tcontrats.service, tcontrats.id, tcontrats.date_souscription, tcontrats.date_fin,tcontrats.tarif, tcontrats.tarifcontrat, tusers.id, tusers.mail, tusers.useridfacture, tcontrats.type, tcontrats.nom,tcontrats.facturelink,tcontrats.prepaye,tcontrats.periode, tcontratstype.nom AS typecontrat  FROM tcontrats INNER JOIN tusers ON (tcontrats.user=tusers.id) INNER JOIN tcontratstype ON (tcontrats.type = tcontratstype.id) WHERE tcontrats.id=$var";
     $query = $db->query($query);
     while ($row = $query->fetch()) {
         $mailuser = $row['mail'];
         $nomcontrat = $row['nom'];
         $periode = $row['periode'];
         $typecontrat = $row['type'];
+        $service = $row['service'];
         $prepaye = $row['prepaye'];
         $useridfacture = $row['useridfacture'];
         $date_debut = $row['date_souscription'];
@@ -42,7 +43,7 @@ function cloturecontrat($id_contrat,$mail)
         $date_fin = date("d-m-Y", strtotime($date_fin));
 
         $designation = <<<EOD
-         <p> $nomcontrat <br> Du : $date_debut Au : $date_fin 
+         <p> $service <br> Du : $date_debut Au : $date_fin 
 EOD;
 
         $id_facture = WebserviceFacture($useridfacture, $designation, $tarifcontrat, $webservice['token'], 1, $webservice['url'], 46);

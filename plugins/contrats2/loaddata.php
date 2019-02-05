@@ -29,13 +29,14 @@ $grid = new EditableGrid();
 $grid->addColumn('id', 'REF', 'integer', null, false);
 $grid->addColumn('status', 'Status', 'string',[0 => "Inactif", 1 => "Actif"], false);
 $grid->addColumn('user', 'Client', 'integer', fetch_pairs($db, 'SELECT id, login  FROM tusers'), true);
-$grid->addColumn('nom', 'Nom', 'string',null, true);
 $grid->addColumn('type', 'Type', 'integer', fetch_pairs($db, 'SELECT id, nom  FROM tcontratstype'), true);
-$grid->addColumn('periode', 'Période', 'string', ["Mensuel" => "Mensuel","Annuel" => "Annuel"], true);
+$grid->addColumn('periode', 'periode', 'string', ["Mensuel" => "Mensuel","Annuel" => "Annuel"], true);
+$grid->addColumn('service', 'service', 'string', ["Webmastering" => "Webmastering","Infogérance" => "Infogérance","Infogérance + Webmastering" => "Infogérance + Webmastering"], true);
 $grid->addColumn('date_souscription', 'Date de souscription', 'date', null, true);
 $grid->addColumn('date_fin', 'Date de fin', 'date',null, true);
 
 if ($type == 3 ){
+    $grid->addColumn('nom', 'Nom', 'string',null, true);
     $grid->addColumn('temps_souscrit', 'Temps souscrit', 'string',null, true);
     $grid->addColumn('timeused', 'Temps consommé', 'string',null, false);
     $grid->addColumn('tempsrestant', 'Temps restant', 'string',null, false);
@@ -43,6 +44,7 @@ if ($type == 3 ){
 }
 
 if ($type == 1 ){
+    $grid->addColumn('nom', 'Nom', 'string',null, true);
     $grid->addColumn('timeused', 'Temps consommé', 'string',null, false);
     $grid->addColumn('tarif', 'Tarif horaire', 'string',null, true);
 }
@@ -72,6 +74,7 @@ switch($type)
     tcontrats.id, 
     tcontrats.status,
     tcontrats.nom,
+    tcontrats.service,
     date_format(tcontrats.date_souscription, '%d/%m/%Y') AS date_souscription,
     date_format(tcontrats.date_fin, '%d/%m/%Y') AS date_fin,
     tcontrats.tarif, 
@@ -95,6 +98,7 @@ switch($type)
     tcontrats.id, 
     tcontrats.status,
     tcontrats.nom,
+    tcontrats.service,
     date_format(tcontrats.date_souscription, '%d/%m/%Y') AS date_souscription,
     date_format(tcontrats.date_fin, '%d/%m/%Y') AS date_fin,
     tcontrats.periode, 
@@ -117,6 +121,7 @@ switch($type)
     tcontrats.id, 
     tcontrats.status,
     tcontrats.nom,
+    tcontrats.service,
     date_format(tcontrats.date_souscription, '%d/%m/%Y') AS date_souscription,
     date_format(tcontrats.date_fin, '%d/%m/%Y') AS date_fin,
     tcontrats.tarif, 
