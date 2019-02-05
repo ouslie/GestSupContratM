@@ -7,6 +7,7 @@
  * Dual licensed under the MIT or GPL Version 2 licenses.
  * http://editablegrid.net/license
  */
+include '../../connect.php';
 $db->exec("set names utf8");
 
 // Get all parameter provided by the javascript
@@ -21,8 +22,6 @@ $montantheure = $_POST['montantheure'];
 $tarifcontrat = $_POST['tarifcontrat'];
 if(!isset($_POST['prepaye'])){ $prepaye=0;}else {$prepaye = $_POST['prepaye'];}
 $name = $_POST['name'];
-
-print_r($_POST);
 
 $return = false;
 

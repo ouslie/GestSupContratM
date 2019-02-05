@@ -1,5 +1,4 @@
 <?php
-
 /*
  *
  * This file is part of EditableGrid.
@@ -9,6 +8,7 @@
  * Dual licensed under the MIT or GPL Version 2 licenses.
  * http://editablegrid.net/license
  */
+require('../../connect.php');
 
 $db->exec("set names utf8");
 

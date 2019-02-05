@@ -194,7 +194,7 @@ function showAddForm() {
  */
 function updateCellValue(editableGrid, rowIndex, columnIndex, oldValue, newValue, row, onResponse) {
     $.ajax({
-        url: 'index.php?page=plugins/contrats2/update',
+        url: 'plugins/contrats2/update.php',
         type: 'POST',
         dataType: "html",
         data: {
@@ -270,7 +270,7 @@ DatabaseGrid.prototype.deleteRow = function (id) {
     if (confirm('Voulez vous bien suprimer la transaction ' + id)) {
 
         $.ajax({
-            url: 'index.php?page=plugins/contrats2/delete',
+            url: 'plugins/contrats2/delete.php',
             type: 'POST',
             dataType: "html",
             data: {
@@ -300,7 +300,7 @@ DatabaseGrid.prototype.addRow = function (id) {
     var self = this;
 
     $.ajax({
-        url: 'index.php?page=plugins/contrats2/add',
+        url: 'plugins/contrats2/add.php',
         type: 'POST',
         dataType: "html",
         data: {
@@ -321,6 +321,7 @@ DatabaseGrid.prototype.addRow = function (id) {
         },
         success: function (response) {
             if (response == "ok") {
+                
                 message("success", "Transaction ajouté");
                 self.fetchGrid();
             } else

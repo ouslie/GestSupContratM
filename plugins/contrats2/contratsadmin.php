@@ -12,7 +12,8 @@ cloturecontrat($var,$_POST['mail']);
 }
 
 ?>
-
+  <link rel="stylesheet" href="public/css/style.css" type="text/css" media="screen">
+    <link rel="stylesheet" href="public/css/responsive.css" type="text/css" media="screen">
 <script src="plugins/contrats2/demo.js"></script>
 <script src="plugins/contrats2/editablegrid-2.1.0-49.js"></script>
 <div class="page-header position-relative">
