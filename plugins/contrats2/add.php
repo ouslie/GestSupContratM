@@ -20,7 +20,7 @@ $date_fin = $_POST['date_fin'];
 $temps_souscrit = $_POST['temps_souscrit'];
 $montantheure = $_POST['montantheure'];
 $tarifcontrat = $_POST['tarifcontrat'];
-$prepaye = $_POST['prepaye'];
+if(!isset($_POST['prepaye'])){ $prepaye=0;}else {$prepaye = $_POST['prepaye'];}
 $name = $_POST['name'];
 
 $montantheure = floatval(str_replace(',', '.', str_replace('.', '',$montantheure)));
