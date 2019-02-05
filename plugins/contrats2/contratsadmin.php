@@ -128,6 +128,12 @@ cloturecontrat($var,$_POST['mail']);
               </div>
             </div>
             <div class="form-group row">
+              <label class="col-3 col-lg-2 col-form-label text-right">Nom du contrat</label>
+              <div class="col-9 col-lg-10">
+                <input type="text" class="form-control" id="name" name="name">
+              </div>
+            </div>
+            <div class="form-group row">
               <label class="col-3 col-lg-2 col-form-label text-right">Période</label>
               <div class="col-9 col-lg-10">
                 <select id="periode" name="periode">

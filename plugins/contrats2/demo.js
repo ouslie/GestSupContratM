@@ -314,7 +314,7 @@ DatabaseGrid.prototype.addRow = function (id) {
             temps_souscrit: $("#temps_souscrit").val(),
             montantheure: $("#montantheure").val(),
             tarifcontrat: $("#tarifcontrat").val(),
-            prepaye: $("#prepaye").val()
+            name: $("#name").val()
 
 
 

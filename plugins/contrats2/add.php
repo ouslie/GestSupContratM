@@ -7,7 +7,6 @@
  * Dual licensed under the MIT or GPL Version 2 licenses.
  * http://editablegrid.net/license
  */
-echo "zpoefvozeuf";
 $db->exec("SET GLOBAL sql_mode = NO_ENGINE_SUBSTITUTION");
 $db->exec("set names utf8");
 
@@ -22,6 +21,7 @@ $temps_souscrit = $_POST['temps_souscrit'];
 $montantheure = $_POST['montantheure'];
 $tarifcontrat = $_POST['tarifcontrat'];
 $prepaye = $_POST['prepaye'];
+$name = $_POST['name'];
 
 $montantheure = floatval(str_replace(',', '.', str_replace('.', '',$montantheure)));
 $tarifcontrat = floatval(str_replace(',', '.', str_replace('.', '',$tarifcontrat)));
@@ -39,6 +39,7 @@ $requete = $db->prepare("INSERT INTO tcontrats SET
 		tarif = :montantheure,
 		tarifcontrat= :tarifcontrat,
         prepaye= :prepaye,
+		nom = :nom,
         status = 1
 		");
 
@@ -52,6 +53,8 @@ $requete->bindValue(':temps_souscrit', $temps_souscrit);
 $requete->bindValue(':montantheure', $montantheure);
 $requete->bindValue(':tarifcontrat', $tarifcontrat);
 $requete->bindValue(':prepaye', $prepaye);
+$requete->bindValue(':nom', $name);
+
 $return = $requete->execute();
 $requete = null;
 echo $return ? "ok" : "error";
