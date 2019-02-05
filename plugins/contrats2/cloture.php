@@ -58,9 +58,11 @@ EOD;
         $messages .= "Votre contrat " . $nomcontrat . " " . $periode . " à été clôturé. </br>";
         $messages .= "Vous trouverez ci-dessous le lien pour la facture :  </br>";
         $messages .= "<a href=$facturelink> Ma facture</a> </br> </br>";
+        $messages .= "Retouvez vos tickets et factures< sur <a href='https://support.arnaudguy.fr'> ICI</a>";
         $messages .= "Je reste à votre disposition, </br> ";
         $messages .= "Arnaud GUY </br>";
         $messages .= "www.arnaudguy.fr </br>";
+
     }
     if ($typecontrat == 1) {
         $query = "SELECT sum(time) AS timeused, tcontrats.id FROM tincidents
@@ -97,10 +99,13 @@ EOD;
         $messages = "Bonjour,  </br></br>";
         $messages .= "Votre décompte d'heure mensuel à été cloturé.</br>";
         $messages .= "Vous trouverez ci-dessous le lien pour la facture : </br>";
-        $messages .= " $facturelink </br></br>";
+        $messages .= "<a href=$facturelink> Ma facture</a> </br> </br>";
+        $messages .= "Retouvez vos tickets et factures< sur <a href='https://support.arnaudguy.fr'> ICI</a>";
         $messages .= "Je reste à votre disposition,</br>";
         $messages .= "Arnaud GUY</br>";
         $messages .= "www.arnaudguy.fr</br>";
+        $messages .= "www.arnaudguy.fr</br>";
+
     }
 
     if ($typecontrat == 3) {
