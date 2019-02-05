@@ -1,4 +1,5 @@
 <?php 
+if ($rright['contrat_displayuser']!=0){
 
 $token_export = uniqid();
 $db->exec("INSERT INTO ttoken (token) VALUES ('$token_export')");
@@ -71,3 +72,4 @@ $db->exec("INSERT INTO ttoken (token) VALUES ('$token_export')");
   }
 
 </script>
+<?php } else {echo "pas de droit";}

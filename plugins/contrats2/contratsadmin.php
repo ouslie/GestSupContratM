@@ -1,7 +1,7 @@
 <?php 
 
-$token_export = uniqid();
-$db->exec("INSERT INTO ttoken (token) VALUES ('$token_export')");
+
+if ($rright['admin_contrat'] != 0) {
 
 ?>
 <script src="plugins/contrats2/demo.js"></script>
@@ -193,3 +193,4 @@ $db->exec("INSERT INTO ttoken (token) VALUES ('$token_export')");
 
   }
 </script>
+<?php } else { echo "pas de droit";}?>
