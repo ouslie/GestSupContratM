@@ -108,8 +108,7 @@ DatabaseGrid.prototype.initializeGrid = function (grid) {
     grid.setCellRenderer("edit", new CellRenderer({
         render: function (cell, id) {
             cell.innerHTML += "<i style='margin:0px 10px 0px 10px' onclick=\"datagrid.deleteRow(" + id + ");\" class='icon-trash red' ></i>";
-            cell.innerHTML += "<a style='margin:0px 10px 0px 10px'  href=index.php?page=plugins/contrats2/cloture&id_contrat=" + id + "  class='icon-cog' ></i></a>";
-
+            cell.innerHTML += "<i style='margin:0px 10px 0px 10px'  data-toggle='modal' data-target='#my_modal' class='icon-cog' data-book-id='"+id +"'></i>";
         }
     }));
 

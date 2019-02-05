@@ -1,9 +1,18 @@
 <?php 
-
-
 if ($rright['admin_contrat'] != 0) {
 
+  if (isset($_POST['formSubmitcloture'])) {
+    $var = $_POST['bookId'];
+    if(!isset( $_POST['mail'])){
+      $_POST['mail']=0;
+    }
+include "cloture.php";
+require_once('webservice.php');
+cloturecontrat($var,$_POST['mail']);
+}
+
 ?>
+
 <script src="plugins/contrats2/demo.js"></script>
 <script src="plugins/contrats2/editablegrid-2.1.0-49.js"></script>
 <div class="page-header position-relative">
@@ -173,9 +182,40 @@ if ($rright['admin_contrat'] != 0) {
     </div>
   </div>
 </div>
-<!-- ============================================================== -->
-<!-- modal  -->
-<!-- ============================================================== -->
+
+
+<div class="modal" id="my_modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title">Cloture contrats</h4>
+      </div>
+      <div class="modal-body">
+        <form id="myFormcloture" method="POST" action="index.php?page=plugins/contrats2/contratsadmin&type=2">
+        <div class="form-group row">
+              <label class="col-3 col-lg-2 col-form-label text-right">Contrat numéro </label>
+              <div class="col-9 col-lg-10">
+                <input type="text" class="form-control"  name="bookId">
+              </div>
+            </div>
+            <div class="form-group row">
+              <label class="col-3 col-lg-2 col-form-label text-right">Mail ? </label>
+              <div class="col-9 col-lg-10">
+                <input type="checkbox" class="form-control"  name="mail">
+              </div>
+            </div>
+          
+      </div>
+      <div class="modal-footer">
+<button type="submit" name="formSubmitcloture" value="Clore" class="btn btn-sm btn-danger">
+              <i class="icon-remove icon-on-right bigger-110"></i>
+              &nbsp;Clore
+            </button>             </form>
+ </div>
+    </div>
+  </div>
+</div>
 <script type="text/javascript">
   var datagrid;
 
@@ -190,7 +230,11 @@ if ($rright['admin_contrat'] != 0) {
     $("#addbutton").click(function () {
       datagrid.addRow();
     });
+    $('#my_modal').on('show.bs.modal', function (e) {
+      var bookId = $(e.relatedTarget).data('book-id');
+      $(e.currentTarget).find('input[name="bookId"]').val(bookId);
 
+    });
   }
 </script>
 <?php } else { echo "pas de droit";}?>

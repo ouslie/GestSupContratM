@@ -1,28 +1,5 @@
 <?php
-include 'webservice.php';
-
-$var = $_GET['id_contrat'];
-
-if (isset($_POST['formSubmitcloture'])) {
-    cloturecontrat();
-}
-?>
-<div class="page-header position-relative">
-	<h1><i class="icon-briefcase"></i>Cloture contrats numéro &nbsp;
-		<?php echo $var; ?>
-	</h1>
-	</br>
-	<form id="myFormcloture" method="POST" action="">
-		<p> Notification mail : <input type="checkbox" name="notificationmail">
-			<button type="submit" name="formSubmitcloture" value="Clore" class="btn btn-sm btn-danger">
-				<i class="icon-remove icon-on-right bigger-110"></i>
-				&nbsp;Clore
-			</button>
-		</p>
-	</form>
-</div>
-<?php
-function cloturecontrat()
+function cloturecontrat($id_contrat,$mail)
 {
     global $db;
     global $query;
@@ -32,12 +9,9 @@ function cloturecontrat()
     global $tomail;
     global $sujet;
     global $messages;
-    $var = $_GET['id_contrat'];
-    if (isset($_POST['notificationmail'])) {
-        $notificationmail = $_POST['notificationmail'];
-    } else {
-        $notificationmail = null;
-    }
+    $var = $id_contrat;
+    $notificationmail = $mail;
+
     $query = "UPDATE tcontrats SET status='0' WHERE id=$var";
     $query = $db->query($query);
     $query = "SELECT tcontrats.user, tcontrats.id, tcontrats.date_souscription, tcontrats.date_fin,tcontrats.tarif, tcontrats.tarifcontrat, tusers.id, tusers.mail, tusers.useridfacture, tcontrats.type, tcontrats.nom,tcontrats.facturelink,tcontrats.prepaye,tcontrats.periode, tcontratstype.nom AS typecontrat  FROM tcontrats INNER JOIN tusers ON (tcontrats.user=tusers.id) INNER JOIN tcontratstype ON (tcontrats.type = tcontratstype.id) WHERE tcontrats.id=$var";
@@ -186,19 +160,15 @@ EOD;
     $mail->Body = "$messages";
 
     if ($notificationmail == "on") {
-         //mail($mailuser,$subject,$messages,implode("\r\n", $headers));
         if (!$mail->Send()) {
             echo '<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>' . T_('Message non envoyé, vérifier la configuration de votre serveur de messagerie') . '.</b> (';
             echo $mail->ErrorInfo;
             echo ')</center></div>';
         } elseif (isset($_SESSION['user_id'])) {
             echo '<div class="alert alert-block alert-success"><center><i class="icon-envelope green"></i> ' . T_('Message envoyé') . '.</center></div>';
-             //redirect
-
+    
         }
         $mail->SmtpClose();
-
-        echo '<meta http-equiv="refresh" content="0">';
 
     }
 }
