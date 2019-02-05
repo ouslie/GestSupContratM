@@ -23,8 +23,7 @@ $tarifcontrat = $_POST['tarifcontrat'];
 if(!isset($_POST['prepaye'])){ $prepaye=0;}else {$prepaye = $_POST['prepaye'];}
 $name = $_POST['name'];
 
-$montantheure = floatval(str_replace(',', '.', str_replace('.', '',$montantheure)));
-$tarifcontrat = floatval(str_replace(',', '.', str_replace('.', '',$tarifcontrat)));
+print_r($_POST);
 
 $return = false;
 
