@@ -95,6 +95,7 @@ $db->exec("INSERT INTO ttoken (token) VALUES ('$token_export')");
 					</label>
 					<div class="col-sm-8">
 <?php
+
 $query = "SELECT * FROM tusers";
 $query = $db->query($query);
 $option = '';

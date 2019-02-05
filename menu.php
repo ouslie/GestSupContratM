@@ -507,19 +507,21 @@ if(!isset($state)) $state = '';
 				</a>
 			</li>';
 		}
-		if ($rright['contrat_displayuser']!=0)
+		
+		if ($rright['admin_contrat']!=0)
 	{
 		if($_GET['page']=='contrats') echo '<li class="active">'; else echo '<li>'; echo '
-			<a href="./index.php?page=contrats">
+			<a href="./index.php?page=plugins/contrats2/contratsadmin&type=1">
 				<i class="icon-briefcase"></i>
 				<span class="menu-text">'.T_('Contrats').'</span>
 			</a>
 		</li>';
 	}
-		if ($rright['admin_contrat']!=0)
+
+	if ($rright['contrat_displayuser']!=0)
 	{
 		if($_GET['page']=='contrats') echo '<li class="active">'; else echo '<li>'; echo '
-			<a href="./index.php?page=contratsadmin&view=1">
+			<a href="./index.php?page=plugins/contrats2/contrats&type=1">
 				<i class="icon-briefcase"></i>
 				<span class="menu-text">'.T_('Contrats').'</span>
 			</a>
