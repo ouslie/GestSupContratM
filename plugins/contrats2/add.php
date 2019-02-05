@@ -7,7 +7,6 @@
  * Dual licensed under the MIT or GPL Version 2 licenses.
  * http://editablegrid.net/license
  */
-$db->exec("SET GLOBAL sql_mode = NO_ENGINE_SUBSTITUTION");
 $db->exec("set names utf8");
 
 // Get all parameter provided by the javascript
