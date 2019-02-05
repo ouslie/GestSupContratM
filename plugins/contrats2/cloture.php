@@ -70,16 +70,7 @@ function cloturecontrat()
         $designation = <<<EOD
          <p> $nomcontrat <br> Du : $date_debut Au : $date_fin 
 EOD;
-echo '<br/>';
 
-        echo $useridfacture;
-        echo '<br/>';
-        echo $designation;
-        echo '<br/>';
-
-        echo $tarifcontrat;
-        echo '<br/>';
-        
         $id_facture = WebserviceFacture($useridfacture, $designation, $tarifcontrat, $webservice['token'], 1, $webservice['url'], 46);
         echo "Facture ID :";
         echo $id_facture;
