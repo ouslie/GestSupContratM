@@ -84,7 +84,7 @@ EOD;
 
         $month = $formatter->format($date);//affiche 14 février 2012
         $designation = <<<EOD
-             <p> $nomcontrat $tarif €/H<br> $month 
+             <p> $service $tarif €/H<br> $month 
 EOD;
 
         $id_facture = WebserviceFacture($useridfacture, $designation, $tarif, $webservice['token'], $quantity, $webservice['url'], 44);
@@ -106,7 +106,7 @@ EOD;
     if ($typecontrat == 3) {
         $subject = "Notifications de clôture contrat";
         $messages = "Bonjour,  </br> </br>";
-        $messages .= "Votre contrat " . $nomcontrat . " " . $periode . " est arrivé à expiration et à donc été cloturé. </br> </br>";
+        $messages .= "Votre contrat " . $service . " " . $periode . " est arrivé à expiration et à donc été cloturé. </br> </br>";
         $messages .= "Je reste à votre disposition, </br> ";
         $messages .= "Arnaud GUY </br>";
         $messages .= "www.arnaudguy.fr </br>";

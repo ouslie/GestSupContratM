@@ -31,6 +31,7 @@ $grid->addColumn('status', 'Status', 'string',[0 => "Inactif", 1 => "Actif"], fa
 $grid->addColumn('type', 'Type', 'integer', fetch_pairs($db, 'SELECT id, nom  FROM tcontratstype'), false);
 $grid->addColumn('periode', 'Période', 'string', ["Mensuel" => "Mensuel","Annuel" => "Annuel"], false);
 $grid->addColumn('date_souscription', 'Date de souscription', 'date', null, false);
+$grid->addColumn('service', 'Service', 'date', null, false);
 $grid->addColumn('date_fin', 'Date de fin', 'date',null, false);
 
 if ($type == 3 ){
@@ -67,7 +68,7 @@ switch($type)
     tincidents.contrats, 
     tcontrats.id, 
     tcontrats.status,
-    tcontrats.nom,
+    tcontrats.service,
     date_format(tcontrats.date_souscription, '%d/%m/%Y') AS date_souscription,
     date_format(tcontrats.date_fin, '%d/%m/%Y') AS date_fin,
     tcontrats.tarif, 
@@ -89,7 +90,7 @@ switch($type)
     $query = "SELECT 
     tcontrats.id, 
     tcontrats.status,
-    tcontrats.nom,
+    tcontrats.service,
     date_format(tcontrats.date_souscription, '%d/%m/%Y') AS date_souscription,
     date_format(tcontrats.date_fin, '%d/%m/%Y') AS date_fin,
     tcontrats.periode, 
@@ -110,7 +111,7 @@ switch($type)
     tincidents.contrats, 
     tcontrats.id, 
     tcontrats.status,
-    tcontrats.nom,
+    tcontrats.service,
     date_format(tcontrats.date_souscription, '%d/%m/%Y') AS date_souscription,
     date_format(tcontrats.date_fin, '%d/%m/%Y') AS date_fin,
     tcontrats.tarif, 
