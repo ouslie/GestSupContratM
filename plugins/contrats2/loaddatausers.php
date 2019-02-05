@@ -27,7 +27,6 @@ function fetch_pairs($db, $query)
 }
 
 $grid = new EditableGrid();
-$grid->addColumn('id', 'REF', 'integer', null, false);
 $grid->addColumn('status', 'Status', 'string',[0 => "Inactif", 1 => "Actif"], false);
 $grid->addColumn('type', 'Type', 'integer', fetch_pairs($db, 'SELECT id, nom  FROM tcontratstype'), false);
 $grid->addColumn('periode', 'Période', 'string', ["Mensuel" => "Mensuel","Annuel" => "Annuel"], false);
