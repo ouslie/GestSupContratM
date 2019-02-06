@@ -81,8 +81,7 @@ switch($type)
     FROM tincidents
     INNER JOIN tcontrats ON (tincidents.contrats=tcontrats.id)
     WHERE tcontrats.type = 1 AND tcontrats.user = $user_id
-    GROUP BY tcontrats.id
-    ORDER BY tcontrats.status DESC";
+    GROUP BY tcontrats.id";
 
     break;
 
@@ -99,8 +98,7 @@ switch($type)
     tcontrats.type
     FROM tcontrats
     WHERE tcontrats.type = 2  AND tcontrats.user = $user_id
-    GROUP BY tcontrats.id
-    ORDER BY tcontrats.status DESC";
+    GROUP BY tcontrats.id";
 
     break;
 
@@ -123,14 +121,18 @@ switch($type)
     FROM tincidents
     INNER JOIN tcontrats ON (tincidents.contrats=tcontrats.id)
     WHERE tcontrats.type = 3  AND tcontrats.user = $user_id
-    GROUP BY tcontrats.id
-    ORDER BY tcontrats.status DESC";
+    GROUP BY tcontrats.id";
 
     break;
 
 }
-//$query = "SELECT * FROM $mydb_tablename";
-//$queryCount = "SELECT count(id) as nb FROM $mydb_tablename";
+if (isset($_GET['sort']) && $_GET['sort'] != "") 
+{
+    $query .= " ORDER BY " . $_GET['sort'] . ($_GET['asc'] == "0" ? " DESC " : "");
+} else {
+    $query .= " ORDER BY status DESC,date_fin";
+
+}
 
 //error_log($query);
 $result = $db->query($query);
