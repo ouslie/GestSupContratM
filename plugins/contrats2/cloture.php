@@ -12,13 +12,14 @@ function cloturecontrat($id_contrat,$notificationmail)
     $var = $id_contrat;
     $query = "UPDATE tcontrats SET status='0' WHERE id=$var";
     $query = $db->query($query);
-    $query = "SELECT tcontrats.user,tcontrats.service, tcontrats.id, tcontrats.date_souscription, tcontrats.date_fin,tcontrats.tarif, tcontrats.tarifcontrat, tusers.id, tusers.mail, tusers.useridfacture, tcontrats.type, tcontrats.nom,tcontrats.facturelink,tcontrats.prepaye,tcontrats.periode, tcontratstype.nom AS typecontrat  FROM tcontrats INNER JOIN tusers ON (tcontrats.user=tusers.id) INNER JOIN tcontratstype ON (tcontrats.type = tcontratstype.id) WHERE tcontrats.id=$var";
+    $query = "SELECT tcontrats.user,tcontrats.service,tcontrats.id, tcontrats.date_souscription, tcontrats.date_fin,tcontrats.tarif, tcontrats.tarifcontrat, tusers.id, tusers.mail, tusers.useridfacture, tcontrats.type, tcontrats.nom,tcontrats.facturelink,tcontrats.prepaye,tcontrats.periode, tcontratstype.nom AS typecontrat  FROM tcontrats INNER JOIN tusers ON (tcontrats.user=tusers.id) INNER JOIN tcontratstype ON (tcontrats.type = tcontratstype.id) WHERE tcontrats.id=$var";
     $query = $db->query($query);
     while ($row = $query->fetch()) {
         $mailuser = $row['mail'];
         $nomcontrat = $row['nom'];
         $periode = $row['periode'];
         $typecontrat = $row['type'];
+        $typecontratname = $row['typecontrat'];
         $service = $row['service'];
         $prepaye = $row['prepaye'];
         $useridfacture = $row['useridfacture'];
@@ -41,7 +42,7 @@ function cloturecontrat($id_contrat,$notificationmail)
         $date_fin = date("d-m-Y", strtotime($date_fin));
 
         $designation = <<<EOD
-         <p> $service <br> Du : $date_debut Au : $date_fin 
+        $typecontratname  <br/> $service <br/> Du : $date_debut Au : $date_fin 
 EOD;
 
         $id_facture = WebserviceFacture($useridfacture, $designation, $tarifcontrat, $webservice['token'], 1, $webservice['url'], 46);
@@ -84,7 +85,8 @@ EOD;
 
         $month = $formatter->format($date);//affiche 14 février 2012
         $designation = <<<EOD
-             <p> $service $tarif €/H<br> $month 
+        $typecontratname  <br/> $service <br/>
+        $tarif €/H<br> $month 
 EOD;
 
         $id_facture = WebserviceFacture($useridfacture, $designation, $tarif, $webservice['token'], $quantity, $webservice['url'], 44);
@@ -115,7 +117,7 @@ EOD;
         $messages .= "www.arnaudguy.fr </br>";
 
     }
-
+    if ($notificationmail == 1) {
     include 'components/PHPMailer/src/PHPMailer.php';
     include 'components/PHPMailer/src/SMTP.php';
     include 'components/PHPMailer/src/Exception.php';
@@ -161,7 +163,7 @@ EOD;
     $mail->AddCC('contact@arnaudguy.fr', 'Arnaud GUY | Notifications');
     $mail->Subject = "$subject";
     $mail->Body = "$messages";
-    if ($notificationmail == "on") {
+    
         if (!$mail->Send()) {
             echo '<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>' . T_('Message non envoyé, vérifier la configuration de votre serveur de messagerie') . '.</b> (';
             echo $mail->ErrorInfo;

@@ -208,7 +208,7 @@ cloturecontrat($var,$_POST['mail']);
           <div class="form-group row">
             <label class="col-3 col-lg-2 col-form-label text-right">Mail ? </label>
             <div class="col-9 col-lg-10">
-              <input type="checkbox" class="form-control" name="mail">
+              <input type="checkbox" class="form-control" name="mail" value="1">
             </div>
           </div>
       </div>
