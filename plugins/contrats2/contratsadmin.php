@@ -125,6 +125,7 @@ cloturecontrat($var,$_POST['mail']);
                   <option value="Webmastering"> Webmastering </option>
                   <option value="Infogérance"> Infogérance </option>
                   <option value="Infogérance + Webmastering"> Infogérance + Webmastering </option>
+                  <option value="Facture réel mensuel"> Facture réel mensuel </option>
                 </select>
               </div>
             </div>
