@@ -85,8 +85,7 @@ switch($type)
     FROM tincidents
     INNER JOIN tcontrats ON (tincidents.contrats=tcontrats.id)
     WHERE tcontrats.type = 1
-    GROUP BY tcontrats.id
-    ORDER BY tcontrats.status DESC";
+    GROUP BY tcontrats.id";
 
     break;
 
@@ -105,8 +104,7 @@ switch($type)
     tcontrats.type
     FROM tcontrats
     WHERE tcontrats.type = 2
-    GROUP BY tcontrats.id
-    ORDER BY tcontrats.status DESC";
+    GROUP BY tcontrats.id";
 
     break;
 
@@ -132,15 +130,20 @@ switch($type)
     INNER JOIN tcontrats ON (tincidents.contrats=tcontrats.id)
     WHERE tcontrats.type = 3
     GROUP BY tcontrats.id
-    ORDER BY tcontrats.status DESC";
+    ";
 
     break;
 
 }
-//$query = "SELECT * FROM $mydb_tablename";
-//$queryCount = "SELECT count(id) as nb FROM $mydb_tablename";
 
-//error_log($query);
+if (isset($_GET['sort']) && $_GET['sort'] != "") 
+{
+    $query .= " ORDER BY " . $_GET['sort'] . ($_GET['asc'] == "0" ? " DESC " : "");
+} else {
+    $query .= " ORDER BY status DESC,date_fin";
+
+}
+error_log($query);
 $result = $db->query($query);
 
 // close PDO
