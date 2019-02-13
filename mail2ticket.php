@@ -322,7 +322,7 @@ foreach ($mailboxes as $mailbox)
 						VALUES (:user,:technician,:title,:description,:date_create,:techread,:state,:criticality,:disable,:place,:creator)");
 						$qry->execute(array(
 							'user' => $user_id,
-							'technician' => 0,
+							'technician' => 1,
 							'title' => $subject,
 							'description' => '',
 							'date_create' => $datetime,
