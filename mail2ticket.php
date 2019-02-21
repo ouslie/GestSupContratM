@@ -225,6 +225,7 @@ foreach ($mailboxes as $mailbox)
 				$from = $mail->fromAddress;
 				$subject = $mail->subject;
 				$datetime = $mail->date;
+				echo $datetime;
 				$blacklist_mail=0;
 				//detect blacklist mail or domain for exclusion
 				if($rparameters['imap_blacklist']!='')
