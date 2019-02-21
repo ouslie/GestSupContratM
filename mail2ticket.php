@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 07/04/2013
-# @Update : 25/10/2018
-# @Version : 3.1.36
+# @Update : 04/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -53,8 +53,8 @@ function func_attachement($c_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox
 	foreach ($tabAttachments as $tabAttachment){
 		@mkdir($c_name_dir_upload.$c_ticket_number);
 		//case image inside in mail
-		//if($tabAttachment->disposition=="inline" || $tabAttachment->disposition==null) 
-		if($tabAttachment->disposition=="inline") 
+		//if($tabAttachment->disposition=="inline" || $tabAttachment->disposition==null) #4015
+		if($tabAttachment->disposition=="inline" || $tabAttachment->disposition=="INLINE" || $tabAttachment->disposition==null) 
 		{
 			$c_name_file = basename($tabAttachment->filePath);
 			echo '['.$mailbox.'] [mail '.$count.'] Image into body: <span style="color:green">'.$c_name_file.'</span><br />';
@@ -225,8 +225,8 @@ foreach ($mailboxes as $mailbox)
 				$from = $mail->fromAddress;
 				$subject = $mail->subject;
 				$datetime = $mail->date;
-				echo $datetime;
 				$blacklist_mail=0;
+				if(!$subject){$subject=T_('(Sans objet)');} //default subject 
 				//detect blacklist mail or domain for exclusion
 				if($rparameters['imap_blacklist']!='')
 				{
@@ -263,6 +263,7 @@ foreach ($mailboxes as $mailbox)
 					if($row['id'])
 					{
 						$user_id=$row['id'];
+						$c_FromMessage='';
 					} else {
 						$user_id='0';
 						$c_FromMessage='De '.$from.':<br />';
@@ -323,7 +324,7 @@ foreach ($mailboxes as $mailbox)
 						VALUES (:user,:technician,:title,:description,:date_create,:techread,:state,:criticality,:disable,:place,:creator)");
 						$qry->execute(array(
 							'user' => $user_id,
-							'technician' => 1,
+							'technician' => 0,
 							'title' => $subject,
 							'description' => '',
 							'date_create' => $datetime,
