@@ -30,9 +30,8 @@ $grid = new EditableGrid();
 $grid->addColumn('status', 'Status', 'string',[0 => "Inactif", 1 => "Actif"], false);
 $grid->addColumn('type', 'Type', 'integer', fetch_pairs($db, 'SELECT id, nom  FROM tcontratstype'), false);
 $grid->addColumn('periode', 'Période', 'string', ["Mensuel" => "Mensuel","Annuel" => "Annuel"], false);
-$grid->addColumn('date_souscription', 'Date de souscription', 'date', null, false);
 $grid->addColumn('service', 'Service', 'date', null, false);
-$grid->addColumn('date_fin', 'Date de fin', 'date',null, false);
+$grid->addColumn('date_souscription', 'Date de souscription', 'date', null, false);
 
 if ($type == 3 ){
     $grid->addColumn('temps_souscrit', 'Temps souscrit', 'string',null, false);
@@ -42,10 +41,12 @@ if ($type == 3 ){
 }
 
 if ($type == 1 ){
+    $grid->addColumn('date_fin', 'Date de fin', 'date',null, false);
     $grid->addColumn('timeused', 'Temps consommé', 'string',null, false);
     $grid->addColumn('tarif', 'Tarif horaire', 'string',null, false);
 }
 if ($type == 2 ){
+    $grid->addColumn('date_fin', 'Date de fin', 'date',null, false);
     $grid->addColumn('tarifcontrat', 'Tarif contrat', 'string',null, false);
 }
 

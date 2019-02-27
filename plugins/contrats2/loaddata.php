@@ -33,7 +33,6 @@ $grid->addColumn('type', 'Type', 'integer', fetch_pairs($db, 'SELECT id, nom  FR
 $grid->addColumn('periode', 'periode', 'string', ["Mensuel" => "Mensuel","Annuel" => "Annuel"], true);
 $grid->addColumn('service', 'service', 'string', ["Webmastering" => "Webmastering","Infogérance" => "Infogérance","Infogérance + Webmastering" => "Infogérance + Webmastering","Facture réel mensuel" => "Facture réel mensuel"], true);
 $grid->addColumn('date_souscription', 'Date de souscription', 'date', null, true);
-$grid->addColumn('date_fin', 'Date de fin', 'date',null, true);
 
 if ($type == 3 ){
     $grid->addColumn('temps_souscrit', 'Temps souscrit', 'string',null, true);
@@ -43,10 +42,12 @@ if ($type == 3 ){
 }
 
 if ($type == 1 ){
+    $grid->addColumn('date_fin', 'Date de fin', 'date',null, true);
     $grid->addColumn('timeused', 'Temps consommé', 'string',null, false);
     $grid->addColumn('tarif', 'Tarif horaire', 'string',null, true);
 }
 if ($type == 2 ){
+    $grid->addColumn('date_fin', 'Date de fin', 'date',null, true);
     $grid->addColumn('tarifcontrat', 'Tarif contrat', 'string',null, true);
 }
 
