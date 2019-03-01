@@ -47,6 +47,7 @@ if(!isset($_POST['limit_ticket_number'])) $_POST['limit_ticket_number'] = '';
 if(!isset($_POST['limit_ticket_days'])) $_POST['limit_ticket_days'] = '';
 if(!isset($_POST['limit_ticket_date_start'])) $_POST['limit_ticket_date_start'] = '';
 if(!isset($_POST['mail'])) $_POST['mail'] = '';
+if(!isset($_POST['useridfacture'])) $_POST['useridfacture'] = '';
 if(!isset($_POST['login'])) $_POST['login'] = '';
 if(!isset($_POST['phone'])) $_POST['phone'] = '';
 if(!isset($_POST['mobile'])) $_POST['mobile'] = '';
@@ -103,6 +104,7 @@ $_POST['lastname']=strip_tags($_POST['lastname']);
 $_POST['address1']=strip_tags($_POST['address1']);
 $_POST['address2']=strip_tags($_POST['address2']);
 $_POST['login']=strip_tags($_POST['login']);
+$_POST['useridfacture']=strip_tags($_POST['useridfacture']);
 $_POST['mail']=strip_tags($_POST['mail']);
 $_POST['phone']=strip_tags($_POST['phone']);
 $_POST['mobile']=strip_tags($_POST['mobile']);
@@ -231,7 +233,8 @@ if($_POST['Modifier'])
 		dashboard_ticket_order=:dashboard_ticket_order,
 		default_ticket_state=:default_ticket_state,
 		chgpwd=:chgpwd,
-		language=:language
+		language=:language,
+		useridfacture=:useridfacture
 		WHERE id=:id
 		");
 		$qry->execute(array(
@@ -260,6 +263,7 @@ if($_POST['Modifier'])
 			'default_ticket_state' => $_POST['default_ticket_state'],
 			'chgpwd' => $_POST['chgpwd'],
 			'language' => $_POST['language'],
+			'useridfacture' => $_POST['useridfacture'],
 			'id' => $_GET['userid']
 			));
 		$qry->closeCursor();
@@ -1034,7 +1038,10 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                     								echo'
                                             </div>
                                             <div id="infos" class="tab-pane'; if ($_GET['tab']=='infos' || $_GET['tab']=='') echo 'active'; echo '">
-                                    			<label for="firstname">'.T_('Prénom').' :</label>
+												<label for="useridfacture">'.T_('useridfacture').':</label>
+												<input name="useridfacture" type="text" value="'; if($user1['useridfacture']) echo "$user1[useridfacture]"; else echo ""; echo'" />
+												<div class="space-4"></div>
+												<label for="firstname">'.T_('Prénom').' :</label>
                 								<input name="firstname" type="text" value="'; if($user1['firstname']) echo "$user1[firstname]"; else echo ""; echo'" />
                 								<div class="space-4"></div>
                 								<label for="lastname">'.T_('Nom').' :</label>
