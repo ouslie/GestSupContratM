@@ -6,8 +6,8 @@
 # @parameters :  
 # @Author : Flox
 # @Create : 22/03/2017
-# @Update : 04/12/2017
-# @Version : 3.1.28
+# @Update : 24/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -22,7 +22,16 @@ $db_iface=strip_tags($db->quote($_GET['iface']));
 //submit actions
 if($_POST['addiface'])
 {
-	$db->exec("INSERT INTO tassets_iface (role_id,asset_id,netbios,ip,mac,disable) VALUES ($_POST[role],$db_id,'','','','0')");
+	$qry=$db->prepare("INSERT INTO `tassets_iface` (`role_id`,`asset_id`,`netbios`,`ip`,`mac`,`disable`) VALUES (:role_id,:asset_id,:netbios,:ip,:mac,:disable)");
+	$qry->execute(array(
+		'role_id' => $_POST['role'],
+		'asset_id' => $_GET['id'],
+		'netbios' => '',
+		'ip' => '',
+		'mac' => '',
+		'disable' => 0
+		));
+	
 	//redirect
 	$www = "./index.php?page=asset&id=$_GET[id]&$url_get_parameters";
 	echo '<script language="Javascript">
@@ -34,7 +43,12 @@ if($_POST['addiface'])
 }
 if($_POST['editiface'])
 {
-	$db->exec("UPDATE tassets_iface SET role_id=$_POST[role] WHERE id=$db_iface");
+	$qry=$db->prepare("UPDATE `tassets_iface` SET `role_id`=:role_id WHERE `id`=:id");
+	$qry->execute(array(
+		'role_id' => $_POST['role'],
+		'id' => $_GET['iface']
+		));
+	
 	//redirect
 	$www = "./index.php?page=asset&id=$_GET[id]&$url_get_parameters";
 	echo '<script language="Javascript">
@@ -52,11 +66,13 @@ if ($_GET['action']=="addiface")
 		<input  name="addiface" type="hidden" value="1" />
 		<label for="role">'.T_("Rôle de l'interface").':</label><br />
 		<select id="role" name="role">';
-			$query = $db->query("SELECT * FROM `tassets_iface_role` WHERE disable=0 ORDER BY name ASC");
-			while ($row = $query->fetch()) {
+			$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_iface_role` WHERE disable='0' ORDER BY name ASC");
+			$qry->execute();
+			while($row=$qry->fetch()) 
+			{
 				$boxtext= $boxtext.'<option value="'.$row['id'].'">'.$row['name'].'</option>';
-			} 
-			$query->closeCursor(); 
+			}
+			$qry->closeCursor();
 			$boxtext= $boxtext.'
 		</select>	
 	</form>
@@ -69,9 +85,10 @@ if ($_GET['action']=="addiface")
 if ($_GET['action']=="editiface") //case for modify an existing user
 {
 	//get current iface
-	$query=$db->query("SELECT role_id FROM tassets_iface WHERE id=$db_iface");
-	$role_id=$query->fetch();
-	$query->closeCursor();
+	$qry=$db->prepare("SELECT `role_id` FROM `tassets_iface` WHERE id=:id");
+	$qry->execute(array('id' => $_GET['iface']));
+	$role_id=$qry->fetch();
+	$qry->closeCursor();
 	
 	$boxtitle='<img src=./images/plug.png /> '.T_('Modifier une interface IP');
 	$boxtext= '
@@ -79,11 +96,13 @@ if ($_GET['action']=="editiface") //case for modify an existing user
 		<input  name="editiface" type="hidden" value="1" />
 		<label for="role">'.T_("Rôle de l'interface").':</label><br />
 		<select id="role" name="role">';
-			$query = $db->query("SELECT * FROM `tassets_iface_role` WHERE disable=0 ORDER BY name ASC");
-			while ($row = $query->fetch()) {
+			$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_iface_role` WHERE disable='0' ORDER BY name ASC");
+			$qry->execute(array('id' => $_GET['id']));
+			while($row=$qry->fetch()) 
+			{
 				if ($row['id']==$role_id[0]) {$boxtext= $boxtext.'<option selected value="'.$row['id'].'">'.$row['name'].'</option>';} else {$boxtext= $boxtext.'<option value="'.$row['id'].'">'.$row['name'].'</option>';}
-			} 
-			$query->closeCursor(); 
+			}
+			$qry->closeCursor();
 			$boxtext= $boxtext.'
 		</select>	
 	</form>

@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 15/03/2011
-# @Update : 21/09/2018
-# @Version : 3.1.35
+# @Update : 24/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -257,7 +257,6 @@ if ($_GET['action']=="add")
 					));
 			} else {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').':</strong> '.T_('Type de fichier interdit').'.<br></div>';}
 		} else{
-			$db->exec("INSERT INTO `tassets_model` (type,manufacturer,name,ip,wifi,warranty) VALUES ('$_POST[type]','$_POST[manufacturer]',$_POST[model],'$_POST[ip]','$_POST[wifi]','$_POST[warranty]')");
 			$qry=$db->prepare("INSERT INTO `tassets_model` (`type`,`manufacturer`,`name`,`ip`,`wifi`,`warranty`) VALUES (:type,:manufacturer,:name,:ip,:wifi,:warranty)");
 			$qry->execute(array(
 				'type' => $_POST['type'],

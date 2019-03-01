@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 07/03/2010
-# @Update : 15/10/2018
-# @Version : 3.1.36
+# @Update : 21/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -373,6 +373,7 @@ if($_GET['state']=='') $_GET['state'] = '%';
 														<div class="space-4"></div>
 													</fieldset>
 												</form>
+												<br />
 											</div><!--/widget-main-->
 											';
 											if ($rparameters['user_register']==1)
@@ -404,9 +405,9 @@ if($_GET['state']=='') $_GET['state'] = '%';
 					</div><!--/.span-->
 				</div><!--/.row-fluid-->
 			</div>
-			<!-- DO NOT DELETE OR MODIFY THIS LINE LICENCE-->
-				<span style="position: absolute; bottom: 0; right: 0;"><a title="'.T_('Ouvre un nouvel onglet vers le site gestsup.fr').'" target="_blank" href="https://gestsup.fr">GestSup.fr</a></span>
-			<!-- DO NOT DELETE OR MODIFY THIS LINE LICENCE-->
+			<!-- DO NOT DELETE OR MODIFY THIS LINE THANKS -->
+				<span style="position: fixed; bottom: 0px; right: 0px;"><a title="'.T_('Ouvre un nouvel onglet vers le site gestsup.fr').'" target="_blank" href="https://gestsup.fr">GestSup.fr</a></span>
+			<!-- DO NOT DELETE OR MODIFY THIS LINE THANKS -->
 		</div><!--/.main-container-->
 		<script type="text/JavaScript">
 			document.getElementById("login").focus();

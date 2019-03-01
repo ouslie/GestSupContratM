@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 19/02/2018
-# @Update : 19/02/2018
-# @Version : 3.1.31
+# @Update : 18/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //init var
@@ -37,12 +37,12 @@ if($_POST['action']=='update_title')
 	$query->execute(array($title,$start,$end,$id));
 } elseif($_POST['action']=='delete_event')
 {
-	//data
-	$id=$_POST['id'];
 	//db delete
-	$query = "UPDATE tevents SET disable=1 WHERE id=:id";
-	$query = $db->prepare($query);
-	$query->execute(array(':id'=>$id));
+	{
+		$query = $db->prepare("DELETE FROM tevents WHERE id=:id");
+		$query->execute(array(':id'=>$_POST['id']));
+	}
+	
 } elseif($_POST['action']=='add_event')
 {
 	//data

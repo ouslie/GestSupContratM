@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 20/01/2011
-# @Update : 18/12/2017
-# @Version : 3.1.29
+# @Update : 24/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -95,7 +95,6 @@ if (!is_writable('./core/ticket.php') || !is_writable('./index.php') || !is_writ
 //update update channel parameter
 if($_POST['update_channel']) 
 {
-	$db->exec("UPDATE tparameters SET update_channel='$_POST[update_channel]'");
 	$qry=$db->prepare("UPDATE `tparameters` SET `update_channel`=:update_channel");
 	$qry->execute(array(
 		'update_channel' => $_POST['update_channel']
@@ -316,13 +315,13 @@ if ($dedicated==0)
 	echo'
 		<div class="profile-user-info profile-user-info-striped">
 			<div class="profile-info-row">
-				<div class="profile-info-name">'.T_('Version actuelle').': </div>
+				<div class="profile-info-name">'.T_('Version actuelle').':</div>
 				<div class="profile-info-value">
 					<span id="username">'.$rparameters['version'].' <span style="font-size: x-small;">'.$current_version_name.'</span></span>
 				</div>
 			</div>
 			<div class="profile-info-row">
-				<div class="profile-info-name"> '.T_('Canal').': </div>
+				<div class="profile-info-name"> '.T_('Canal').' : </div>
 				<div class="profile-info-value">
 					<span id="username">
 						<form method="POST" name="form">
@@ -335,7 +334,7 @@ if ($dedicated==0)
 				</div>
 			</div>
 			<div class="profile-info-row">
-				<div class="profile-info-name"> '.T_('Serveur de MAJ').': </div>
+				<div class="profile-info-name"> '.T_('Serveur MAJ').' : </div>
 				<div class="profile-info-value">
 					<span id="username">'.$serverstate.'</span>
 				</div>
@@ -521,13 +520,13 @@ if ($dedicated==0)
 		echo'
 			<div class="profile-user-info profile-user-info-striped">
 				<div class="profile-info-row">
-					<div class="profile-info-name">'.T_('Version actuelle').': </div>
+					<div class="profile-info-name">'.T_('Version actuelle').' : </div>
 					<div class="profile-info-value">
 						<span id="username">'.$rparameters['version'].' <span style="font-size: x-small;">'.$current_version_name.'</span></span>
 					</div>
 				</div>
 				<div class="profile-info-row">
-					<div class="profile-info-name"> '.T_('Serveur de MAJ').': </div>
+					<div class="profile-info-name"> '.T_('Serveur de MAJ').' : </div>
 					<div class="profile-info-value">
 						<span id="username">'.$serverstate.'</span>
 					</div>

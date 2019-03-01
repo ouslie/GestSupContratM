@@ -5,9 +5,9 @@
 # @Call : auto mail
 # @Parameters : token
 # @Author : Flox
-# @Version : 3.1.36
+# @Version : 3.1.37
 # @Create : 22/04/2017
-# @Update : 26/10/2018
+# @Update : 21/12/2018
 ################################################################################
 
 //initialize variables 
@@ -182,10 +182,10 @@ if($_POST['validation'] && !$error && $ticket_id)
 		<link rel="shortcut icon" type="image/png" href="./images/favicon_survey.png" />
 		<meta name="description" content="gestsup" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link href="./template/assets/css/bootstrap.min.css" rel="stylesheet" />
+		<link href="./components/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
 		<link rel="stylesheet" href="./template/assets/css/font-awesome.min.css" />
 		<link rel="stylesheet" href="./template/assets/css/ace-fonts.css" />
-		<link rel="stylesheet" href="./template/assets/css/jquery-ui-1.10.3.full.min.css" />
+		<link rel="stylesheet" href="./components/jquery-ui/jquery-ui.min.css" />
 		<link rel="stylesheet" href="./template/assets/css/ace.min.css" />
 		<link rel="stylesheet" href="./template/assets/css/ace-rtl.min.css" />
 		<link rel="stylesheet" href="./template/assets/css/ace-skins.min.css" />

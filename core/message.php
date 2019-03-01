@@ -6,8 +6,8 @@
 # @parameters : $from, $to, $message, $object
 # @Author : Flox
 # @Create : 21/11/2012
-# @Update : 15/10/2018
-# @Version : 3.1.36 p1
+# @Update : 11/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //functions
@@ -33,10 +33,12 @@ if ($rparameters['mail_port']!=25) {$mail->Port = $rparameters['mail_port'];}
 $mail->Username = "$rparameters[mail_username]";
 if(preg_match('/gs_en/',$rparameters['mail_password'])) {$rparameters['mail_password']=gs_crypt($rparameters['mail_password'], 'd' , $rparameters['server_private_key']);}
 $mail->Password = "$rparameters[mail_password]";
-$mail->IsHTML(true); // Envoi en html
+$mail->IsHTML(true); 
+$mail->Timeout = 30;
 $mail->From = "$from";
 $mail->FromName = "$from";
-//multiadr case
+
+//multi adrress case
 if(preg_match('#;#',$to))
 {
 	$to=explode(';',$to);

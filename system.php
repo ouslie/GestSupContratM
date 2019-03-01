@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 10/11/2013
-# @Update : 26/10/2018
-# @Version : 3.1.36
+# @Update : 21/11/2018
+# @Version : 3.1.37 p1
 ################################################################################
 
 //initialize variables 
@@ -89,6 +89,7 @@ if(!isset($ftp)) $ftp = '';
 if(!isset($xml)) $xml = '';
 if(!isset($curl)) $curl = '';
 if(!isset($php_error)) $php_error = '';
+if(!isset($php_warning)) $php_warning = '';
 
 //SQL db connect
 if ($_GET['page']!='admin') {require('../connect.php');}
@@ -148,6 +149,11 @@ if ($_GET['page']!='admin')
 	$wol = file_get_contents('../components/wol/VERSION');
 	$mysqldumpphp = file_get_contents('../components/mysqldump-php/VERSION');
 	$fullcalendar = file_get_contents('../components/fullcalendar/VERSION');
+	$jquery = file_get_contents('../components/jquery/VERSION');
+	$jquery_ui = file_get_contents('../components/jquery-ui/VERSION');
+	$bootstrap = file_get_contents('../components/bootstrap/VERSION');
+	$datetimepicker = file_get_contents('../components/datetimepicker/VERSION');
+	$moment = file_get_contents('../components/moment/VERSION');
 } else {
 	$phpmailer = file_get_contents('./components/PHPMailer/VERSION');
 	$phpgettext = file_get_contents('./components/php-gettext/VERSION');
@@ -156,6 +162,11 @@ if ($_GET['page']!='admin')
 	$wol = file_get_contents('./components/wol/VERSION');	
 	$mysqldumpphp = file_get_contents('./components/mysqldump-php/VERSION');	
 	$fullcalendar = file_get_contents('./components/fullcalendar/VERSION');	
+	$jquery = file_get_contents('./components/jquery/VERSION');	
+	$jquery_ui = file_get_contents('./components/jquery-ui/VERSION');
+	$bootstrap = file_get_contents('./components/bootstrap/VERSION');	
+	$datetimepicker = file_get_contents('./components/datetimepicker/VERSION');	
+	$moment = file_get_contents('./components/moment/VERSION');	
 }
 
 //check php version
@@ -163,7 +174,10 @@ $phpversion=phpversion();
 $phpversion=explode(".",$phpversion);
 if(($phpversion[0]<5) || ($phpversion[0]==5 && $phpversion[1]<6))
 {
-	$php_error=T_("Votre version de PHP est incompatible avec l'application mettre à jour en version 5.6 minimum");
+	$php_error=T_("(Votre version de PHP est incompatible avec l'application mettre à jour en version 5.6 minimum)");
+}elseif($phpversion[0]==5 && $phpversion[1]>=6)
+{
+	$php_warning=T_("(Votre version de PHP est compatible, mais obsolète, merci d'installer une version 7.)");
 }
 
 //get php session max lifetime parameter
@@ -189,8 +203,12 @@ $db_size=formatfilesize($db_size);
 			<span id="username">
 				&nbsp;&nbsp;&nbsp;&nbsp;<img src="./images/<?php echo $os; ?>.png" style="border-style: none" alt="img" /> <?php echo "<b>OS :</b> {$phpinfo['phpinfo']['System']}<br />"; ?>
 				&nbsp;&nbsp;&nbsp;&nbsp;<img src="./images/apache.png" style="border-style: none" alt="img" /> <b>Apache :</b> <?php echo $apache_version ; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<img src="./images/<?php echo $rdb_name.'.png'; ?>" style="border-style: none" alt="img" /> <?php echo '<b>'.$rdb_name.':</b> '.$rdb_version.' ('.T_('base').' : '.$db_name.' '.$db_size.')<br />'; ?>
-				&nbsp;&nbsp;&nbsp;&nbsp;<?php if($php_error) {echo '<i class="icon-remove-sign icon-large red"></i> <b>PHP :</b> '.phpversion().' '.$php_error;} else {echo '<img src="./images/php.png" style="border-style: none" alt="img" /> <b>PHP:</b> '.phpversion();} ?>  <br />
+				&nbsp;&nbsp;&nbsp;&nbsp;<img src="./images/<?php echo $rdb_name.'.png'; ?>" style="border-style: none" alt="img" /> <?php echo '<b>'.$rdb_name.' :</b> '.$rdb_version.' ('.T_('base').' : '.$db_name.' '.$db_size.')<br />'; ?>
+				&nbsp;&nbsp;&nbsp;&nbsp;
+				<?php 
+				if($php_error) {echo '<i class="icon-remove-sign icon-large red"></i> <b>PHP :</b> '.phpversion().' '.$php_error;}
+				elseif($php_warning)  {echo '<i class="icon-warning-sign icon-large orange"></i> <b>PHP :</b> '.phpversion().' '.$php_warning;}
+				else {echo '<img src="./images/php.png" style="border-style: none" alt="img" /> <b>PHP :</b> '.phpversion();} ?>  <br />
 				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-ticket icon-large"></i> <b><?php echo T_('GestSup'); ?> :</b> <?php echo $rparameters['version']; ?><br />
 				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-time icon-large"></i> <b><?php echo T_('Horloge'); ?> :</b> <?php echo date('Y-m-d H:i:s'); ?><br />
 				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-key icon-large"></i> <b><?php echo T_('Clé privée'); ?> :</b> <?php echo $rparameters['server_private_key']; ?> <i><?php echo T_("(Clé à ne pas divulguer)"); ?></i>
@@ -218,6 +236,11 @@ $db_size=formatfilesize($db_size);
 				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>Highcharts :</b> <?php echo $highcharts; ?><br />
 				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>WOL :</b> <?php echo $wol; ?><br />
 				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>FullCalendar :</b> <?php echo $fullcalendar; ?><br />
+				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>jQuery :</b> <?php echo $jquery; ?><br />
+				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>jQuery-ui :</b> <?php echo $jquery_ui; ?><br />
+				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>Bootstrap :</b> <?php echo $bootstrap; ?><br />
+				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>DateTimePicker :</b> <?php echo $datetimepicker; ?><br />
+				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>Moment :</b> <?php echo $moment; ?><br />
 			</span>
 		</div>
 	</div>

@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 17/07/2009
-# @Update : 17/10/2018
-# @Version : 3.1.36
+# @Update : 28/12/2018
+# @Version : 3.1.37 p1
 ################################################################################
 
 //initialize variables 
@@ -529,9 +529,22 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 		if ($_POST['checkbox'.$row['id']]!='') 
 		{
 			//change state
-			if($_POST['selectrow']=="delete")
+			if($_POST['selectrow']=="delete" && $rright['ticket_delete']!=0 && $row['id'])
 			{
-				$db->exec("UPDATE tincidents SET disable='1' WHERE id LIKE '$row[id]'");
+				$qry=$db->prepare("DELETE FROM `tincidents` WHERE id=:id"); //delete ticket
+				$qry->execute(array('id' => $row['id']));
+				$qry=$db->prepare("DELETE FROM `tevents` WHERE incident=:incident"); //delete associate events
+				$qry->execute(array('incident' => $row['id']));
+				$qry=$db->prepare("DELETE FROM `tthreads` WHERE ticket=:ticket"); //delete threads
+				$qry->execute(array('ticket' => $row['id']));
+				$qry=$db->prepare("DELETE FROM `tmails` WHERE incident=:incident"); //delete mails
+				$qry->execute(array('incident' => $row['id']));
+				$qry=$db->prepare("DELETE FROM `tsurvey_answers` WHERE ticket_id=:ticket_id"); //delete survey
+				$qry->execute(array('ticket_id' => $row['id']));
+				$qry=$db->prepare("DELETE FROM `ttemplates` WHERE incident=:incident"); //delete template
+				$qry->execute(array('incident' => $row['id']));
+				$qry=$db->prepare("DELETE FROM `ttoken` WHERE ticket_id=:ticket_id"); //delete token
+				$qry->execute(array('ticket_id' => $row['id']));
 				echo '<div class="alert alert-block alert-success"><i class="icon-remove"></i> '.T_('Ticket').' '.$row['id'].' '.T_('supprimé').'.</div>';
 			} else {			
 				$db->exec("UPDATE tincidents SET state='$_POST[selectrow]' WHERE id LIKE '$row[id]'");
@@ -671,9 +684,9 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 			'.T_('Tickets modifiés du').'
 			</span>
 			<form style="display: inline-block;" class="form-horizontal" name="period" id="period" method="post" action="./index.php?page=dashboard&userid='.$_GET['userid'].'&state=%25&view=activity&date_range=1" onsubmit="loadVal();" >
-				<input type="text" size="10" name="date_start" id="date_start" value="'.$date_start.'" onchange="submit();" >
+				<input data-provide="datepicker" type="text" autocomplete="off" size="10" name="date_start" id="date_start" value="'.$date_start.'" onchange="submit();" >
 				'.T_('au').'
-				<input type="text" size="10" name="date_end" id="date_end" value="'.$date_end.'" onchange="submit();" >
+				<input data-provide="datepicker" type="text" autocomplete="off" size="10" name="date_end" id="date_end" value="'.$date_end.'" onchange="submit();" >
 			</form>
 			';
 		}
@@ -1971,8 +1984,15 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 	if ($rright['task_checkbox']!=0 && $resultcount[0]>0)
 	{
 		echo '
+			<script>
+				function choice1(select) {
+					if(select.options[select.selectedIndex].value=="delete") {
+						alert(\''.T_('Êtes-vous sur de vouloir supprimer ces tickets ?').'\');
+					}
+				}
+			</script>
 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp	<i class="icon-level-down icon-rotate-180 icon-2x"></i>&nbsp&nbsp&nbsp
-			<select title="'.T_('Effectue des actions pour les tickets sélectionnés dans la liste des tickets').'." name="selectrow" onchange="submit()">
+			<select title="'.T_('Effectue des actions pour les tickets sélectionnés dans la liste des tickets').'." name="selectrow" onchange="submit(); choice1(this)">
 				<option value="selectall"> > '.T_('Sélectionner tout').'</option>
 				<option selected> > '.T_('Pour la selection').':</option>
 				';
@@ -2073,46 +2093,23 @@ if ($rparameters['notify']==1 && ($_SESSION['profile_id']==4 || $_SESSION['profi
 if($_GET['view']=='activity')
 {
 	include ('./wysiwyg.php'); 
-	echo '
-	<!-- date picker script -->
-	<script type="text/javascript">
-		window.jQuery || document.write("<script src=\'assets/js/jquery-2.0.3.min.js\'>"+"<"+"/script>");
+	//datepicker
+	echo '<script src="./components/datepicker/js/bootstrap-datepicker.min.js" charset="UTF-8"></script>';
+	if($ruser['language']=='fr_FR') {echo '<script src="./components/datepicker/locales/bootstrap-datepicker.fr.min.js" charset="UTF-8"></script>'; $lang='fr';} 
+	if($ruser['language']=='de_DE') {echo '<script src="./components/datepicker/locales/bootstrap-datepicker.de.min.js" charset="UTF-8"></script>'; $lang='de';} 
+	if($ruser['language']=='es_ES') {echo '<script src="./components/datepicker/locales/bootstrap-datepicker.es.min.js" charset="UTF-8"></script>'; $lang='es';} 
+	if($ruser['language']=='en_US') {$lang='en';}
+	echo "
+	<script type=\"text/javascript\">
+		$('#date_start').datepicker({
+			format: 'dd/mm/yyyy',
+			language: '$lang'
+		});
+		$('#date_end').datepicker({
+			format: 'dd/mm/yyyy',
+			language: '$lang'
+		});
 	</script>
-		<script src="template/assets/js/date-time/bootstrap-timepicker.min.js"></script>
-	<script type="text/javascript">
-	jQuery(function($) {
-
-				$.datepicker.setDefaults( $.datepicker.regional["fr"] );
-				jQuery(function($){
-				   $.datepicker.regional["fr"] = {
-					  closeText: "Fermer",
-					  prevText: "'.T_('<Préc').'",
-					  nextText: "'.T_('Suiv>').'",
-					  currentText: "Courant",
-					  monthNames: ["'.T_('Janvier').'","'.T_('Février').'","'.T_('Mars').'","'.T_('Avril').'","'.T_('Mai').'","'.T_('Juin').'","'.T_('Juillet').'","'.T_('Août').'","'.T_('Septembre').'","'.T_('Octobre').'","'.T_('Novembre').'","'.T_('Décembre').'"],
-					  monthNamesShort: ["Jan","Fév","Mar","Avr","Mai","Jun",
-					  "Jul","Aoû","Sep","Oct","Nov","Déc"],
-					  dayNames: ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"],
-					  dayNamesShort: ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"],
-					  dayNamesMin: ["'.T_('Di').'","'.T_('Lu').'","'.T_('Ma').'","'.T_('Me').'","'.T_('Je').'","'.T_('Ve').'","'.T_('Sa').'"],
-					  weekHeader: "Sm",
-					  dateFormat: "dd/mm/yy",
-					  timeFormat:  "hh:mm:ss",
-					  firstDay: 1,
-					  isRTL: false,
-					  showMonthAfterYear: false,
-					  yearSuffix: ""};
-				   $.datepicker.setDefaults($.datepicker.regional["fr"]);
-					});
-		
-			$( "#date_start" ).datepicker({ 
-				dateFormat: \'dd/mm/yy\'
-			});
-			$( "#date_end" ).datepicker({ 
-				dateFormat: \'dd/mm/yy\'
-			});
-		});		
-	</script>	
-	';
+	";
 }
 ?>	

@@ -4,9 +4,9 @@
 # @Description : create gestsup user
 # @Call : /index.php
 # @Author : Flox
-# @Version : 3.1.29
+# @Version : 3.1.37
 # @Create : 20/03/2014
-# @Update : 18/12/2017
+# @Update : 21/12/2018
 ################################################################################
 
 //init language
@@ -117,7 +117,7 @@ if ($rparameters['user_register']==1)
 		<meta name="description" content="gestsup" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<!-- basic styles -->
-		<link href="./template/assets/css/bootstrap.min.css" rel="stylesheet" />
+		<link href="./components/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
 		<link rel="stylesheet" href="./template/assets/css/font-awesome.min.css" />
 		<!--[if IE 7]>
 		  <link rel="stylesheet" href="./template/assets/css/font-awesome-ie7.min.css" />
@@ -125,7 +125,7 @@ if ($rparameters['user_register']==1)
 		<!-- page specific plugin styles -->
 		<!-- fonts -->
 		<link rel="stylesheet" href="./template/assets/css/ace-fonts.css" />
-		<link rel="stylesheet" href="./template/assets/css/jquery-ui-1.10.3.full.min.css" />
+		<link rel="stylesheet" href="./template/components/jquery-ui/jquery-ui.min.css" />
 		<!-- ace styles -->
 		<link rel="stylesheet" href="./template/assets/css/ace.min.css" />
 		<link rel="stylesheet" href="./template/assets/css/ace-rtl.min.css" />

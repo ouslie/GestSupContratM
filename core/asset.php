@@ -5,8 +5,8 @@
 # @call : ./asset.php
 # @Author : Flox
 # @Create : 28/10/2013
-# @Update : 21/08/2018
-# @Version : 3.1.35
+# @Update : 03/01/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variable
@@ -101,7 +101,7 @@ if($_GET['action']=='new')
 }
 
 //action delete asset
-if (($_GET['action']=="delete") && ($rright['asset_delete']!=0))
+if (($_GET['action']=="delete") && ($rright['asset_delete']!=0) && $_GET['id'])
 {
 	//disable asset
 	$qry=$db->prepare("UPDATE `tassets` SET `disable`=:disable WHERE `id`=:id");

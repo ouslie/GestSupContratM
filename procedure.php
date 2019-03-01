@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 03/09/2013
-# @Update : 11/10/2018
-# @Version : 3.1.36 p1
+# @Update : 05/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -23,8 +23,6 @@ if(!isset($_POST['category'])) $_POST['category'] = '';
 if(!isset($_GET['procedure'])) $_GET['procedure'] = '';
 if(!isset($_GET['edit'])) $_GET['edit'] = '';
 if(!isset($_GET['delete_file'])) $_GET['delete_file'] = '';
-
-$db_id=strip_tags($db->quote($_GET['id']));
 
 //delete procedure
 if ($_GET['action']=='delete' && $rright['procedure_delete']!=0)
@@ -167,14 +165,14 @@ if ($_GET['action']=='add' && $rright['procedure_add']!=0)
 		<fieldset>
 			<div class="col-xs-12">
 				<form method="POST" enctype="multipart/form-data" name="myform" id="myform" action="" onsubmit="loadVal();" >
-					<label for="name">'.T_('Nom de la procédure').':</label>
+					<label for="name">'.T_('Nom de la procédure').' :</label>
 					<input name="name" size="50px" type="text" value="'; echo $_POST['name']; echo '">
 					<br />
 					<br />';
 					if($rright['procedure_company']!=0)
 					{
 						echo '
-						<label for="company">'.T_('Société').':</label>
+						<label for="company">'.T_('Société').' :</label>
 						<select name="company">
 							';
 							$qry2=$db->prepare("SELECT `id`,`name` FROM `tcompany` WHERE `disable`=:disable ORDER BY name");
@@ -199,7 +197,7 @@ if ($_GET['action']=='add' && $rright['procedure_add']!=0)
 						';
 					}
 					echo '
-					<label for="category">'.T_('Catégorie').':</label>
+					<label for="category">'.T_('Catégorie').' :</label>
 					<select name="category" onchange="submit();">
 					    ';
 						$qry2=$db->prepare("SELECT `id`,`name` FROM `tcategory` ORDER BY `name`");
@@ -220,7 +218,7 @@ if ($_GET['action']=='add' && $rright['procedure_add']!=0)
 					</select>
 					<br />
 					<br />
-					<label for="subcat">'.T_('Sous-catégorie').':</label>
+					<label for="subcat">'.T_('Sous-catégorie').' :</label>
 					<select name="subcat">
 					   ';
 						if($_POST['category'])
@@ -249,7 +247,7 @@ if ($_GET['action']=='add' && $rright['procedure_add']!=0)
 					    echo '
 					</select>
 					<br /><br />
-					<label for="procedure_file">'.T_('Joindre un fichier').':</label>
+					<label for="procedure_file">'.T_('Joindre un fichier').' :</label>
 					<input name="procedure_file"  type="file" style="display:inline" />
 					<br /><br />
 					<div id="editor" class="wysiwyg-editor"></div>
@@ -404,7 +402,7 @@ elseif ($_GET['action']=='edit')
 			<fieldset>
 				<div class="col-xs-12">
 					<form method="POST" enctype="multipart/form-data" name="myform" id="myform" action="" onsubmit="loadVal();" >
-						<label for="name">'.T_('Nom de la procédure').':</label>
+						<label for="name">'.T_('Nom de la procédure').' :</label>
 						<input name="name" size="50px" type="text" value="'.$row['name'].'" '; if ($rright['procedure_modify']==0) {echo 'readonly="readonly"';} echo '>
 						<br />
 						<br />
@@ -412,7 +410,7 @@ elseif ($_GET['action']=='edit')
 						if($rright['procedure_company']!=0)
 						{
 							echo '
-							<label for="company">'.T_('Société').':</label>
+							<label for="company">'.T_('Société').' :</label>
 							<select name="company" onchange="">
 								';
 								$qry2=$db->prepare("SELECT `id`,`name` FROM `tcompany` WHERE disable=:disable ORDER BY `name`");
@@ -437,7 +435,7 @@ elseif ($_GET['action']=='edit')
 							';
 						}
 						echo '
-						<label for="category">'.T_('Catégorie').':</label>
+						<label for="category">'.T_('Catégorie').' :</label>
 						<select name="category" onchange="submit();" '; if ($rright['procedure_modify']==0) {echo 'disabled="disabled"';} echo '>
 							';
 							$qry2=$db->prepare("SELECT `id`,`name` FROM `tcategory` ORDER BY `name`");
@@ -458,7 +456,7 @@ elseif ($_GET['action']=='edit')
 						</select>
 						<br />
 						<br />
-						<label for="subcat">'.T_('Sous-catégorie').':</label>
+						<label for="subcat">'.T_('Sous-catégorie').' :</label>
 						<select name="subcat" '; if ($rright['procedure_modify']==0) {echo 'disabled="disabled"';} echo '>
 						   ';
 							if ($_POST['category'])
@@ -489,7 +487,7 @@ elseif ($_GET['action']=='edit')
 						';
 						if($rright['procedure_modify']!=0) {
 							echo '
-							<label for="procedure_file">'.T_('Joindre un fichier').':</label>
+							<label for="procedure_file">'.T_('Joindre un fichier').' :</label>
 							<input name="procedure_file"  type="file" style="display:inline" />
 							<br /><br />
 							';
@@ -515,7 +513,7 @@ elseif ($_GET['action']=='edit')
 						}
 						echo '<br />';
 						if ($rright['procedure_modify']==0) 
-						{echo '<label for="procedure">'.T_('Procédure').':</label><br /><br />'.$text;} 
+						{echo '<label for="procedure">'.T_('Procédure').' :</label><br /><br />'.$text;} 
 						else
 						{echo '<div id="editor" class="wysiwyg-editor">'.$text.'</div>';}
 						echo '
@@ -560,8 +558,8 @@ elseif ($_GET['action']=='edit')
 		$company=T_(' de la société ').$company['name'];
 		
 		//count procedure
-		$qry=$db->prepare("SELECT COUNT(*) FROM `tprocedures` WHERE company_id=:company_id AND disable=:disable");
-		$qry->execute(array('company_id' => $ruser['company'],'disable' => 0));
+		$qry=$db->prepare("SELECT COUNT(*) FROM `tprocedures` WHERE company_id=:company_id AND disable=0");
+		$qry->execute(array('company_id' => $ruser['company']));
 		$row=$qry->fetch();
 		$qry->closeCursor();
 	} else {
@@ -605,8 +603,8 @@ elseif ($_GET['action']=='edit')
 						$masterquery = $db->prepare("SELECT * FROM `tprocedures` WHERE `company_id`=:company_id AND `disable`='0' ORDER BY `category`,`subcat` ASC");
 						$masterquery->execute(array('company_id' => $ruser['company']));
 					} else {
-						$masterquery = $db->prepare("SELECT * FROM `tprocedures` WHERE `disable`=:disable ORDER BY `category`,`subcat` ASC");
-						$masterquery->execute(array('disable' => 0));
+						$masterquery = $db->prepare("SELECT * FROM `tprocedures` WHERE `disable`='0' ORDER BY `category`,`subcat` ASC");
+						$masterquery->execute();
 					}
 					while ($row=$masterquery->fetch())
 					{

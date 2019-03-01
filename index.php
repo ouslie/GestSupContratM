@@ -2,12 +2,12 @@
 ################################################################################
 # @Name : index.php
 # @Description : main page include all sub-pages
-# @call : 
-# @parameters : 
+# @Call : 
+# @Parameters : 
 # @Author : Flox
 # @Create : 07/03/2010
-# @Update : 18/10/2018
-# @Version : 3.1.36
+# @Update : 10/12/2018
+# @Version : 3.1.37 p4
 ################################################################################
 
 //cookies initialization
@@ -222,22 +222,22 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		
 		<!-- basic styles -->
-		<link href="./template/assets/css/bootstrap.min.css" rel="stylesheet" />
+		<link rel="stylesheet" href="./components/bootstrap/css/bootstrap.min.css"  />
 		<link rel="stylesheet" href="./template/assets/css/font-awesome.min.css" />
 		
 		<link rel="stylesheet" href="./template/assets/css/ace-fonts.css" />
-		<link rel="stylesheet" href="./template/assets/css/jquery-ui-1.10.3.full.min.css" />
+		<link rel="stylesheet" href="./components/jquery-ui/jquery-ui.min.css" />
 		
 		<?php 
 		//add special css for selected page
-		if (($_GET['page']=='ticket') || ($_GET['page']=='asset')) 
+		if (($_GET['page']=='ticket') || ($_GET['page']=='asset') || ($_GET['page']=='dashboard' && $_GET['view']=='activity')) 
 		{
 			echo '
 			<!-- chosen styles -->
 			<link rel="stylesheet" href="./template/assets/css/chosen.min.css" />
 			
-			<!-- timepicker styles -->
-			<link rel="stylesheet" href="template/assets/css/bootstrap-timepicker.css" />
+			<!-- datetimepicker styles -->
+			<link rel="stylesheet" href="./components/datetimepicker/build/css/bootstrap-datetimepicker.min.css" />
 			';
 		}
 		if($_GET['page']=='calendar')
@@ -255,7 +255,11 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 		<link rel="stylesheet" href="./template/assets/css/ace-rtl.min.css" />
 		<link rel="stylesheet" href="./template/assets/css/ace-skins.min.css" />
 		
+		<!-- ui scripts -->
 		<script src="./template/assets/js/ace-extra.min.js"></script>
+		<script type="text/javascript">
+			window.jQuery || document.write("<script src='./components/jquery/jquery.min.js'>"+"<"+"/script>");
+		</script>
 	</head>
 	<?php
 		//display navigation bar if user is connected
@@ -286,7 +290,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 			{$operator='AND'; $parenthese1=''; $parenthese2='';}
 			
 			//special case to limit ticket to services
-			if($rright['dashboard_service_only']!=0 && $rparameters['user_limit_service']==1) 
+			if($rright['dashboard_service_only']!=0 && $rparameters['user_limit_service']==1)
 			{
 				$where_service='';
 				$where_service_your='';
@@ -424,7 +428,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 					</script>
 
 					<div class="navbar-container" id="navbar-container">
-						<div class="navbar-header pull-left">
+						<div style="height:55px;" class="navbar-header pull-left">
 							<a href="./index.php?page=dashboard&userid='.$_GET['userid'].'&state='.$_GET['state'].'" class="navbar-brand">
 								<i class="icon-ticket" title="'.$rparameters['version'].'" ></i>
 								';
@@ -438,7 +442,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 								} else {$logo_size='';}
 								if (file_exists("./upload/logo/$rparameters[logo]"))
 								{
-									echo '&nbsp;<img style="border-style: none" '.$logo_size.' alt="logo" src="./upload/logo/'; if ($rparameters['logo']=='') echo 'logo.png'; else echo $rparameters['logo'];  echo '" />';
+									echo '&nbsp;<img style="display:inline; border-style: none" '.$logo_size.' alt="logo" src="./upload/logo/'; if ($rparameters['logo']=='') echo 'logo.png'; else echo $rparameters['logo'];  echo '" />';
 								}
 								echo '
 								<small>
@@ -598,7 +602,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 								</li>';
 								echo '
 								<li class="light-blue">
-									<a data-toggle="dropdown" href="#" class="dropdown-toggle">
+									<a data-toggle="dropdown" href="" class="dropdown-toggle">
 										<img class="nav-user-photo" src="./images/avatar/';
 											$query=$db->query("SELECT img FROM tprofiles WHERE level=$_SESSION[profile_id]");
 											$rprofile_img=$query->fetch();
@@ -758,9 +762,10 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 								//security check own ticket right
 								if(($_GET['page']=='ticket') && ($_GET['action']!='new')) 
 								{
-									$query=$db->query("SELECT user FROM tincidents WHERE id='$_GET[id]'");
-									$rticket=$query->fetch();
-									$query->closeCursor(); 
+									$qry=$db->prepare("SELECT `user` FROM `tincidents` WHERE id=:id");
+									$qry->execute(array('id' => $_GET['id']));
+									$rticket=$qry->fetch();
+									$qry->closeCursor();
 								} else $rticket[0]=$_SESSION['user_id'];
 								
 								//ACL security check for page
@@ -889,6 +894,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 									elseif (preg_match( '/^admin.*/', $_GET['page']) && $_GET['page']!='admin/user' && $rright['admin']==0 && $rright['admin_lists']==0 && $rright['admin_groups']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Vous n'avez pas les droits d'accès à l'administration du logiciel, contacter votre administrateur").'<br></div>';}
 									elseif (preg_match( '/^stat.*/', $_GET['page']) && $rright['stat']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès aux statistiques du logiciel, contacter votre administrateur').'.<br></div>';}
 									elseif (preg_match( '/^core.*/', $_GET['page']) && $rright['admin']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès à cette page, contacter votre administrateur').'.<br></div>';}
+									elseif ($_GET['page']=='dashboard' && $_GET['userid']=='%' && $rright['side_all']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès à la liste de tous les tickets, contacter votre administrateur').'.<br></div>';}
 									elseif ($_GET['page']=='plugins/availability/index' && $rright['availability']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès au module de disponibilité, contacter votre administrateur').'.<br></div>';}
 									elseif ($_GET['page']=='ticket' && $rright['dashboard_service_only']!=0 && $_GET['id'] && $rparameters['user_limit_service']==1 && $cnt_agency==0) //case to user profil super try to open another ticket of another service
 									{
@@ -992,16 +998,11 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 		//close database access
 		$db = null;
 		?>
-
-		<script type="text/javascript">
-			window.jQuery || document.write("<script src='./template/assets/js/jquery-2.0.3.min.js'>"+"<"+"/script>");
-		</script>
-
-		<script src="./template/assets/js/bootstrap.min.js"></script>
+		<script src="./components/bootstrap/js/bootstrap.min.js"></script>
 		<script src="./template/assets/js/typeahead-bs2.min.js"></script>
 		
 		<!-- Modalbox -->
-		<script src="./template/assets/js/jquery-ui-1.10.3.full.min.js"></script>
+		<script src="./components/jquery-ui/jquery-ui.min.js"></script>
 		<script src="./template/assets/js/jquery.ui.touch-punch.min.js"></script>
 		
 		<?php

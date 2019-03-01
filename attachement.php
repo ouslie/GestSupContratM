@@ -7,7 +7,7 @@
 # @Author : Flox
 # @Create : 06/03/2013
 # @Update : 25/04/2018
-# @Version : 3.1.32
+# @Version : 3.1.37 p2
 ################################################################################
 
 //initialize variables 
@@ -28,7 +28,7 @@ if ($db_delimg)
 	$row=$query->fetch();
 	$query->closeCursor();
 
-	if($_GET['id'] && $row['filename'])	{unlink('./upload/'.$_GET['id'].'/'.$row['filename']);} 
+	if($_GET['id'] && $row['filename'])	{if(file_exists('./upload/'.$_GET['id'].'/'.$row['filename'])) {unlink('./upload/'.$_GET['id'].'/'.$row['filename']);}} 
 	$db->exec("UPDATE `tincidents` SET $db_delimg='' WHERE `id`=$globalrow[id];");
 	
 	//redirection vers la page d'accueil

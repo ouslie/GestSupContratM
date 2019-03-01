@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 06/10/2012
-# @Update : 13/09/2017
-# @Version : 3.1.26
+# @Update : 05/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //customize label for graph selected
@@ -17,19 +17,19 @@ if($_GET['tab']=='asset')
 	$label_state1=T_('installés');
 	$label_state2=T_('recyclés');
 	$label_state3='';
-	$subtitle='<u>'.T_('Total').' '.$label_state1.':</u> '.$count.' / <u>'.T_('Total').' '.$label_state2.':</u> '.$count2.'  / <u>'.T_('Total depuis le début').':</u> '.$count4;
+	$subtitle='<u>'.T_('Total').' '.$label_state1.' :</u> '.$count.' / <u>'.T_('Total').' '.$label_state2.' :</u> '.$count2.'  / <u>'.T_('Total depuis le début').' :</u> '.$count4;
 } elseif ($container=='container1') {
 	$label_type='';
 	$label_state1=T_('Tickets avancés *');
 	$label_state2=T_('Tickets ouverts');
 	$label_state3=T_('Tickets fermés');
-	$subtitle='<u>'.$label_state2.':</u> '.$count.' / <u>'.$label_state3.':</u> '.$count2.'  / <u> '.$label_state1.':</u> '.$count3.' / <u>'.T_('Total depuis le début').':</u> '.$count4;
+	$subtitle='<u>'.$label_state2.' :</u> '.$count.' / <u>'.$label_state3.' :</u> '.$count2.'  / <u> '.$label_state1.' :</u> '.$count3.' / <u>'.T_('Total depuis le début').' :</u> '.$count4;
 } elseif ($container=='container9') {
 	$label_type=T_('Élément de <br />résolutions');
 	$label_state1='';
 	$label_state2='';
 	$label_state3='';
-	$current='/ <u>'.T_('Total en cours').':</u> '.$count3;
+	$current='/ <u>'.T_('Total en cours').' :</u> '.$count3;
 	$subtitle='';
 } else {
 	$label_type='';

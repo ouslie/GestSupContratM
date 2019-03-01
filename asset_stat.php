@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 25/01/2016
-# @Update : 26/10/2018
-# @Version : 3.1.36
+# @Update : 05/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -17,7 +17,7 @@ if(!isset($_POST['model'])) $_POST['model']='';
 
 <form method="post" action="" name="filter" >
 	<center>
-	<small><?php echo T_('Filtre global'); ?>:</small>
+	<small><?php echo T_('Filtre global'); ?> :</small>
 	<select style="width:155px" name="tech" onchange=submit()>
 		<?php
 		$query = $db->query("SELECT * FROM tusers WHERE (profile=0 OR profile=4) and disable=0 ORDER BY lastname");				

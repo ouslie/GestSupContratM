@@ -1,6 +1,44 @@
 <meta charset="UTF-8" />
 #################################<br />
 # @Name : GestSup Release Notes  <br />
+# @Date : 07/01/2019             <br />
+# @Version : 3.1.37     	 	 <br />
+#################################<br />
+<br />
+
+<u>Update:</u><br />
+- Paramètres : Ajout du fuseau horaire America/Guadeloupe (./admin/parameters.php)<br />
+- Composant : Mise à jour PHPMailer en version 6.0.6 (./components/PHPMailer/*)<br />
+- Composant : Highcharts 7.0.1 (./components/Highcharts/*)<br />
+- Composant : PHPmysqldump 2.6 (./components/PHPmysqldump/*)<br />
+- Composant : Bootstrap 3.3.7(./components/bootstrap/*)<br />
+- Composant : Jquery 3.3.1 (./components/jquery/*)<br />
+- Composant : jQuery-ui 1.12.1 (./components/jquery-ui/*)<br />
+- Composant : TimePicker 0.5.2 (./components/timepicker/*)<br />
+- Composant : DatepPicker 1.8.0 (./components/datepicker/*)<br />
+- Mail : Timeout forcé à 30s en cas d'erreur de connexion au serveur de messagerie (./core/mail.php)<br />
+- Mail automatique : Avec le paramètre "Au technicien lors de l'attribution d'un ticket à un technicien" le mail est émit également lors de d'un changement de technicien (./core/auto_mail.php)<br />
+- Calendrier : Les rappels reste affichés dans le calendrier après accréditation (./core/calendar.php)<br />
+- Connecteur SMTP : Améliorations de la prise en charge des erreurs de communication avec les serveurs de messageries. (./core/mail.php)<br /> 
+- Liste des tickets : Fenêtre de confirmation lors de la suppression des tickets sélectionnés  (./dashboard.php)<br /> 
+<br />
+<br />
+<u>Bugfix:</u><br />
+- Connecteur LDAP : Erreur de synchronisation avec les UO possédant des accents (./core/ldap.php)<br /> 
+- Connecteur LDAP : Erreur de synchronisation avec des utilisateurs à désactiver possédant des accents dans leurs logins (./core/ldap.php)<br /> 
+- Connecteur SMTP : Dans certains cas l'émission de plusieurs mails pouvaient simultanée être bloqué. (./core/messages.php)<br /> 
+- Ticket : Lors de l'insertion d'image dans le champs description certaines images pouvaient être tronqués (./ticket.php)<br /> 
+- Ticket : Perte du groupe de technicien lors de l'ajout d'un élément de résolution par utilisateur (./ticket.php)<br /> 
+- Ticket : Sur les date l'outil de sélection prend en compte la langue de l'utilisateur (./ticket.php)<br /> 
+- Procédure : Erreur de requête SQL (./procedure.php)<br /> 
+- Paramètre : Le nombre ligne maximum ne peut plus être définit à 0. (./admin/parameters.php)<br /> 
+- Droit : Erreur de détection du droit "side_all" sur certains profils. (./index.php)<br /> 
+- Calendrier : Conservation de l'affichage des rappel après accréditation. (./calendar.php)<br /> 
+- Ticket : Erreur sur l'ajout d'un rappel, lorsque le ticket possède un accent dans son titre. (./event.php)<br /> 
+
+<br />
+#################################<br />
+# @Name : GestSup Release Notes  <br />
 # @Date : 07/11/2018             <br />
 # @Version : 3.1.36     	 	 <br />
 #################################<br />
@@ -154,7 +192,7 @@
 - Menu: Erreur menu déroulant "Tous les tickets" depuis la page Calendrier (./index.php) <br />
 - Ticket: Erreur lors de la planification d'un ticket si ce dernier à un apostrophe dans le titre (./event.php) <br />
 - Ticket: Erreur du chargement de certaines pièces jointes possédant certains caractères spéciaux (./core/upload.php) <br />
-- Ticket: Erreur dans le fil de résolution lors de l'ouverture d'un ticket par le connecteur IMAP dans le nom de l'éxecutant (./thread.php)
+- Ticket: Erreur dans le fil de résolution lors de l'ouverture d'un ticket par le connecteur IMAP dans le nom de l'éxécutant (./thread.php)
 - Connecteur IMAP: Erreur d'affichage des tickets sur les mails possédant la balise "base" (./mail2ticket.php) <br />
 - Connecteur IMAP: Erreur d'envoi de mail automatique à l'utilisateur lors de l'utilisation en ligne de commande (./mail2ticket.php ./core/mail.php) <br />
 - Fonction Sondage: Le ticket passait en non lu pour le technicien lors de la clôture du sondage" (./survey.php) <br />
@@ -417,7 +455,7 @@
 - Ticket: Un nouveau droit permet d'afficher les techniciens sans les administrateurs dans la liste des techniciens cf "ticket_tech_admin" (./ticket.php) <br />
 - Ticket: Un nouveau droit permet d'afficher les superviseurs dans la liste des techniciens cf "ticket_tech_super" (./ticket.php) <br />
 - Ticket: Un nouveau paramètre permet de définir l'état par défaut des tickets (./ticket.php) <br />
-- Menu: lors de l'utilisation du menu de gauche réduit avec le thème bleu affichage de l'icône de creation d'un nouveau ticket (./manu.php) <br />
+- Menu: lors de l'utilisation du menu de gauche réduit avec le thème bleu affichage de l'icône de creation d'un nouveau ticket (./menu.php) <br />
 <br /><br />
 <u>Bugfix:</u><br />
 - Lien nouvel onglet: Dans certains les liens sur nouveaux onglets ne fonctionnaient pas (./*) <br />

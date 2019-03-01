@@ -5,8 +5,8 @@
 # @Call : ./core/ticket.php
 # @Parameters : ticket id 
 # @Author : Flox
-# @Update : 31/10/2018
-# @Version : 3.1.36
+# @Update : 21/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -56,7 +56,7 @@ if($mail_u_group['u_group']!=0)
 if($rparameters['debug']==1) {echo "<b>AUTO MAIL VAR:</b> SESSION[profile_id]=$_SESSION[profile_id] mail_auto_user_modify=$rparameters[mail_auto_user_modify] _POST[resolution]=$_POST[resolution] _POST[private]=$_POST[private] <br />";}
 
 //case send auto mail to tech when technician attribution
-if(($rparameters['mail_auto_tech_attribution']==1) && ($_POST['modify'] || $_POST['quit']) && $globalrow['technician']==0 && ($_POST['technician']!=0 || $t_group) && ($_POST['technician']!=$_SESSION['user_id']))
+if(($rparameters['mail_auto_tech_attribution']==1) && ($_POST['modify'] || $_POST['quit']) && ($globalrow['technician']!=$_POST['technician']) && ($_POST['technician']!=0 || $t_group) && ($_POST['technician']!=$_SESSION['user_id']))
 {
 	//debug
 	if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b>  FROM system TO tech  (Reason: mail_auto_tech_attribution ticket technician attribution is detected)<br> ";}

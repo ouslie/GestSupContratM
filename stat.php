@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 26/10/2018
-# @Version : 3.1.36
+# @Update : 21/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -67,7 +67,6 @@ $jour = array(1 => "1", 2=> "2", 3=> "3", 4=> "4", 5=> "5", 6=> "6", 7=> "7", 8=
 
 //call highcharts scripts
 echo'
-<script type="text/javascript" src="./template/assets/js/jquery-2.0.3.min.js"></script>
 <script src="components/Highcharts/highcharts.js"></script>
 <script src="components/Highcharts/modules/exporting.js"></script>
 ';

@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 18/04/2014
-# @Update : 16/05/2018
-# @Version : 3.1.33
+# @Update : 21/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -57,7 +57,6 @@ echo '
 
 </div>
 <div class="sidebar-shortcuts-large" id="sidebar-shortcuts-large"></div>
-<script type="text/javascript" src="./template/assets/js/jquery-2.0.3.min.js"></script>
 <script src="./components/Highcharts/highcharts.js"></script>
 <script src="./components/Highcharts/modules/exporting.js"></script>';
 echo '

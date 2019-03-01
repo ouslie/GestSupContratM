@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 27/11/2015
-# @Update : 06/09/2018
-# @Version : 3.1.35
+# @Update : 08/01/2019
+# @Version : 3.1.37 p2
 ################################################################################
 
 //initialize variables 
@@ -43,6 +43,7 @@ $db_id=strip_tags($db->quote($_GET['id']));
 include('./core/asset.php');
 
 //default values for new asset
+if(!isset($globalrow['id'])) $globalrow['id']= ''; 
 if(!isset($globalrow['sn_internal'])) $globalrow['sn_internal']= ''; 
 if(!isset($globalrow['sn_manufacturer'])) $globalrow['sn_manufacturer']= ''; 
 if(!isset($globalrow['type'])) $globalrow['type']= ''; 
@@ -225,7 +226,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 							<div class="col-sm-8">
 								<!-- START sn_internal part -->
 								<div class="form-group">
-									<label class="col-sm-4 control-label no-padding-right" for="sn_internal"><?php echo T_('Numéro'); ?>:</label>
+									<label class="col-sm-4 control-label no-padding-right" for="sn_internal"><?php echo T_('Numéro'); ?> :</label>
 									<div class="col-sm-6">
 										<input  name="sn_internal" id="sn_internal" type="text" size="25"  value="<?php if ($_POST['sn_internal']) echo $_POST['sn_internal']; else echo $globalrow['sn_internal']; ?>"  />
 									</div>
@@ -236,7 +237,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								<div class="form-group ">
 									<label class="col-sm-4 control-label no-padding-right" for="type">
 										<?php if(($globalrow['type']==0) && ($_POST['type']==0)) echo '<i title="Aucun type sélectionné." class="icon-warning-sign red bigger-130"></i>&nbsp;'; ?>
-										<?php echo T_('Type'); ?>:
+										<?php echo T_('Type'); ?> :
 									</label>
 									<div class="col-sm-8">
 										<select id="type" name="type" onchange="submit();" >
@@ -331,9 +332,10 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								if ($rright['asset_virtualization_disp']!=0)
 								{
 									//check if type is virtual
-									$query=$db->query("SELECT virtualization FROM tassets_type WHERE id='$globalrow[type]'");
-									$row=$query->fetch();
-									$query->closeCursor();
+									$qry=$db->prepare("SELECT `virtualization` FROM `tassets_type` WHERE id=:id");
+									$qry->execute(array('id' => $globalrow['type']));
+									$row=$qry->fetch();
+									$qry->closeCursor();
 									if ($row['virtualization']==1)
 									{
 										echo '
@@ -354,7 +356,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								
 								<!-- START netbios part -->
 								<div class="form-group">
-									<label class="col-sm-4 control-label no-padding-right" for="netbios"><?php echo T_('Nom'); ?>:</label>
+									<label class="col-sm-4 control-label no-padding-right" for="netbios"><?php echo T_('Nom'); ?> :</label>
 									<div class="col-sm-8">
 										<input  name="netbios" id="netbios" type="text" size="25"  value="<?php if ($_POST['netbios']) echo $_POST['netbios']; else echo $globalrow['netbios']; ?>"  />
 									</div>
@@ -364,7 +366,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								<!-- START user part -->	
 								<div class="form-group" >
 									<label class="col-sm-4 control-label no-padding-right" for="user">
-										<?php echo T_('Utilisateur'); ?>:
+										<?php echo T_('Utilisateur'); ?> :
 									</label>
 									<div class="col-sm-4">
 										<select <?php if($mobile==0) {echo 'class="chosen-select"';}?> id="user" name="user" style="width:195px" onchange="loadVal(); submit();">
@@ -372,19 +374,26 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 											//limit select list to users who have the same company than current connected user
 											if($rright['asset_list_company_only']!=0)
 											{
-												$query="SELECT * FROM `tusers` WHERE disable='0' AND company='$ruser[company]' ORDER BY lastname ASC, firstname ASC";
+												//display user list
+												$qry=$db->prepare("SELECT `id`,`lastname`,`firstname` FROM `tusers` WHERE disable='0' AND company=:company ORDER BY lastname ASC, firstname ASC");
+												$qry->execute(array('company' => $ruser['company']));
+												while($row=$qry->fetch()) {echo '<option value="'.$row['id'].'">'.$row['lastname'].' '.$row['firstname'].'</option>';}
+												$qry->closeCursor();
+												
 											} else {
-												$query="SELECT * FROM `tusers` WHERE disable='0' ORDER BY lastname ASC, firstname ASC";
+												//display user list
+												$qry=$db->prepare("SELECT `id`,`lastname`,`firstname` FROM `tusers` WHERE disable='0' ORDER BY lastname ASC, firstname ASC");
+												$qry->execute();
+												while($row=$qry->fetch()) {echo '<option value="'.$row['id'].'">'.$row['lastname'].' '.$row['firstname'].'</option>';}
+												$qry->closeCursor();
 											}
-											//display user list
-											$query = $db->query($query);
-											while ($row = $query->fetch()) {echo "<option value=\"$row[id]\">$row[lastname] $row[firstname]</option>";}
 											//selection
-											if ($_POST['user'])	{$user=$_POST['user'];}	elseif ($globalrow['user']!=''){$user=$globalrow['user'];} else {$user=0;}
-											$query=$db->query("SELECT * FROM tusers WHERE id LIKE '$user'");
-											$row=$query->fetch();
-											$query->closeCursor();
-											if ($user==0) {echo '<option selected value="0">'.T_('Aucun').'</option>';} else  {echo "<option selected value=\"$user\">$row[lastname] $row[firstname]</option>";}
+											if($_POST['user']){$user=$_POST['user'];}elseif ($globalrow['user']!=''){$user=$globalrow['user'];} else {$user=0;}
+											$qry=$db->prepare("SELECT `lastname`,`firstname` FROM `tusers` WHERE id=:id");
+											$qry->execute(array('id' => $user));
+											$row=$qry->fetch();
+											$qry->closeCursor();
+											if ($user==0) {echo '<option selected value="0">'.T_('Aucun').'</option>';} else  {echo '<option selected value="'.$user.'">'.$row['lastname'].' '.$row['firstname'].'</option>';}
 											?>
 										</select>
 									</div>
@@ -394,24 +403,25 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								<!-- START department part -->	
 								<div class="form-group" >
 									<label class="col-sm-4 control-label no-padding-right" for="department">
-										<?php echo T_('Service'); ?>:
+										<?php echo T_('Service'); ?> :
 									</label>
 									<div class="col-sm-4">
 										<select id="department" name="department" style="width:195px" onchange="loadVal(); submit();">
 											<?php
-											echo "<option value=\"0\">Aucun</option>";
+											echo '<option value="0">Aucun</option>';
 											//display service list
-											$query = $db->query("SELECT * FROM `tservices` WHERE disable='0' ORDER BY name ASC");
-											while ($row = $query->fetch()) 
+											$qry=$db->prepare("SELECT `id`,`name` FROM `tservices` WHERE disable='0' ORDER BY name ASC");
+											$qry->execute();
+											while($row=$qry->fetch()) 
 											{
-												if ($row['id']==0) {$row['name']=T_($row['name']);} // translate none value from db
+												if ($row['id']==0) {$row['name']=T_($row['name']);} //translate none value from db
 												if ($globalrow['department']==$row['id']) {
-													echo "<option selected value=\"$row[id]\">$row[name]</option>";
+													echo '<option selected value="'.$row['id'].'">'.$row['name'].'</option>';
 												} else {
-													echo "<option value=\"$row[id]\">$row[name]</option>";
+													echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';
 												}
 											}
-											$query->closeCursor();
+											$qry->closeCursor();
 											?>
 										</select>
 									</div>
@@ -421,24 +431,27 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								<!-- START iface part -->
 								<?php
 									//check if asset iface exist and display it
-									$query = $db->query("SELECT COUNT(id) FROM `tassets_iface` WHERE asset_id='$globalrow[id]' AND disable='0'");
-									$iface_counter=$query->fetch();
-									$query->closeCursor();
-									if ($iface_counter[0]>0)
+									$qry=$db->prepare("SELECT COUNT(id) FROM `tassets_iface` WHERE asset_id=:asset_id AND disable='0'");
+									$qry->execute(array('asset_id' => $globalrow['id']));
+									$iface_counter=$qry->fetch();
+									$qry->closeCursor();
+									if($iface_counter[0]>0)
 									{
 										if ($rparameters['debug']==1) {$debug_error=$iface_counter[0].' IFACE DETECTED: Display each iface';}
 										//display each iface
-										$query = $db->query("SELECT * FROM `tassets_iface` WHERE asset_id='$globalrow[id]' AND disable='0' ORDER BY role_id ASC");
-										while ($row = $query->fetch()) 
+										$qry=$db->prepare("SELECT * FROM `tassets_iface` WHERE asset_id=:asset_id AND disable='0' ORDER BY role_id ASC");
+										$qry->execute(array('asset_id' => $globalrow['id']));
+										while($row=$qry->fetch()) 
 										{
 											//init var
 											if(!isset($_POST["netbios_$row[id]"])) $_POST["netbios_$row[id]"] = '';
 											if(!isset($_POST["ip_$row[id]"])) $_POST["ip_$row[id]"] = '';
 											if(!isset($_POST["mac_$row[id]"])) $_POST["mac_$row[id]"] = '';
 											//get name of role of current iface
-											$query2 = $db->query("SELECT name FROM `tassets_iface_role` WHERE id=$row[role_id]");
-											$row2=$query2->fetch();
-											$query2->closeCursor();
+											$qry2=$db->prepare("SELECT `name` FROM `tassets_iface_role` WHERE id=:id");
+											$qry2->execute(array('id' => $row['role_id']));
+											$row2=$qry2->fetch();
+											$qry2->closeCursor();
 											$iface_name=$row2[0];
 											//display if bloc
 											echo '
@@ -454,7 +467,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 														echo '<i title="'.T_('Dernier ping échoué le').' '.date("d/m/Y H:i:s", strtotime($row['date_ping_ko'])).'" class="icon-flag red"></i>';
 													}
 													echo '
-													'.T_('Interface IP').' '.$iface_name.':
+													'.T_('Interface IP').' '.$iface_name.' :
 												</label>
 												<div class="col-sm-8">
 													<input name="netbios_'.$row['id'].'" id="netbios_'.$row['id'].'" type="text" placeholder="Nom NetBIOS" size="12" value="';if($_POST["netbios_$row[id]"]) {echo $_POST["netbios_$row[id]"];} else { echo $row['netbios'];} echo'" />
@@ -467,23 +480,26 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 											</div>
 											';
 										}
-										$query->closeCursor();
+										$qry->closeCursor();
 									}
 
 									//display default iface fields when asset not have iface and when it's ip asset
-									$query = $db->query("SELECT COUNT(id) FROM `tassets_iface` WHERE asset_id='$globalrow[id]' AND disable='0'");
-									$iface_lan_counter=$query->fetch();
-									$query->closeCursor();
-									$query = $db->query("SELECT COUNT(id) FROM `tassets_iface` WHERE asset_id='$globalrow[id]' AND role_id='2' AND disable='0'");
-									$iface_wifi_counter=$query->fetch();
-									$query->closeCursor();
+									$qry=$db->prepare("SELECT COUNT(id) FROM `tassets_iface` WHERE asset_id=:asset_id AND disable='0'");
+									$qry->execute(array('asset_id' => $globalrow['id']));
+									$iface_lan_counter=$qry->fetch();
+									$qry->closeCursor();
+									
+									$qry=$db->prepare("SELECT COUNT(id) FROM `tassets_iface` WHERE asset_id=:asset_id AND role_id='2' AND disable='0'");
+									$qry->execute(array('asset_id' => $globalrow['id']));
+									$iface_wifi_counter=$qry->fetch();
+									$qry->closeCursor();
 									
 									if ($ip_asset=='1' && $iface_lan_counter[0]==0)
 									{
 										if ($rparameters['debug']==1) {$debug_error='NO LAN IFACE DETECTED: display default LAN input';}
 										echo '
 										<div class="form-group">
-											<label class="col-sm-4 control-label no-padding-right" for="ip">'.T_('Interface IP LAN').':</label>
+											<label class="col-sm-4 control-label no-padding-right" for="ip">'.T_('Interface IP LAN').' :</label>
 											<div class="col-sm-8">
 												<input name="netbios_lan_new" id="netbios_lan_new" type="text" placeholder="Nom NetBIOS" size="12" value="'.$_POST['netbios_lan_new'].'" />
 												<input name="ip_lan_new" id="ip_lan_new" type="text" size="14" placeholder="Adresse IP" value="'; if($_GET['findip'] && $_GET['iface']=='ip_lan_new') {echo $_GET['findip'];} else {echo $_POST['ip_lan_new'];} echo'" />
@@ -498,7 +514,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 										if ($rparameters['debug']==1) {$debug_error='NO WIFI IFACE DETECTED: display default WIFI input';}
 										echo '
 										<div class="form-group">
-											<label class="col-sm-4 control-label no-padding-right" for="wifi">'.T_('Interface IP WIFI').':</label>
+											<label class="col-sm-4 control-label no-padding-right" for="wifi">'.T_('Interface IP WIFI').' :</label>
 											<div class="col-sm-8">
 												<input name="netbios_wifi_new" id="netbios_wifi_new" type="text" placeholder="Nom NetBIOS" size="12" value="'.$_POST['netbios_wifi_new'].'" />
 												<input name="ip_wifi_new" id="ip_wifi_new" type="text" size="14" placeholder="Adresse IP" value="';if($_GET['findip'] && $_GET['iface']=='ip_wifi_new') {echo $_GET['findip'];} else {echo $_POST['ip_wifi_new'];} echo'" />
@@ -520,7 +536,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 									if($mobile==0) {$sn_manufacturer_size='41';} else {$sn_manufacturer_size='30';}
 									echo '
 									<div class="form-group">
-										<label class="col-sm-4 control-label no-padding-right" for="sn_manufacturer">'.T_('Numéro de série fabricant').':</label>
+										<label class="col-sm-4 control-label no-padding-right" for="sn_manufacturer">'.T_('Numéro de série fabricant').' :</label>
 										<div class="col-sm-8">
 											<input  name="sn_manufacturer" id="sn_manufacturer" type="text" size="'.$sn_manufacturer_size.'"  value="'; if ($_POST['sn_manufacturer']) echo $_POST['sn_manufacturer']; else echo $globalrow['sn_manufacturer']; echo '"  />
 										</div>
@@ -537,7 +553,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 									if($mobile==0) {$sn_indent_size='41';} else {$sn_indent_size='30';}
 									echo '
 									<div class="form-group">
-										<label class="col-sm-4 control-label no-padding-right" for="sn_indent">'.T_('Numéro de commande').':</label>
+										<label class="col-sm-4 control-label no-padding-right" for="sn_indent">'.T_('Numéro de commande').' :</label>
 										<div class="col-sm-8">
 											<input  name="sn_indent" id="sn_indent" type="text" size="'.$sn_indent_size.'"  value="'; if ($_POST['sn_indent']) echo $_POST['sn_indent']; else echo $globalrow['sn_indent']; echo '"  />
 										</div>
@@ -550,7 +566,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								<!-- START description part -->
 								<?php if($mobile==0) {$description_size='40';} else {$description_size='30';} ?>
 								<div class="form-group">
-									<label class="col-sm-4 control-label no-padding-right" for="description"><?php echo T_('Description'); ?>:</label>
+									<label class="col-sm-4 control-label no-padding-right" for="description"><?php echo T_('Description'); ?> :</label>
 									<div class="col-sm-8">
 										<textarea name="description" id="description"  cols="<?php echo $description_size; ?>" rows="4"><?php if ($_POST['description']) echo $_POST['description']; else echo $globalrow['description']; ?></textarea>
 									</div>
@@ -564,21 +580,20 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 									echo '
 									<div class="form-group" >
 										<label class="col-sm-4 control-label no-padding-right" for="location">
-											'.T_('Localisation').'
+											'.T_('Localisation').' :
 										</label>
 										<div class="col-sm-4">
 											<select '; if($mobile==0) {echo 'class="chosen-select"';} echo ' id="location" name="location" style="width:195px" onchange="loadVal(); submit();">
 												';
-												//display service list
-												$query = $db->query("SELECT * FROM `tassets_location` WHERE disable='0' ORDER BY id!=0,name ASC");
-												while ($row = $query->fetch()) 
+												//display location list
+												$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_location` WHERE disable='0' ORDER BY id!=0,name ASC");
+												$qry->execute();
+												while($row=$qry->fetch()) 
 												{
-													if ($globalrow['location']==$row['id']) {
-														echo "<option selected value=\"$row[id]\">$row[name]</option>";
-													} else {
-														echo "<option value=\"$row[id]\">$row[name]</option>";
-													}
+													if ($globalrow['location']==$row['id']) {echo '<option selected value="'.$row['id'].'">'.$row['name'].'</option>';} 
+													else {echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';}
 												}
+												$qry->closeCursor();
 												echo '
 											</select>
 										</div>
@@ -594,7 +609,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 									{
 										echo '
 										<div class="form-group">
-											<label class="col-sm-4 control-label no-padding-right" for="socket">'.T_('Numéro de prise').':</label>
+											<label class="col-sm-4 control-label no-padding-right" for="socket">'.T_('Numéro de prise').' :</label>
 											<div class="col-sm-8">
 												<input  name="socket" id="socket" type="text" size="25"  value="'; if ($_POST['socket']) echo $_POST['socket']; else echo $globalrow['socket']; echo '"  />
 											</div>
@@ -608,21 +623,29 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								<div class="form-group" >
 									<label class="col-sm-4 control-label no-padding-right" for="technician">
 										<?php if (($_POST['technician']==0) && ($globalrow['technician']==0)) echo '<i title="'.T_('Sélectionner un technicien').'." class="icon-warning-sign red bigger-130"></i>&nbsp;'; ?>
-										<?php echo T_('Installateur'); ?>:
+										<?php echo T_('Installateur'); ?> :
 									</label>
 									<div class="col-sm-4">
 										<select id="technician" name="technician" style="width:195px" onchange="loadVal(); submit();">
 											<?php
 											//display technician list
-											$query = $db->query("SELECT * FROM `tusers` WHERE (profile='0' || profile='4') AND disable='0' ORDER BY lastname ASC, firstname ASC");
-											while ($row = $query->fetch()) {echo "<option value=\"$row[id]\">$row[lastname] $row[firstname]</option>";}
+											$qry=$db->prepare("SELECT `id`,`lastname`,`firstname` FROM `tusers` WHERE (profile='0' || profile='4') AND disable='0' ORDER BY lastname ASC, firstname ASC");
+											$qry->execute();
+											while($row=$qry->fetch()) 
+											{
+												echo '<option value="'.$row['id'].'">'.$row['lastname'].' '.$row['firstname'].'</option>';
+											}
+											$qry->closeCursor();
+											
 											//selection
-											if ($_POST['technician'])	{$user=$_POST['technician'];}	elseif ($globalrow['technician']!=''){$user=$globalrow['technician'];} else {$user=0;}
-											$query=$db->query("SELECT * FROM tusers WHERE (profile='0' || profile='4') AND id LIKE '$user'");
-											$row=$query->fetch();
-											$query->closeCursor();
-											echo "<option selected value=\"$user\">$row[lastname] $row[firstname]</option>";
-											if ($user==0) echo '<option selected value="0">'.T_('Aucun').'</option>';
+											if ($_POST['technician']){$user=$_POST['technician'];}elseif($globalrow['technician']!=''){$user=$globalrow['technician'];} else {$user=0;}
+											$qry=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE (profile='0' || profile='4') AND id LIKE :id");
+											$qry->execute(array('id' => $user));
+											$row=$qry->fetch();
+											$qry->closeCursor();
+											
+											echo '<option selected value="'.$user.'">'.$row['lastname'].' '.$row['firstname'].'</option>';
+											if($user==0) {echo '<option selected value="0">'.T_('Aucun').'</option>';}
 											?>
 										</select>
 									</div>
@@ -632,15 +655,16 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								<!-- START maintenance part -->	
 								<div class="form-group" >
 									<label class="col-sm-4 control-label no-padding-right" for="maintenance">
-										<?php echo T_('Maintenance'); ?>:
+										<?php echo T_('Maintenance'); ?> :
 									</label>
 									<div class="col-sm-4">
 										<select id="maintenance" name="maintenance" style="width:195px" onchange="loadVal(); submit();">
 											<?php
-											echo '<option selected value="0">'.T_('Aucun').'</option>';
+											echo '<option value="0">'.T_('Aucun').'</option>';
 											//display service list
-											$query = $db->query("SELECT * FROM `tservices` WHERE disable='0' ORDER BY name ASC");
-											while ($row = $query->fetch()) 
+											$qry=$db->prepare("SELECT `id`,`name` FROM `tservices` WHERE disable='0' ORDER BY name ASC");
+											$qry->execute();
+											while($row=$qry->fetch()) 
 											{
 												if ($globalrow['maintenance']==$row['id']) {
 													echo "<option selected value=\"$row[id]\">$row[name]</option>";
@@ -648,6 +672,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 													echo "<option value=\"$row[id]\">$row[name]</option>";
 												}
 											}
+											$qry->closeCursor();
 											?>
 										</select>
 									</div>
@@ -660,7 +685,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								{
 									echo '
 									<div class="form-group ">
-										<label class="col-sm-4 control-label no-padding-right" for="date_stock">'.T_("Date d'achat").':</label>
+										<label class="col-sm-4 control-label no-padding-right" for="date_stock">'.T_("Date d'achat").' :</label>
 										<div class="col-sm-8">
 											<input autocomplete="off" type="text" size="25" name="date_stock" id="date_stock" value="'; if ($_POST['date_stock']) echo $_POST['date_stock']; else echo $globalrow['date_stock']; echo '" >
 										</div> 
@@ -674,9 +699,9 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								<?php
 									echo '
 										<div class="form-group ">
-											<label class="col-sm-4 control-label no-padding-right" for="date_install">'.T_('Date d\'installation').':</label>
+											<label class="col-sm-4 control-label no-padding-right" for="date_install">'.T_('Date d\'installation').' :</label>
 											<div class="col-sm-8">
-												<input autocomplete="off" type="text" size="25" name="date_install" id="date_install" value="'; if ($_POST['date_install']) echo $_POST['date_install']; else echo $globalrow['date_install']; echo'" >
+												<input data-provide="datepicker" autocomplete="off" type="text" size="25" name="date_install" id="date_install" value="'; if ($_POST['date_install']) echo $_POST['date_install']; else echo $globalrow['date_install']; echo'" >
 											</div> 
 										</div>
 									';
@@ -714,9 +739,9 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 										}
 										echo '
 											<div class="form-group ">
-												<label class="col-sm-4 control-label no-padding-right" for="date_end_warranty">'.$warranty_icon.' '.T_('Date de fin de garantie').':</label>
+												<label class="col-sm-4 control-label no-padding-right" for="date_end_warranty">'.$warranty_icon.' '.T_('Date de fin de garantie').' :</label>
 												<div class="col-sm-8">
-													<input autocomplete="off" type="text" size="25" name="date_end_warranty" id="date_end_warranty" value="'.$globalrow['date_end_warranty'].'" >
+													<input data-provide="datepicker" autocomplete="off" type="text" size="25" name="date_end_warranty" id="date_end_warranty" value="'.$globalrow['date_end_warranty'].'" >
 												</div> 
 											</div>
 										';
@@ -732,7 +757,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 											<div class="form-group ">
 												<label class="col-sm-4 control-label no-padding-right" for="date_standbye">'.T_('Date de standbye').'</label>
 												<div class="col-sm-8">
-													<input type="text" size="25" name="date_standbye" id="date_standbye" value="'; if ($_POST['date_standbye']) echo $_POST['date_standbye']; else echo $globalrow['date_standbye']; echo '" >
+													<input data-provide="datepicker" type="text" size="25" name="date_standbye" id="date_standbye" value="'; if ($_POST['date_standbye']) echo $_POST['date_standbye']; else echo $globalrow['date_standbye']; echo '" >
 												</div> 
 											</div>
 										';
@@ -746,9 +771,9 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								{
 									echo '
 										<div class="form-group ">
-											<label class="col-sm-4 control-label no-padding-right" for="date_recycle">'.T_('Date de recyclage').':</label>
+											<label class="col-sm-4 control-label no-padding-right" for="date_recycle">'.T_('Date de recyclage').' :</label>
 											<div class="col-sm-8">
-												<input type="text" size="25" name="date_recycle" id="date_recycle" value="'; if ($_POST['date_recycle']) echo $_POST['date_recycle']; else echo $globalrow['date_recycle']; echo '" >
+												<input data-provide="datepicker" type="text" size="25" name="date_recycle" id="date_recycle" value="'; if ($_POST['date_recycle']) echo $_POST['date_recycle']; else echo $globalrow['date_recycle']; echo '" >
 											</div> 
 										</div>
 									';
@@ -759,14 +784,15 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								<!-- START state part -->	
 								<div class="form-group" >
 									<label class="col-sm-4 control-label no-padding-right" for="state">
-										<?php echo T_('État'); ?>:
+										<?php echo T_('État'); ?> :
 									</label>
 									<div class="col-sm-4">
 										<select id="state" name="state" style="width:195px" onchange="loadVal(); submit();">
 											<?php
 											//display states list
-											$query = $db->query("SELECT * FROM `tassets_state` WHERE disable='0' ORDER BY `order` ASC");
-											while ($row = $query->fetch()) 
+											$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_state` WHERE disable='0' ORDER BY `order` ASC");
+											$qry->execute();
+											while($row=$qry->fetch()) 
 											{
 												if ($globalrow['state']==$row['id']) {
 													echo '<option selected value="'.$row['id'].'">'.T_($row['name']).'</option>';
@@ -774,6 +800,8 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 													echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';
 												}
 											}
+											$qry->closeCursor();
+											
 											?>
 										</select>
 									</div>
@@ -788,27 +816,35 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 									//display model image if exist, display in priority model if image exist for more precision
 									if($_POST['model']!='') 
 									{
-										$query=$db->query("SELECT image FROM tassets_model WHERE id LIKE '$_POST[model]'");
-										$row=$query->fetch();
-										$query->closeCursor();
+										$qry=$db->prepare("SELECT `image` FROM `tassets_model` WHERE id LIKE :id");
+										$qry->execute(array('id' => $_POST['model']));
+										$row=$qry->fetch();
+										$qry->closeCursor();
+										
 										$model=$_POST['model'];
 									} elseif($_POST['type']!='') 
 									{
-										$query=$db->query("SELECT image FROM tassets_model WHERE type LIKE '$_POST[type]'");
-										$row=$query->fetch();
-										$query->closeCursor();
+										$qry=$db->prepare("SELECT `image` FROM `tassets_model` WHERE type LIKE :id");
+										$qry->execute(array('id' => $_POST['type']));
+										$row=$qry->fetch();
+										$qry->closeCursor();
+										
 										$model=$_POST['model'];
 									} else {
-										$query=$db->query("SELECT image FROM tassets_model WHERE id LIKE '$globalrow[model]'");
-										$row=$query->fetch();
-										$query->closeCursor();
+										$qry=$db->prepare("SELECT `image` FROM `tassets_model` WHERE id LIKE :id");
+										$qry->execute(array('id' => $globalrow['model']));
+										$row=$qry->fetch();
+										$qry->closeCursor();
+										
 										$model=$globalrow['model'];
 									}
 									if ($ip_asset==1) {
 										//find ip lan to create link
-										$query2=$db->query("SELECT ip FROM tassets_iface WHERE asset_id='$globalrow[id]' AND role_id='1' AND disable='0'");
-										$row2=$query2->fetch();
-										$query2->closeCursor();
+										$qry2=$db->prepare("SELECT `ip` FROM `tassets_iface` WHERE asset_id=:asset_id AND role_id='1' AND disable='0'");
+										$qry2->execute(array('asset_id' => $globalrow['id']));
+										$row2=$qry2->fetch();
+										$qry2->closeCursor();
+										
 										if ($row2[0] && $row['image']!='') {echo '<a href="http://'.$row2['ip'].'" target="_blank" title="'.T_('Accédez à l\'interface web de cet équipement:').' http://'.$row2['ip'].'" >';}
 									}
 									//display and re-size asset too large image
@@ -858,54 +894,34 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 
 <?php include ('./wysiwyg.php'); ?>
 
-<!-- date picker script -->
+<!-- date time picker scripts -->
+<script src="./components/timepicker/js/bootstrap-timepicker.min.js" charset="UTF-8"></script>
+<script src="./components/datepicker/js/bootstrap-datepicker.min.js" charset="UTF-8"></script>
+<?php 
+if($ruser['language']=='fr_FR') {echo '<script src="./components/datepicker/locales/bootstrap-datepicker.fr.min.js" charset="UTF-8"></script>'; $lang='fr';} 
+if($ruser['language']=='de_DE') {echo '<script src="./components/datepicker/locales/bootstrap-datepicker.de.min.js" charset="UTF-8"></script>'; $lang='de';} 
+if($ruser['language']=='es_ES') {echo '<script src="./components/datepicker/locales/bootstrap-datepicker.es.min.js" charset="UTF-8"></script>'; $lang='es';} 
+if($ruser['language']=='en_US') {$lang='en';}
+?>
 <script type="text/javascript">
-	window.jQuery || document.write("<script src='assets/js/jquery-2.0.3.min.js'>"+"<"+"/script>");
-</script>
-	<script src="template/assets/js/date-time/bootstrap-timepicker.min.js"></script>
-<script type="text/javascript">
-jQuery(function($) {
-    <?php
-		
-		echo '
-			$.datepicker.setDefaults( $.datepicker.regional["fr"] );
-			jQuery(function($){
-			   $.datepicker.regional["fr"] = {
-				  closeText: "Fermer",
-				  prevText: "'.T_('<Préc').'",
-				  nextText: "'.T_('Suiv>').'",
-				  currentText: "Courant",
-				  monthNames: ["'.T_('Janvier').'","'.T_('Février').'","'.T_('Mars').'","'.T_('Avril').'","'.T_('Mai').'","'.T_('Juin').'","'.T_('Juillet').'","'.T_('Août').'","'.T_('Septembre').'","'.T_('Octobre').'","'.T_('Novembre').'","'.T_('Décembre').'"],
-				  monthNamesShort: ["Jan","Fév","Mar","Avr","Mai","Jun",
-				  "Jul","Aoû","Sep","Oct","Nov","Déc"],
-				  dayNames: ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"],
-				  dayNamesShort: ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"],
-				  dayNamesMin: ["'.T_('Di').'","'.T_('Lu').'","'.T_('Ma').'","'.T_('Me').'","'.T_('Je').'","'.T_('Ve').'","'.T_('Sa').'"],
-				  weekHeader: "Sm",
-				  dateFormat: "dd/mm/yy",
-				  timeFormat:  "hh:mm:ss",
-				  firstDay: 1,
-				  isRTL: false,
-				  showMonthAfterYear: false,
-				  yearSuffix: ""};
-			   $.datepicker.setDefaults($.datepicker.regional["fr"]);
-				});
-		';
-	?>
-		$( "#date_install" ).datepicker({ 
-			dateFormat: 'dd/mm/yy'
-		});
-		$( "#date_end_warranty" ).datepicker({ 
-			dateFormat: 'dd/mm/yy'
-		});
-		$( "#date_stock" ).datepicker({ 
-			dateFormat: 'dd/mm/yy'
-		});
-		$( "#date_recycle" ).datepicker({ 
-			dateFormat: 'dd/mm/yy'
-		});
-		$( "#date_standbye" ).datepicker({ 
-			dateFormat: 'dd/mm/yy'
-		});
+	$('#date_install').datepicker({
+		format: 'dd/mm/yyyy',
+		language: '$lang'
+	});
+	$('#date_end_warranty').datepicker({
+		format: 'dd/mm/yyyy',
+		language: '$lang'
+	});
+	$('#date_stock').datepicker({
+		format: 'dd/mm/yyyy',
+		language: '$lang'
+	});
+	$('#date_recycle').datepicker({
+		format: 'dd/mm/yyyy',
+		language: '$lang'
+	});
+	$('#date_standbye').datepicker({
+		format: 'dd/mm/yyyy',
+		language: '$lang'
 	});		
 </script>		

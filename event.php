@@ -6,8 +6,8 @@
 # @Parameters :  
 # @Author : Flox
 # @Create : 20/07/2011
-# @Update : 21/08/2018
-# @Version : 3.1.36 p1
+# @Update : 28/01/2019
+# @Version : 3.1.37 p1
 ################################################################################
 
 //initialize variables 
@@ -37,8 +37,9 @@ if ($_GET['event']!='' && $_GET['disable']==1)
 //display event
 if($_GET['hide']!=1)
 {
-	$query = $db->query("SELECT * FROM `tevents` WHERE technician LIKE '$_SESSION[user_id]' and disable='0' and type='1'"); 
-	while ($event = $query->fetch())
+	$qry=$db->prepare("SELECT * FROM `tevents` WHERE technician=:technician and disable='0' and type='1'");
+	$qry->execute(array('technician' => $_SESSION['user_id'])); 
+	while($event=$qry->fetch()) 
 	{
 		$devent=explode(" ",$event['date_start']);
 		//day check
@@ -50,9 +51,10 @@ if($_GET['hide']!=1)
 			if ($currenthour>$eventhour[1])
 			{
 				//get ticket data
-				$query=$db->query("SELECT * FROM tincidents WHERE id LIKE '$event[incident]'");
-				$rticket=$query->fetch();
-				$query->closeCursor();
+				$qry=$db->prepare("SELECT `title` FROM `tincidents` WHERE id=:id");
+				$qry->execute(array('id' => $event['incident']));
+				$rticket=$qry->fetch();
+				$qry->closeCursor();
 				
 				//send data to box
 				$boxtitle="<i class='icon-bell red bigger-120'></i>  Rappel pour le ticket n°$event[incident]";
@@ -68,6 +70,7 @@ if($_GET['hide']!=1)
 			}
 		}
 	}
+	$qry->closeCursor();
 }
 //add new event
 if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
@@ -75,14 +78,15 @@ if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
 	//database inputs
 	if($_POST['date'] || $_POST['direct'] || $_POST['date_start'])
 	{
+		//get ticket title
+		$qry=$db->prepare("SELECT `id`,`title` FROM `tincidents` WHERE id=:id");
+		$qry->execute(array('id' => $_GET['id']));
+		$rticket=$qry->fetch();
+		$qry->closeCursor();
+			
 		if ($_GET['action']!='addcalendar')
 		{
-			//get ticket data
-			$query=$db->query("SELECT title FROM tincidents WHERE id LIKE $db_id");
-			$rticket=$query->fetch();
-			$query->closeCursor();
-				
-			if ($_POST['direct']!='') {$date=$_POST['direct'];} else {$date="$_POST[date] $_POST[hour]";}
+			if($_POST['direct']!='') {$date=$_POST['direct'];} else {$date="$_POST[date] $_POST[hour]";}
 			$qry=$db->prepare("INSERT INTO `tevents` (`technician`,`incident`,`date_start`,`type`,`title`,`classname`) VALUES (:technician,:incident,:date_start,:type,:title,:classname)");
 			$qry->execute(array(
 				'technician' => $_SESSION['user_id'],
@@ -92,7 +96,7 @@ if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
 				'title' => "Rappel: $rticket[title]",
 				'classname' => 'label-warning'
 				));
-				//redirect
+			//redirect
 			$www = "./index.php?page=ticket&id=$_GET[id]&userid=$_GET[userid]";
 			echo '<script language="Javascript">
 			<!--
@@ -100,11 +104,6 @@ if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
 			// -->
 			</script>';
 		} else {
-			//get ticket data
-			$query=$db->query("SELECT id,title FROM tincidents WHERE id LIKE $db_id");
-			$rticket=$query->fetch();
-			$query->closeCursor();
-			
 			$qry=$db->prepare("INSERT INTO `tevents` (`technician`,`incident`,`date_start`,`date_end`,`type`,`title`,`classname`) VALUES (:technician,:incident,:date_start,:date_end,:type,:title,:classname)");
 			$qry->execute(array(
 				'technician' => $globalrow['technician'],
@@ -138,11 +137,13 @@ if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
 	{
 		if ($_GET['action']!='addcalendar')
 		{
+			$boxsize='height: 450,';
 			$boxtitle='<i class=\'icon-bell-alt orange \'></i> '.T_('Ajouter un rappel');
 			$boxtext='
 			<form name="form" method="POST" action="" id="form">
 				<label>'.T_('Date').':</label> 
-				<input type="text" name="date" id="date"   />
+				<div class="space-1"></div>
+				<input autocomplete="off" type="text" name="date" id="date"  />
 				<input type="hidden" name="hide" id="hide" value="1"/>
 				<div class="space-4"></div>
 				<label>'.T_('Heure').':</label> 
@@ -179,11 +180,13 @@ if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
 			<input type="radio" name="direct" value="'.$year.' 08:00:00"> '.T_('Dans un an').'<br />
 			';
 		} else {
+			$boxsize='height: 440,width: 350,';
 			$boxtitle='<i class=\'icon-calendar green\'></i> '.T_('Planifier une intervention');
 			$boxtext='
 			<form name="form" method="POST" action="" id="form">
 				<label>'.T_('Date début').':</label> 
-				<input type="text" name="date_start" id="date_start" />
+				<div class="space-2"></div>
+				<input autocomplete="off" type="text" name="date_start" id="date_start" />
 				<input type="hidden" name="hide" id="hide" value="1"/>
 				<div class="space-4"></div>
 				<label>'.T_('Heure début').':</label> 
@@ -214,7 +217,8 @@ if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
 				</select>
 				<hr />
 				<label>'.T_('Date de fin').':</label> 
-				<input type="text" name="date_end" id="date_end" />
+				<div class="space-2"></div>
+				<input autocomplete="off" type="text" name="date_end" id="date_end" />
 				<div class="space-4"></div>
 				<label>'.T_('Heure de fin').':</label> 
 				<select class="textfield" id="hour_fin" name="hour_fin" >
@@ -246,24 +250,6 @@ if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
 		}
 		echo "	
 		</form>
-		<script type=\"text/javascript\">
-			jQuery(function($) {
-				$.datepicker.setDefaults( $.datepicker.regional[ \"fr\" ] );
-	
-				$( \"#date\" ).datepicker({ 
-					dateFormat: 'yy-mm-dd',
-					minDate: 0
-				});
-				$( \"#date_start\" ).datepicker({ 
-					dateFormat: 'yy-mm-dd',
-					minDate: 0
-				});
-				$( \"#date_end\" ).datepicker({ 
-					dateFormat: 'yy-mm-dd',
-					minDate: 0
-				});
-			});	
-		</script>	
 		";
 	}
 	$valid=T_('Ajouter');

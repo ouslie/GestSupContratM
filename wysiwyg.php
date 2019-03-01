@@ -6,14 +6,10 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 06/03/2013
-# @Update : 24/10/2018
-# @Version : 3.1.36
+# @Update : 21/12/2018
+# @Version : 3.1.37
 ################################################################################
 ?>
-<script type="text/javascript">
- window.jQuery || document.write("<script src='./template/assets/js/jquery-2.0.3.min.js'>"+"<"+"/script>");
-</script>
-
 <script src="./template/assets/js/bootstrap-wysiwyg.min.js"></script>
 <!-- ace scripts -->
 <script src="./template/assets/js/ace-elements.min.js"></script>

@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 25/10/2018
-# @Version : 3.1.36
+# @Update : 07/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //functions
@@ -26,6 +26,7 @@ if(!isset($mail_secure)) $mail_secure= '';
 if(!isset($nomorigine)) $nomorigine = '';
 if(!isset($action)) $action = '';
 if(!isset($error)) $error = '';
+if(!isset($_POST['maxline'])) $_POST['maxline'] = '';
 if(!isset($_POST['submit_general'])) $_POST['submit_general'] = '';
 if(!isset($_POST['ticket_type'])) $_POST['ticket_type'] = '';
 if(!isset($_POST['ticket_increment_number'])) $_POST['ticket_increment_number'] = '';
@@ -123,6 +124,9 @@ if(!isset($_GET['deletequestion'])) $_GET['deletequestion']= '';
 if(!isset($_FILES['logo']['name'])) $_FILES['logo']['name'] = '';
 if(!isset($_FILES['asset_import']['name'])) $_FILES['asset_import']['name'] = '';
 
+//default value
+if($_POST['maxline']==0) {$_POST['maxline']=14;}
+
 //delete logo file
 if($_GET['action']=="deletelogo" && $rright['admin']!=0)
 {
@@ -193,7 +197,7 @@ if($_POST['submit_general'])
     		echo T_('Erreur de transfert vérifier le chemin').' '.$repertoireDestination;
     		}
         } else {
-            echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').':</strong> '.T_('Fichier interdit').'.<br></div>';
+            echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').' :</strong> '.T_('Fichier interdit').'.<br></div>';
             $file_rename='logo.png';
         }
 	} else {$file_rename=$rparameters['logo'];}
@@ -321,13 +325,16 @@ if($_POST['submit_connector'] || $_POST['test_ldap'])
 {
 	//secure string
 	$_POST['mail_smtp']=strip_tags($_POST['mail_smtp']);
+	$_POST['mail_smtp']=str_replace('|','',$_POST['mail_smtp']);
 	$_POST['mail_username']=strip_tags($_POST['mail_username']);
 	$_POST['mail_password']=strip_tags($_POST['mail_password']);
 	$_POST['ldap_server']=strip_tags($_POST['ldap_server']);
+	$_POST['ldap_server']=str_replace('|','',$_POST['ldap_server']);
 	$_POST['ldap_domain']=strip_tags($_POST['ldap_domain']);
 	$_POST['ldap_user']=strip_tags($_POST['ldap_user']);
 	$_POST['ldap_password']=strip_tags($_POST['ldap_password']);
 	$_POST['imap_server']=strip_tags($_POST['imap_server']);
+	$_POST['imap_server']=str_replace('|','',$_POST['imap_server']);
 	$_POST['imap_user']=strip_tags($_POST['imap_user']);
 	$_POST['imap_password']=strip_tags($_POST['imap_password']);
 	$_POST['imap_blacklist']=strip_tags($_POST['imap_blacklist']);
@@ -543,10 +550,10 @@ if($_POST['submit_function'])
 				//launch import treatment
 				require('./core/import_assets.php');
     		} else {
-			echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Erreur de transfert vérifier le chemin').' ('.$dest_folder.')<br></div>';
+			echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').' :</strong> '.T_('Erreur de transfert vérifier le chemin').' ('.$dest_folder.')<br></div>';
     		}
         } else {
-            echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').':</strong> '.T_('Fichier interdit').'.<br></div>';
+            echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').' :</strong> '.T_('Fichier interdit').'.<br></div>';
         }
 	}
 	
@@ -817,14 +824,14 @@ if ($test_install_file==1)
 						<div class="profile-info-row">
 							<div class="profile-info-name"> 
 								<i class="icon-building"></i>
-								<?php echo T_('Société'); ?>:
+								<?php echo T_('Société'); ?> :
 							</div>
 							<div class="profile-info-value">
 								<div class="control-group">	
-									<label for="company"><?php echo T_('Nom de l\'entreprise'); ?>: </label>
+									<label for="company"><?php echo T_('Nom de l\'entreprise'); ?> : </label>
 									<input type="text" name="company" value="<?php echo $rparameters['company']; ?>" placeholder="<?php echo T_('Société'); ?>">
 									<div class="space-4"></div>
-									<label for="logo"><?php echo T_('Logo'); ?>: </label>
+									<label for="logo"><?php echo T_('Logo'); ?> : </label>
 									<?php
 										if ($rparameters['logo']!="")
 										{
@@ -844,24 +851,31 @@ if ($test_install_file==1)
 						<div class="profile-info-row">
 							<div class="profile-info-name">
 								<i class="icon-hdd"></i>
-								<?php echo T_('Serveur'); ?>: 
+								<?php echo T_('Serveur'); ?> : 
 							</div>
 							<div class="profile-info-value">
 								<span id="username">
-									<label for="server_url"><?php echo T_('URL d\'accès au serveur'); ?>: </label>
+									<label for="server_url"><?php echo T_('URL d\'accès au serveur'); ?> : </label>
 									<input type="text" name="server_url" value="<?php echo $rparameters['server_url']; ?>">
 									<i title="<?php echo T_('URL de l\'accès au serveur pour vos utilisateurs, utilisé dans l\'envoi de mail (exemple: https://gestsup en LAN ou https://support.masociete.com sur Internet)'); ?>" class="icon-question-sign blue bigger-110"></i>
 									<div class="space-4"></div>
-									<label for="server_timezone"><?php echo T_('Fuseau horaire'); ?>: </label>
+									<label for="server_timezone"><?php echo T_('Fuseau horaire'); ?> : </label>
 									<select name="server_timezone">
 										<option <?php if($rparameters['server_timezone']=='') {echo 'selected';} ?> value="">Définit php.ini</option>
+										<option <?php if($rparameters['server_timezone']=='America/Guadeloupe') {echo 'selected';} ?> value="America/Guadeloupe">America/Guadeloupe</option>
+										<option <?php if($rparameters['server_timezone']=='America/Guyana') {echo 'selected';} ?> value="America/Guyana">America/Guyana</option>
+										<option <?php if($rparameters['server_timezone']=='America/Martinique') {echo 'selected';} ?> value="America/Martinique">America/Martinique</option>
+										<option <?php if($rparameters['server_timezone']=='America/Miquelon') {echo 'selected';} ?> value="America/Miquelon">America/Miquelon</option>
 										<option <?php if($rparameters['server_timezone']=='America/New_York') {echo 'selected';} ?> value="America/New_York">America/New_York</option>
+										<option <?php if($rparameters['server_timezone']=='America/St_Barthelemy') {echo 'selected';} ?> value="America/St_Barthelemy">America/St_Barthelemy</option>
 										<option <?php if($rparameters['server_timezone']=='America/Toronto') {echo 'selected';} ?> value="America/Toronto">America/Toronto</option>
 										<option <?php if($rparameters['server_timezone']=='Europe/Berlin') {echo 'selected';} ?> value="Europe/Berlin">Europe/Berlin</option>
 										<option <?php if($rparameters['server_timezone']=='Europe/London') {echo 'selected';} ?> value="Europe/London">Europe/London</option>
 										<option <?php if($rparameters['server_timezone']=='Europe/Madrid') {echo 'selected';} ?> value="Europe/Madrid">Europe/Madrid</option>
 										<option <?php if($rparameters['server_timezone']=='Europe/Paris') {echo 'selected';} ?> value="Europe/Paris">Europe/Paris</option>
+										<option <?php if($rparameters['server_timezone']=='Indian/Mayotte') {echo 'selected';} ?> value="Indian/Mayotte">Indian/Mayotte</option>
 										<option <?php if($rparameters['server_timezone']=='Indian/Reunion') {echo 'selected';} ?> value="Indian/Reunion">Indian/Reunion</option>
+										<option <?php if($rparameters['server_timezone']=='Pacific/Tahiti') {echo 'selected';} ?> value="Pacific/Tahiti">Pacific/Tahiti</option>
 									</select>
 									<i title="<?php echo T_('Force le fuseau horaire, par défaut la valeur définie et celle présente dans le fichier php.ini'); ?>" class="icon-question-sign blue bigger-110"></i>
 								</span>
@@ -870,15 +884,15 @@ if ($test_install_file==1)
 						<div class="profile-info-row">
 							<div class="profile-info-name">
 								<i class="icon-desktop"></i>
-								<?php echo T_('Affichage'); ?>: 
+								<?php echo T_('Affichage'); ?> : 
 							</div>
 							<div class="profile-info-value">
 								<span id="username">
-									<label for="timeout"><?php echo T_('Temps de déconnexion'); ?>: </label>
+									<label for="timeout"><?php echo T_('Temps de déconnexion'); ?> : </label>
 									<input type="text" size="2" name="timeout" value="<?php echo $rparameters['timeout']; ?>"> m
-									<i title="<?php echo T_("Valeur en minutes, permettant de déconnecter la session au bout d'un temps d'inactivité. Désactivé si la valeur 0 est spécifiée. Doit être inférieur au session.gc_maxlifetime définit en secondes dans le php.ini"); ?>" class="icon-question-sign blue bigger-110"></i>
+									<i title="<?php echo T_("Valeur en minutes, permettant de déconnecter la session au bout d'un temps d'inactivité. Doit être inférieur au session.gc_maxlifetime définit en secondes dans le php.ini"); ?>" class="icon-question-sign blue bigger-110"></i>
 									<div class="space-4"></div>
-									<label for="maxline"><?php echo T_('Nombre de lignes par page'); ?>: </label>
+									<label for="maxline"><?php echo T_('Nombre de lignes par page'); ?> : </label>
 									<input type="text" size="2" name="maxline" value="<?php echo $rparameters['maxline']; ?>">
 									<i title="<?php echo T_('Si cette valeur est trop grande cela peut ralentir l\'application'); ?>" class="icon-question-sign blue bigger-110"></i>
 									<div class="space-4"></div>
@@ -928,11 +942,11 @@ if ($test_install_file==1)
 						<div class="profile-info-row">
 							<div class="profile-info-name">
 								<i class="icon-ticket"></i>
-								<?php echo T_('Tickets'); ?>: 
+								<?php echo T_('Tickets'); ?> : 
 							</div>
 							<div class="profile-info-value">
 								<span id="username">
-									<label for="ticket_increment_number"><?php echo T_("Numéro d'incrémentation"); ?>: </label>
+									<label for="ticket_increment_number"><?php echo T_("Numéro d'incrémentation"); ?> : </label>
 									<input type="text" size="6" name="ticket_increment_number" value="">
 									<i title="<?php echo T_("Permet d'initialiser le compteur de ticket à une valeur numérique. Attention vous devez spécifier une valeur supérieur au numéro de ticket actuel le plus haut et ne pourrez plus redéfinir le compteur à une valeur inférieur"); ?>" class="icon-question-sign blue bigger-110"></i>
 									<div class="space-4"></div>
@@ -987,7 +1001,7 @@ if ($test_install_file==1)
 						<div class="profile-info-row">
 							<div class="profile-info-name">
 								<i class="icon-volume-up"></i>
-								<?php echo T_('Son'); ?>: 
+								<?php echo T_('Son'); ?> : 
 							</div>
 							<div class="profile-info-value">
 								<span id="username">
@@ -1002,7 +1016,7 @@ if ($test_install_file==1)
 						<div class="profile-info-row">
 							<div class="profile-info-name">
 								<i class="icon-user"></i>
-								<?php echo T_('Utilisateurs'); ?>: 
+								<?php echo T_('Utilisateurs'); ?> : 
 							</div>
 							<div class="profile-info-value">
 								<span id="username">
@@ -1057,11 +1071,11 @@ if ($test_install_file==1)
 						<div class="profile-info-row">
 							<div class="profile-info-name">
 								<i class="icon-envelope"></i>
-								<?php echo T_('Mails'); ?>: 
+								<?php echo T_('Mails'); ?> : 
 							</div>
 							<div class="profile-info-value">
 								<span id="username">
-									<i class="icon-caret-right blue"></i> <label><?php echo T_("Envoi de mail automatique"); ?>:</label>
+									<i class="icon-caret-right blue"></i> <label><?php echo T_("Envoi de mail automatique"); ?> :</label>
 									<br />
 									<blockquote>
 										<label>
@@ -1104,17 +1118,17 @@ if ($test_install_file==1)
 											}
 										?>
 									</blockquote>
-									<i class="icon-caret-right blue"></i> <label><?php echo T_('Texte début du mail'); ?>:</label> <input name="mail_txt" type="text" value="<?php echo $rparameters['mail_txt']; ?>" size="80" />
+									<i class="icon-caret-right blue"></i> <label><?php echo T_('Texte début du mail'); ?> :</label> <input name="mail_txt" type="text" value="<?php echo $rparameters['mail_txt']; ?>" size="80" />
 									<i title="<?php echo T_('Vous pouvez utiliser du code HTML (Exemple: <br />, <b></b>...)'); ?>" class="icon-question-sign blue bigger-110"></i>
 									<div class="space-4"></div>
-									<i class="icon-caret-right blue"></i> <label><?php echo T_('Texte fin du mail'); ?>:</label> <input name="mail_txt_end" type="text" value="<?php echo $rparameters['mail_txt_end']; ?>" size="83" />
+									<i class="icon-caret-right blue"></i> <label><?php echo T_('Texte fin du mail'); ?> :</label> <input name="mail_txt_end" type="text" value="<?php echo $rparameters['mail_txt_end']; ?>" size="83" />
 									<i title="<?php echo T_('Si vide texte automatique généré, pour le personnaliser sous pouvez utiliser du code HTML (<br />, <b></b>), des balises sont également disponible ([tech_name] Prénom et Nom du technicien, [tech_phone] téléphone du technicien, [link] Lien vers le ticket si le paramètre est activé)'); ?>" class="icon-question-sign blue bigger-110"></i>
 									<div class="space-4"></div>
-									<i class="icon-caret-right blue"></i> <label><?php echo T_('Adresse en copie'); ?>:</label> <input name="mail_cc" type="text" value="<?php echo $rparameters['mail_cc']; ?>" size="30" /><br />
+									<i class="icon-caret-right blue"></i> <label><?php echo T_('Adresse en copie'); ?> :</label> <input name="mail_cc" type="text" value="<?php echo $rparameters['mail_cc']; ?>" size="30" /><br />
 									<div class="space-4"></div>
-									<i class="icon-caret-right blue"></i> <label><?php echo T_('Intitulé de l\'émetteur'); ?>:</label> <input name="mail_from_name" type="text" value="<?php echo $rparameters['mail_from_name']; ?>" size="30" /><br />
+									<i class="icon-caret-right blue"></i> <label><?php echo T_('Intitulé de l\'émetteur'); ?> :</label> <input name="mail_from_name" type="text" value="<?php echo $rparameters['mail_from_name']; ?>" size="30" /><br />
 									<div class="space-4"></div>
-									<i class="icon-caret-right blue"></i> <label><?php echo T_('Adresse de l\'émetteur'); ?>:</label> <input name="mail_from_adr" type="text" value="<?php echo $rparameters['mail_from_adr']; ?>" size="30" />
+									<i class="icon-caret-right blue"></i> <label><?php echo T_('Adresse de l\'émetteur'); ?> :</label> <input name="mail_from_adr" type="text" value="<?php echo $rparameters['mail_from_adr']; ?>" size="30" />
 									<i title="<?php echo T_('Adresse d\'envoi de tous les messages de l\'application, si ce paramètre est vide les messages seront envoyés avec l\'adresse mail de l\'utilisateur connecté. Certains serveurs SMTP peuvent exiger que l\'émetteur soit le même que le compte de connexion'); ?>. " class="icon-question-sign blue bigger-110"></i><br />
 									<div class="space-4"></div>
 									<label>
@@ -1128,18 +1142,18 @@ if ($test_install_file==1)
 										<i title="<?php echo T_("Permet d'inverser le sens du fil de suivi de la résolution les éléments les plus récents seront en premier"); ?>. " class="icon-question-sign blue bigger-110"></i><br />
 									</label>
 									<div class="space-4"></div>
-									<i class="icon-caret-right blue"></i> <label><?php echo T_('Couleur du titre'); ?>:</label> #<input  style="background-color: <?php echo "#$rparameters[mail_color_title]"; ?>;" name="mail_color_title" type="text" value="<?php echo $rparameters['mail_color_title']; ?>" size="6" /><br />
+									<i class="icon-caret-right blue"></i> <label><?php echo T_('Couleur du titre'); ?> :</label> #<input  style="background-color: <?php echo "#$rparameters[mail_color_title]"; ?>;" name="mail_color_title" type="text" value="<?php echo $rparameters['mail_color_title']; ?>" size="6" /><br />
 									<div class="space-4"></div>
-									<i class="icon-caret-right blue"></i> <label><?php echo T_('Couleur du fond'); ?>:</label> #<input  style="background-color: <?php echo "#$rparameters[mail_color_bg]"; ?>;" name="mail_color_bg" type="text" value="<?php echo $rparameters['mail_color_bg']; ?>" size="6" /><br />
+									<i class="icon-caret-right blue"></i> <label><?php echo T_('Couleur du fond'); ?> :</label> #<input  style="background-color: <?php echo "#$rparameters[mail_color_bg]"; ?>;" name="mail_color_bg" type="text" value="<?php echo $rparameters['mail_color_bg']; ?>" size="6" /><br />
 									<div class="space-4"></div>
-									<i class="icon-caret-right blue"></i> <label><?php echo T_('Couleur du texte'); ?>:</label> #<input  style="background-color: <?php echo "#$rparameters[mail_color_text]"; ?>;" name="mail_color_text" type="text" value="<?php echo $rparameters['mail_color_text']; ?>" size="6" /><br />			
+									<i class="icon-caret-right blue"></i> <label><?php echo T_('Couleur du texte'); ?> :</label> #<input  style="background-color: <?php echo "#$rparameters[mail_color_text]"; ?>;" name="mail_color_text" type="text" value="<?php echo $rparameters['mail_color_text']; ?>" size="6" /><br />			
 								</span>
 							</div>						
 						</div>
 						<div class="profile-info-row">
 							<div class="profile-info-name">
 								<i class="icon-bug"></i>
-								<?php echo T_('Debug'); ?>: 
+								<?php echo T_('Debug'); ?> : 
 							</div>
 							<div class="profile-info-value">
 								<span id="username">
@@ -1170,7 +1184,7 @@ if ($test_install_file==1)
 						<div class="profile-info-row">
 							<div class="profile-info-name"> 
 								<i class="icon-envelope"></i>
-								&nbsp;SMTP:
+								&nbsp;SMTP :
 							</div>
 							<div class="profile-info-value">
 								<label>
@@ -1184,11 +1198,11 @@ if ($test_install_file==1)
 								{
 									echo '
 									<div class="space-4"></div>
-									<label for="mail_smtp"><i class="icon-caret-right blue"></i> '.T_('Serveur SMTP').':</label>
+									<label for="mail_smtp"><i class="icon-caret-right blue"></i> '.T_('Serveur SMTP').' :</label>
 									<input name="mail_smtp" type="text" value="'.$rparameters['mail_smtp'].'" size="20" />
 									<i title="'.T_('Adresse IP ou Nom de votre serveur de messagerie (Exemple: 192.168.0.1 ou SRVMSG ou smtp.free.fr ou auth.smtp.1and1.fr ou SSL0.OVH.NET)').'" class="icon-question-sign blue bigger-110"></i>
 									<div class="space-4"></div>
-									<label for="mail_port"><i class="icon-caret-right blue"></i> '.T_('Port SMTP').':</label>
+									<label for="mail_port"><i class="icon-caret-right blue"></i> '.T_('Port SMTP').' :</label>
 									<select class="textfield" id="mail_port" name="mail_port" >
 										<option ';if ($rparameters['mail_port']==25) echo "selected "; echo' value="25">25</option>
 										<option ';if ($rparameters['mail_port']==465) echo "selected "; echo' value="465">465 (SSL)</option>
@@ -1196,14 +1210,14 @@ if ($test_install_file==1)
 									</select>
 									<i title="'.T_('Port du serveur de messagerie par défaut le port 25 est utilisé, pour les connexions sécurisées les ports 465 et 587 sont utilisés. (exemple: OVH port 587 1&1 port 587)').'" class="icon-question-sign blue bigger-110"></i>
 									<div class="space-4"></div>
-									<label for="mail_ssl_check"><i class="icon-caret-right blue"></i> '.T_('Vérification SSL').':</label>
+									<label for="mail_ssl_check"><i class="icon-caret-right blue"></i> '.T_('Vérification SSL').' :</label>
 									<select class="textfield" id="mail_ssl_check" name="mail_ssl_check" >
 										<option ';if ($rparameters['mail_ssl_check']==1) echo "selected "; echo' value="1">'.T_('Activée').'</option>
 										<option ';if ($rparameters['mail_ssl_check']==0) echo "selected "; echo' value="0">'.T_('Désactivée').'</option>
 									</select>
 									<i title="'.T_('Désactivation de la verification du certificat serveur et autorise les certificats auto-signés').'" class="icon-question-sign blue bigger-110"></i>
 									<div class="space-4"></div>
-									<label for="mail_secure"><i class="icon-caret-right blue"></i> '.T_('Préfixe SMTP').':</label>
+									<label for="mail_secure"><i class="icon-caret-right blue"></i> '.T_('Préfixe SMTP').' :</label>
 									<select class="textfield" id="mail_secure" name="mail_secure" >
 										<option ';if ($rparameters['mail_secure']==0) echo "selected "; echo' value="0">'.T_('Aucun').'</option>
 										<option ';if ($rparameters['mail_secure']=='SSL') echo "selected "; echo' value="SSL">ssl//</option>
@@ -1230,9 +1244,9 @@ if ($test_install_file==1)
 									{
 									echo '
 										<div class="space-4"></div>
-										&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; '.T_('Utilisateur').': <input name="mail_username" type="text" value="'.$rparameters['mail_username'].'" size="30" />
+										&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; '.T_('Utilisateur').' : <input name="mail_username" type="text" value="'.$rparameters['mail_username'].'" size="30" />
 										<div class="space-4"></div>
-										&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; '.T_('Mot de passe').': <input name="mail_password" type="password" value="'.$rparameters['mail_password'].'" size="30" />
+										&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; '.T_('Mot de passe').' : <input name="mail_password" type="password" value="'.$rparameters['mail_password'].'" size="30" />
 										';
 									}
 								}
@@ -1242,7 +1256,7 @@ if ($test_install_file==1)
 						<div class="profile-info-row">
 							<div class="profile-info-name"> 
 								<i class="icon-book"></i>
-								&nbsp;LDAP:
+								&nbsp;LDAP :
 							</div>
 							<div class="profile-info-value">
 								<div class="control-group">	
@@ -1278,7 +1292,7 @@ if ($test_install_file==1)
 										{
 											echo '
 											&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-											'.T_("Emplacement des groupes de service").':
+											'.T_("Emplacement des groupes de service").' :
 											<input name="ldap_service_url" type="text" value="'.$rparameters['ldap_service_url'].'" size="50" />
 											<i title="'.T_('Emplacement des groupes de service dans l\'annuaire LDAP. (exemple: ou=service, ou=utilisateurs) Attention il ne doit pas être suffixé du domaine').'." class="icon-question-sign blue bigger-110"></i> <br />
 											<div class="space-4"></div>
@@ -1298,12 +1312,12 @@ if ($test_install_file==1)
 											{
 												echo '
 												&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-												'.T_("Emplacement des groupes d'agence").':
+												'.T_("Emplacement des groupes d'agence").' :
 												<input name="ldap_agency_url" type="text" value="'.$rparameters['ldap_agency_url'].'" size="50" />
 												<i title="'.T_('Emplacement des groupes d\'agences dans l\'annuaire LDAP. (exemple: ou=groupe_agence, ou=utilisateurs) Attention il ne doit pas être suffixé du domaine').'." class="icon-question-sign blue bigger-110"></i> <br />
 												<div class="space-4"></div>
 												&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-												'.T_("Déplacer les tickets associés à l'agence").':
+												'.T_("Déplacer les tickets associés à l'agence").' :
 												<select id="from_agency" name="from_agency" />
 													';
 													$qry = $db->prepare("SELECT `id`,`name` FROM `tagencies` ORDER BY name");
@@ -1332,7 +1346,7 @@ if ($test_install_file==1)
 											}
 										}
 										echo '
-										'.T_('Type de serveur LDAP').': 
+										'.T_('Type de serveur LDAP').' : 
 										<select id="ldap_type" name="ldap_type" >
 											<option ';if ($rparameters['ldap_type']==0) echo "selected "; echo ' value="0">Active Directory</option>
 											<option ';if ($rparameters['ldap_type']==1) echo "selected "; echo ' value="1">OpenLDAP</option>
@@ -1340,35 +1354,35 @@ if ($test_install_file==1)
 										</select>
 										<i title="'.T_('Sélectionner si votre serveur d\'annuaire est Windows Active Directory ou OpenLDAP').'." class="icon-question-sign blue bigger-110"></i><br />
 										<div class="space-4"></div>
-										'.T_('Nom du serveur LDAP').':
+										'.T_('Nom du serveur LDAP').' :
 										<input name="ldap_server" type="text" value="'.$rparameters['ldap_server'].'" size="20" />
 										<i title="'.T_('Adresse IP ou nom netbios du serveur d\'annuaire, sans suffixe DNS (Exemple: 192.168.0.1 ou SVRAD)').'. " class="icon-question-sign blue bigger-110"></i><br />
 										<div class="space-4"></div>
-										'.T_('Port LDAP').': 
+										'.T_('Port LDAP').' : 
 										<select id="ldap_port" name="ldap_port" >
 											<option ';if ($rparameters['ldap_port']==389) echo "selected "; echo ' value="389">389</option>
 											<option ';if ($rparameters['ldap_port']==636) echo "selected "; echo ' value="636">636</option>
 										</select>
 										<i title="'.T_('Le port par défaut est 389 si vous utilisez un serveur LDAPS (sécurisé) le port est 636').'." class="icon-question-sign blue bigger-110"></i> <br />
 										<div class="space-4"></div>
-										'.T_('Domaine').':
+										'.T_('Domaine').' :
 										<input name="ldap_domain" type="text" value="'.$rparameters['ldap_domain'].'" size="20" />
 										<i title="'.T_('Nom du domaine FQDN (Exemple: exemple.local)').'." class="icon-question-sign blue bigger-110"></i> <br />
 										<div class="space-4"></div>
-										'.T_('Emplacement des utilisateurs').':
+										'.T_('Emplacement des utilisateurs').' :
 										<input name="ldap_url" type="text" value="'.$rparameters['ldap_url'].'" size="80" />
 										<i title="'.T_('Emplacement dans l\'annuaire des utilisateurs. Par défaut pour Active Directory cn=users, si vous utilisez plusieurs unités d\'organisation séparer avec un point virgule (ou=France,ou=utilisateurs;ou=Belgique,ou=utilisateurs) Attention il ne doit pas être suffixé du domaine').'." class="icon-question-sign blue bigger-110"></i> <br />
 										<div class="space-4"></div>
-										Utilisateur: <input name="ldap_user" type="text" value="'.$rparameters['ldap_user'].'" size="20" />
+										'.T_('Utilisateur').' : <input name="ldap_user" type="text" value="'.$rparameters['ldap_user'].'" size="20" />
 										<i title="'.T_('Utilisateur présent dans l\'annuaire LDAP, pour OpenLDAP l\'utilisateur doit être à la racine et de type CN').'" class="icon-question-sign blue bigger-110"></i> <br />
 										<div class="space-4"></div>
-										'.T_('Mot de passe').':
+										'.T_('Mot de passe').' :
 										<input name="ldap_password" type="password" value="'.$rparameters['ldap_password'].'" size="20" /><br />
 										';
 										if ($rparameters['ldap_agency']==0 && $rparameters['ldap_service']==0)
 										{
 											echo '
-											'.T_('Désactiver les utilisateurs GestSup lors de la synchronisation').': 
+											'.T_('Désactiver les utilisateurs GestSup lors de la synchronisation').' : 
 											<select id="ldap_disable_user" name="ldap_disable_user" >
 												<option ';if ($rparameters['ldap_disable_user']==0) echo "selected "; echo ' value="0">Non</option>
 												<option ';if ($rparameters['ldap_disable_user']==1) echo "selected "; echo ' value="1">Oui</option>
@@ -1407,7 +1421,7 @@ if ($test_install_file==1)
 						<div class="profile-info-row">
 							<div class="profile-info-name"> 
 								<i class="icon-download-alt"></i>
-								&nbsp;IMAP:
+								&nbsp;IMAP :
 							</div>
 							<div class="profile-info-value">
 								<label>
@@ -1420,11 +1434,11 @@ if ($test_install_file==1)
 								if ($rparameters['imap']=='1') 
 								{
 									echo '
-										<label for="imap_server"><i class="icon-caret-right blue"></i> '.T_('Serveur de Messagerie').' IMAP:</label>
+										<label for="imap_server"><i class="icon-caret-right blue"></i> '.T_('Serveur de Messagerie').' IMAP :</label>
 										<input name="imap_server" type="text" value="'.$rparameters['imap_server'].'" size="20" />
 										<i title="'.T_('Adresse IP ou nom netbios ou nom FQDN du serveur IMAP de messagerie (ex: imap.free.fr, imap.gmail.com)').'" class="icon-question-sign blue bigger-110"></i>
 										<div class="space-4"></div>
-										<label for="imap_port"><i class="icon-caret-right blue"></i> '.T_('Protocole').':</label>
+										<label for="imap_port"><i class="icon-caret-right blue"></i> '.T_('Protocole').' :</label>
 										<select id="imap_port" name="imap_port" >
 											<option ';if ($rparameters['imap_port']=='143') {echo "selected ";} echo ' value="143">IMAP (port: 143)</option>
 											<!-- <option ';if ($rparameters['imap_port']=="110/pop3") {echo "selected ";} echo ' value="110/pop3">POP (port: 110)</option> -->
@@ -1433,25 +1447,25 @@ if ($test_install_file==1)
 										</select>
 										<i title="'.T_('Protocole utilisé sur le serveur POP ou IMAP sécurisé ou non (ex: pour free.fr sélectionner IMAP, pour gmail utiliser IMAP sécurisé)').'" class="icon-question-sign blue bigger-120"></i>
 										<div class="space-4"></div>
-										<label for="imap_ssl_check"><i class="icon-caret-right blue"></i> '.T_('Vérification SSL').':</label>
+										<label for="imap_ssl_check"><i class="icon-caret-right blue"></i> '.T_('Vérification SSL').' :</label>
 										<select class="textfield" id="imap_ssl_check" name="imap_ssl_check" >
 											<option ';if ($rparameters['imap_ssl_check']==1) echo "selected "; echo' value="1">'.T_('Activée').'</option>
 											<option ';if ($rparameters['imap_ssl_check']==0) echo "selected "; echo' value="0">'.T_('Désactivée').'</option>
 										</select>
 										<i title="'.T_('Désactivation de la verification du certificat serveur et autorise les certificats auto-signés').'" class="icon-question-sign blue bigger-110"></i>
 										<div class="space-4"></div>
-										<label for="inbox"><i class="icon-caret-right blue"></i> '.T_('Dossier racine').':</label>
+										<label for="inbox"><i class="icon-caret-right blue"></i> '.T_('Dossier racine').' :</label>
 										<select id="imap_inbox" name="imap_inbox" >
 											<option ';if ($rparameters['imap_inbox']=='INBOX') {echo "selected ";} echo ' value="INBOX">INBOX</option>
 											<option ';if ($rparameters['imap_inbox']=='') {echo "selected ";} echo ' value="">'.T_('Aucun').'</option>
 										</select>
 										<i title="'.T_('Dossier racine ou se trouve les messages entrants (par défaut INBOX, pour gmail INBOX)').'" class="icon-question-sign blue bigger-110"></i>
 										<div class="space-4"></div>
-										<label for="imap_user"><i class="icon-caret-right blue"></i> '.T_('Adresse de messagerie').':</label>
+										<label for="imap_user"><i class="icon-caret-right blue"></i> '.T_('Adresse de messagerie').' :</label>
 										<input name="imap_user" type="text" value="'.$rparameters['imap_user'].'" size="25" />
 										<i title="'.T_("Adresse de la boite de messagerie à relever, pour exchange mettre le login utilisateur de la BAL ou le nom FQDN de l'utilisateur exemple: user@domain.local").'." class="icon-question-sign blue bigger-110"></i>
 										<div class="space-4"></div>
-										<label for="imap_password"><i class="icon-caret-right blue"></i> '.T_('Mot de passe').':</label>
+										<label for="imap_password"><i class="icon-caret-right blue"></i> '.T_('Mot de passe').' :</label>
 										<input name="imap_password" type="password" value="'.$rparameters['imap_password'].'" size="20" /><br /><div class="space-4"></div>
 										<label>
 											<input class="ace" type="checkbox" '; if ($rparameters['imap_reply']==1) {echo "checked";} echo ' name="imap_reply" value="1">
@@ -1508,11 +1522,11 @@ if ($test_install_file==1)
 											';
 										}
 										echo '
-										<label for="imap_blacklist"><i class="icon-caret-right blue"></i> '.T_('Adresses à exclure').':</label>
+										<label for="imap_blacklist"><i class="icon-caret-right blue"></i> '.T_('Adresses à exclure').' :</label>
 										<input name="imap_blacklist" type="text" value="'.$rparameters['imap_blacklist'].'" size="60" />
 										<i title="'.T_("Permet d'ajouter des adresses mail et/ou des domaines à exclure de la récupération des messages. Le séparateur est le point virgule exemple: john.doe@example.com;example2.com;outlook").'." class="icon-question-sign blue bigger-110"></i>
 										<div class="space-4"></div>
-										<label for="imap_post_treatment"><i class="icon-caret-right blue"></i> '.T_('Action post traitement').':</label>
+										<label for="imap_post_treatment"><i class="icon-caret-right blue"></i> '.T_('Action post traitement').' :</label>
 										<select id="imap_post_treatment" name="imap_post_treatment" >
 											<option ';if ($rparameters['imap_post_treatment']=='move') {echo "selected ";} echo ' value="move">Déplacer le mail dans un repertoire</option>
 											<option ';if ($rparameters['imap_post_treatment']=='delete') {echo "selected ";} echo ' value="delete">Supprimer le mail</option>
@@ -1552,7 +1566,7 @@ if ($test_install_file==1)
 						<div class="profile-info-row">
 							<div class="profile-info-name"> 
 								<i class="icon-calendar"></i>
-								<?php echo T_('Calendrier'); ?>:
+								<?php echo T_('Calendrier'); ?> :
 							</div>
 							<div class="profile-info-value">
 								<label>
@@ -1565,7 +1579,7 @@ if ($test_install_file==1)
 						<div class="profile-info-row">
 							<div class="profile-info-name"> 
 								<i class="icon-desktop"></i>
-								<?php echo T_('Équipement'); ?>:
+								<?php echo T_('Équipement'); ?> :
 							</div>
 							<div class="profile-info-value">
 								<label>
@@ -1579,7 +1593,7 @@ if ($test_install_file==1)
 									echo'
 									<div class="space-4"></div>
 									&nbsp; &nbsp; &nbsp;<i class="icon-circle green"></i>
-									'.T_('Gestion des adresses IP').':&nbsp;
+									'.T_('Gestion des adresses IP').' :&nbsp;
 									<label for="asset_ip">
 											<input type="radio" class="ace" value="1" name="asset_ip"'; if ($rparameters['asset_ip']==1) {{echo "checked";}} echo '> <span class="lbl"> '.T_('Oui').' </span>
 											<input type="radio" class="ace" value="0" name="asset_ip"'; if ($rparameters['asset_ip']==0) echo "checked"; echo '  > <span class="lbl"> '.T_('Non').' </span>
@@ -1587,7 +1601,7 @@ if ($test_install_file==1)
 									<i title="'.T_('Permet d\'afficher dans la liste des équipements une colonne adresse IP, active les également des champs additionnels sur les fiches des équipements').'" class="icon-question-sign blue"></i>
 									<div class="space-4"></div>
 									&nbsp; &nbsp; &nbsp;<i class="icon-circle green"></i>
-									'.T_('Gestion des garanties').':&nbsp;
+									'.T_('Gestion des garanties').' :&nbsp;
 									<label for="asset_warranty">
 											<input type="radio" class="ace" value="1" name="asset_warranty"'; if ($rparameters['asset_warranty']==1) {{echo "checked";}} echo '> <span class="lbl"> '.T_('Oui').' </span>
 											<input type="radio" class="ace" value="0" name="asset_warranty"'; if ($rparameters['asset_warranty']==0) echo "checked"; echo '  > <span class="lbl"> '.T_('Non').' </span>
@@ -1599,7 +1613,7 @@ if ($test_install_file==1)
 									{
 										echo '
 										&nbsp; &nbsp; &nbsp;<i class="icon-circle green"></i>
-										'.T_("Activer le lien VNC sur l'équipement").':&nbsp;
+										'.T_("Activer le lien VNC sur l'équipement").' :&nbsp;
 										<label for="asset_vnc_link">
 												<input type="radio" class="ace" value="1" name="asset_vnc_link"'; if ($rparameters['asset_vnc_link']==1) {{echo "checked";}} echo '> <span class="lbl"> '.T_('Oui').' </span>
 												<input type="radio" class="ace" value="0" name="asset_vnc_link"'; if ($rparameters['asset_vnc_link']==0) echo "checked"; echo '  > <span class="lbl"> '.T_('Non').' </span>
@@ -1609,7 +1623,7 @@ if ($test_install_file==1)
 									}
 									echo '
 									&nbsp; &nbsp; &nbsp;<i class="icon-circle green"></i>
-									'.T_('Importer des équipements').':&nbsp;
+									'.T_('Importer des équipements').' :&nbsp;
 									<input style="display:inline" type="file" id="asset_import" name="asset_import" />
 									<a title="'.T_('Télécharger le modèle CSV pour ensuite pouvoir lancer l\'import').'" href="./download/tassets_template.csv">'.T_('Modèle').'</a>
 									<i title="'.T_('Permet d\'importer des équipements en lot depuis un fichier CSV').'" class="icon-question-sign blue"></i>
@@ -1621,7 +1635,7 @@ if ($test_install_file==1)
 						<div class="profile-info-row">
 							<div class="profile-info-name"> 
 								<i class="icon-book"></i>
-								<?php echo T_('Procédure'); ?>:
+								<?php echo T_('Procédure'); ?> :
 							</div>
 							<div class="profile-info-value">
 								<label>
@@ -1634,7 +1648,7 @@ if ($test_install_file==1)
 						<div class="profile-info-row">
 							<div class="profile-info-name"> 
 								<i class="icon-check"></i>
-								<?php echo T_('Sondage'); ?>:
+								<?php echo T_('Sondage'); ?> :
 							</div>
 							<div class="profile-info-value">
 								<label>
@@ -1648,7 +1662,7 @@ if ($test_install_file==1)
 									echo'
 									<div class="space-4"></div>
 									&nbsp; &nbsp; &nbsp;<i class="icon-circle green"></i>
-									'.T_("Envoyer un mail avec un lien vers le sondage à l'utilisateur lorsque le ticket passe dans l'état").':&nbsp;
+									'.T_("Envoyer un mail avec un lien vers le sondage à l'utilisateur lorsque le ticket passe dans l'état").' :&nbsp;
 									<select name="survey_ticket_state">
 										';
 									$qry = $db->prepare("SELECT `id`,`name` FROM `tstates` ORDER by number");
@@ -1664,10 +1678,10 @@ if ($test_install_file==1)
 									<i title="'.T_("Envoi un mail en destination de l'utilisateur lorsque le ticket passe dans l'état sélectionné, exemple état attente retour client").'" class="icon-question-sign blue"></i>
 									<div class="space-4"></div>
 									&nbsp; &nbsp; &nbsp;<i class="icon-circle green"></i>
-									'.T_("Texte du mail envoyé à l'utilisateur pour le sondage, vous pouvez utiliser la balise [ticket_link] afin d'insérer un lien vers le ticket").':&nbsp;<i title="'.T_("Texte du mail que l'utilisateur va recevoir afin de lui indiquer de remplir un sondage en cliquant sur un lien").'" class="icon-question-sign blue"></i><br />
+									'.T_("Texte du mail envoyé à l'utilisateur pour le sondage, vous pouvez utiliser la balise [ticket_link] afin d'insérer un lien vers le ticket").' :&nbsp;<i title="'.T_("Texte du mail que l'utilisateur va recevoir afin de lui indiquer de remplir un sondage en cliquant sur un lien").'" class="icon-question-sign blue"></i><br />
 									&nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<textarea cols="60" rows="3" name="survey_mail_text">'.$rparameters['survey_mail_text'].'</textarea>
 									<div class="space-4"></div>&nbsp; &nbsp; &nbsp;<i class="icon-circle green"></i>
-									'.T_("Clôturer automatiquement le ticket lorsque le sondage a été validé par l'utilisateur").':&nbsp;
+									'.T_("Clôturer automatiquement le ticket lorsque le sondage a été validé par l'utilisateur").' :&nbsp;
 									<label for="survey_auto_close_ticket">
 											<input type="radio" class="ace" value="1" name="survey_auto_close_ticket"'; if ($rparameters['survey_auto_close_ticket']==1) {{echo "checked";}} echo '> <span class="lbl"> '.T_('Oui').' </span>
 											<input type="radio" class="ace" value="0" name="survey_auto_close_ticket"'; if ($rparameters['survey_auto_close_ticket']==0) echo "checked"; echo '  > <span class="lbl"> '.T_('Non').' </span>
@@ -1675,7 +1689,7 @@ if ($test_install_file==1)
 									<i title="'.T_("Modifie l'état du ticket en résolu si l'utilisateur à remplit et validé le sondage").'" class="icon-question-sign blue"></i>
 									<div class="space-4"></div>
 									&nbsp; &nbsp; &nbsp;<i class="icon-circle green"></i>
-									'.T_('Liste des questions du sondage').':<br />';
+									'.T_('Liste des questions du sondage').' :<br />';
 									$qry = $db->prepare("SELECT * FROM `tsurvey_questions` ORDER by number");
 									$qry->execute();
 									while ($row=$qry->fetch())
@@ -1684,7 +1698,7 @@ if ($test_install_file==1)
 										echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
 										echo '<input type="text" name="survey_question_number_'.$row['id'].'" size="1" value="'.$row['number'].'"></input>&nbsp;&nbsp;';
 										echo '<input type="text" name="survey_question_text_'.$row['id'].'" size="50" value="'.$row['text'].'" ></input>&nbsp;&nbsp;';
-										echo 'Type:&nbsp;';
+										echo 'Type :&nbsp;';
 										echo '
 											<select name="survey_question_type_'.$row['id'].'" style="width:80px;" >
 												<option '; if ($row['type']==1) {echo 'selected';} echo ' value="1">'.T_('Oui/Non').'</option>
@@ -1696,7 +1710,7 @@ if ($test_install_file==1)
 										//display scale size filed if selected
 										if($row['type']==4) {echo '&nbsp;&nbsp;Valeur maximum: <input type="text" size="2" name="survey_question_scale_'.$row['id'].'" value="'.$row['scale'].'" />';}
 										if($row['type']==3) {
-										echo '&nbsp;&nbsp;Choix:&nbsp;
+										echo '&nbsp;&nbsp;Choix :&nbsp;
 											<input type="text" size="5" name="survey_question_select_1_'.$row['id'].'" value="'.$row['select_1'].'" />
 											<input type="text" size="5" name="survey_question_select_2_'.$row['id'].'" value="'.$row['select_2'].'" />
 											<input type="text" size="5" name="survey_question_select_3_'.$row['id'].'" value="'.$row['select_3'].'" />
@@ -1714,7 +1728,7 @@ if ($test_install_file==1)
 										&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 										<input placeholder="N°" type="text" name="survey_new_question_number" size="1" ></input>&nbsp;
 										<input placeholder="'.T_('Texte de la nouvelle question').'" type="text" name="survey_new_question_text" size="50" ></input>&nbsp;
-										Type:&nbsp;
+										Type :&nbsp;
 										<select name="survey_new_question_type" style="width:80px;">
 											<option value="1">'.T_('Oui/Non').'</option>
 											<option value="2">'.T_('Texte').'</option>

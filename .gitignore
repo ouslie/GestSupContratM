@@ -9,3 +9,6 @@ download/
 _SQL/
 images/
 sounds/
+._*
+plugins/.DS_Store
+plugins/._.DS_Store

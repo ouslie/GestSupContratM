@@ -1,12 +1,12 @@
 ﻿<?php
 ################################################################################
-# @Name : ticket.php 
-# @Description : page to edit ticket
+# @Name : ticket_print.php 
+# @Description : page to print ticket
 # @Call : /ticket.php
 # @Author : Flox
 # @Version : 3.1.36
 # @Create : 09/02/2014
-# @Update : 22/10/2018
+# @Update : 09/11/2018
 ################################################################################
 
 //initialize variables 
@@ -45,6 +45,9 @@ if(!isset($u_group)) $u_group = '';
 if(!isset($globalrow['u_group'])) $globalrow['u_group'] = ''; 
 if(!isset($_POST['user'])) $_POST['user'] = ''; 
 if(!isset($_POST['technician'])) $_POST['technician'] = ''; 
+if(!isset($rtechgroup4['name'])) $rtechgroup4['name'] = ''; 
+if(!isset($rtech5['firstname'])) $rtech5['firstname'] = ''; 
+if(!isset($rtech5['lastname'])) $rtech5['lastname'] = ''; 
 
 //master query
 $qry=$db->prepare("SELECT * FROM `tincidents` WHERE id=:id");

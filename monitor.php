@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 15/02/2014
-# @Update : 06/06/2018
-# @Version : 3.1.33
+# @Update : 09/01/2019
+# @Version : 3.1.37 p1
 ################################################################################
 
 //initialize variables 
@@ -50,7 +50,7 @@ if($_GET['key']==$key['server_private_key'])
 	$query->closeCursor(); 
 
 	//query new ticket not associate to technician
-	$query=$db->query("SELECT COUNT(*) FROM `tincidents` WHERE technician='0' and disable='0'");
+	$query=$db->query("SELECT COUNT(*) FROM `tincidents` WHERE technician='0' AND t_group='0' AND disable='0'");
 	$cnt5=$query->fetch();
 	$query->closeCursor(); 
 
@@ -99,10 +99,10 @@ if($_GET['key']==$key['server_private_key'])
 			<link rel="shortcut icon" type="image/png" href="./images/favicon_ticket.png" />
 			<meta name="description" content="gestsup" />
 			<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-			<link href="./template/assets/css/bootstrap.min.css" rel="stylesheet" />
+			<link href="./components/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
 			<link rel="stylesheet" href="./template/assets/css/font-awesome.min.css" />
 			<link rel="stylesheet" href="./template/assets/css/ace-fonts.css" />
-			<link rel="stylesheet" href="./template/assets/css/jquery-ui-1.10.3.full.min.css" />
+			<link rel="stylesheet" href="./components/jquery-ui/jquery-ui.min.css" />
 			<link rel="stylesheet" href="./template/assets/css/ace.min.css" />
 			<link rel="stylesheet" href="./template/assets/css/ace-rtl.min.css" />
 			<link rel="stylesheet" href="./template/assets/css/ace-skins.min.css" />
@@ -120,7 +120,7 @@ if($_GET['key']==$key['server_private_key'])
 			if($nbday[0]>1) $open=T_('Ouverts'); else $open=T_('Ouvert');
 			if($nbdayres[0]>1) $res=T_('Résolus'); else $res=T_('Résolu');
 			echo '
-			<a href="#" class="btn btn-<?php echo $color; ?> btn-app radius-4">
+			<a href="#" class="btn btn-'.$color.' btn-app radius-4">
 				'.$new.'<br />'.$ticket.' <br /><br />
 				<i class="icon-ticket bigger-230"><br /><br />'.$cnt5[0].'</i>
 				<br />

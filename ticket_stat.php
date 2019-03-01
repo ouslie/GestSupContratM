@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 25/01/2016
-# @Update : 26/10/2018
-# @Version : 3.1.36
+# @Update : 05/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> where_service='.$where_service.' where_agency='.$where_agency.' POST_service='.$_POST['service'].' POST_agency='.$_POST['agency'].'';}
@@ -15,12 +15,12 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 
 <form method="post" action="" name="filter" >
 	<center>
-		<small><?php echo T_('Filtre global'); ?>:</small>
+		<small><?php echo T_('Filtre global'); ?> :</small>
 		<select style="width:160px"name="tech" onchange="submit()">
 			<?php
 			if ($_POST['tech']=='%') {echo '<option value="%" selected >'.T_('Tous les techniciens').'</option>';} else {echo '<option value="%" >'.T_('Tous les techniciens').'</option>';}											
 			//case limit user service
-			if ($rparameters['user_limit_service']==1 && $rright['admin']==0)
+			if ($rparameters['user_limit_service']==1 && $rright['admin']==0 && $where_service)
 			{
 				//case technician with agency et service
 				$where_service2=str_replace('AND tincidents.u_service','service_id', $where_service);

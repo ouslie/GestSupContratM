@@ -6,13 +6,14 @@
 # @Parameters : $boxtitle $boxtext $valid $cancel $action1 $action2
 # @Author : Flox
 # @Create : 19/10/2013
-# @Update : 26/07/2016
-# @Version : 3.1.10
+# @Update : 28/01/2019
+# @Version : 3.1.37 p1
 ################################################################################
 
 //initialize variables 
 if(!isset($boxtext)) $boxtext = '';
 if(!isset($boxtitle)) $boxtitle = '';
+if(!isset($boxsize)) $boxsize = '';
 if(!isset($_GET['id'])) $_GET['id'] = '';
 ?>
 
@@ -22,12 +23,31 @@ if(!isset($_GET['id'])) $_GET['id'] = '';
 	</div>
 </div><!-- #dialog-confirm -->
 
-<script type="text/javascript">
-	window.jQuery || document.write("<script src='./template/assets/js/jquery-2.0.3.min.js'>"+"<"+"/script>");
-</script>
-<!-- inline scripts related to this page -->
+<!-- datetime picker scripts  -->
+<script src="./components/moment/min/moment.min.js" charset="UTF-8"></script>
+<?php 
+	if($ruser['language']=='fr_FR') {echo '<script src="./components/moment/locale/fr.js" charset="UTF-8"></script>';} 
+	if($ruser['language']=='de_DE') {echo '<script src="./components/moment/locale/de.js" charset="UTF-8"></script>';} 
+	if($ruser['language']=='es_ES') {echo '<script src="./components/moment/locale/es.js" charset="UTF-8"></script>';} 
+?>
+<script src="./components/datetimepicker/build/js/bootstrap-datetimepicker.min.js" charset="UTF-8"></script>
 
+<!-- inline scripts related to this page date_start -->
 <script type="text/javascript">
+	jQuery(function($) {
+		$('#date').datetimepicker({
+			format: 'YYYY-MM-DD',
+		});
+		$('#date_start').datetimepicker({
+			format: 'YYYY-MM-DD',
+		});
+		$('#date_end').datetimepicker({
+			format: 'YYYY-MM-DD',
+		});
+			
+		
+	});
+	
 	jQuery(function($) {
 		//override dialog's title function to allow for HTML titles
 		$.widget("ui.dialog", $.extend({}, $.ui.dialog.prototype, {
@@ -40,6 +60,7 @@ if(!isset($_GET['id'])) $_GET['id'] = '';
 		}));
 		
 		$( "#dialog-confirm" ).removeClass('hide').dialog({
+			<?php echo $boxsize; ?>
 			resizable: false,
 			modal: true,
 			title: "<div class='widget-header widget-header-small'><h4 class='smaller'><?php echo $boxtitle; ?></h4></div>",

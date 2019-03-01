@@ -5,8 +5,8 @@
 # @call : /admin/user.php
 # @Author : Flox
 # @Create : 15/10/2012
-# @Update : 01/10/2018
-# @Version : 3.1.36 p4
+# @Update : 09/11/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables
@@ -120,6 +120,7 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 				$data = array();
 				$data_temp = array();
 				foreach ($list_dn as $value) {
+					//$ldap_url=utf8_decode("$value$dcgen");
 					$ldap_url="$value$dcgen";
 					//change query filter for OpenLDAP or AD
 					if ($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) {$filter="(&(objectClass=user)(objectCategory=person)(cn=*))";} else {$filter="(uid=*)";}	
@@ -577,6 +578,7 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 					$qry->execute();
 					while($row=$qry->fetch()) 	
 					{
+						
 						$find2_login='';
 						for ($i=0; $i < $cnt_ldap; $i++) 
 						{
@@ -588,6 +590,7 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 							$cnt_disable=$cnt_disable+1;
 							if($_GET['action']=='run')
 							{
+								echo "debug $samaccountname == $row[login]";
 								echo '<i class="icon-remove-sign icon-large red"></i><font color="red"> '.T_('Utilisateur').' <b>'.$row['firstname'].' '.$row['lastname'].'</b> ('.$row['login'].'), '.T_('désactivé').'.</font><br />';
 								$qry2=$db->prepare("UPDATE `tusers` SET `disable`=:disable WHERE `login`=:login");
 								$qry2->execute(array(
@@ -595,6 +598,7 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 									'login' => $row['login']
 									));
 							} else {
+								echo "debug $samaccountname == $row[login]";
 								echo '<i class="icon-remove-sign icon-large red"></i><font color="red"> '.T_('Désactivation de l\'utilisateur').' <b>'.$row['firstname'].' '.$row['lastname'].'</b> ('.$row['login'].'). <span style="font-size: x-small;">'.T_('Raison').': '.T_('Utilisateur non présent dans l\'annuaire LDAP').'.</span></font><br />';
 							}
 						}

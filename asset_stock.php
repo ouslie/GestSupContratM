@@ -4,9 +4,9 @@
 # @Description : page to add multiple assets in one time in your stock based on serials numbers
 # @Call : /dashboard.php
 # @Author : Flox
-# @Version : 3.1.26
+# @Version : 3.1.37
 # @Create : 18/12/2015
-# @Update : 14/09/2017
+# @Update : 24/12/2018
 ################################################################################################
 
 //initialize variables 
@@ -22,9 +22,11 @@ if(!isset($globalrow['type'])) $globalrow['type']= '';
 if($_POST['save'])
 {
 	//check if warranty is present on asset model
-	$query=$db->query("SELECT * FROM tassets_model WHERE id='$_POST[model]'");
-	$row_model=$query->fetch();
-	$query->closeCursor();
+	$qry=$db->prepare("SELECT `warranty` FROM `tassets_model` WHERE id=:id");
+	$qry->execute(array('id' => $_POST['model']));
+	$row_model=$qry->fetch();
+	$qry->closeCursor();
+	
 	if($row_model['warranty']!=0)
 	{
 		//calculate end warranty date
@@ -42,39 +44,30 @@ if($_POST['save'])
 	
 	for ($i=0; $i<$nb; $i++) {
 		//find internal number of new asset
-		$query=$db->query("SELECT MAX(CONVERT(sn_internal, SIGNED INTEGER)) FROM tassets");
-		$row_sn_internal=$query->fetch();
-		$query->closeCursor(); 
+		$qry=$db->prepare("SELECT MAX(CONVERT(sn_internal, SIGNED INTEGER)) FROM `tassets`");
+		$qry->execute();
+		$row_sn_internal=$qry->fetch();
+		$qry->closeCursor();
 		$row_sn_internal=$row_sn_internal[0]+1;
 		
 		//get current date
 		$date=date('Y-m-d');
-		$db->exec("
-		INSERT INTO tassets (
-		sn_internal,
-		sn_manufacturer,
-		sn_indent,
-		user,
-		type,
-		manufacturer,
-		model,
-		state,
-		date_stock,
-		date_end_warranty,
-		disable
-		) VALUES (
-		'$row_sn_internal',
-		'$serials[$i]',
-		'$_POST[sn_indent]',
-		'$user_id',
-		'$_POST[type]',
-		'$_POST[manufacturer]',
-		'$_POST[model]',
-		'1',
-		'$date',
-		'$date_end_warranty',
-		'0'
-		)");
+		$qry=$db->prepare("
+		INSERT INTO `tassets` (`sn_internal`,`sn_manufacturer`,`sn_indent`,`user`,`type`,`manufacturer`,`model`,`state`,`date_stock`,`date_end_warranty`,`disable`) 
+		VALUES (:sn_internal,:sn_manufacturer,:sn_indent,:user,:type,:manufacturer,:model,:state,:date_stock,:date_end_warranty,:disable)");
+		$qry->execute(array(
+			'sn_internal' => $row_sn_internal,
+			'sn_manufacturer' => $serials[$i],
+			'sn_indent' => $_POST['sn_indent'],
+			'user' => $user_id,
+			'type' => $_POST['type'],
+			'manufacturer' => $_POST['manufacturer'],
+			'model' => $_POST['model'],
+			'state' => 1,
+			'date_stock' => $date,
+			'date_end_warranty' => $date_end_warranty,
+			'disable' => 0
+			));
 	}
 }
 ?>
@@ -103,8 +96,9 @@ if($_POST['save'])
 									<div class="col-sm-8">
 										<select id="type" name="type" onchange="submit();" >
 										<?php
-											$query= $db->query("SELECT * FROM `tassets_type` ORDER BY name ");
-											while ($row = $query->fetch()) 
+											$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_type` ORDER BY name");
+											$qry->execute();
+											while($row=$qry->fetch()) 
 											{
 												if ($_POST['type'])
 												{
@@ -115,52 +109,88 @@ if($_POST['save'])
 													if ($globalrow['type']==$row['id']) echo "<option value=\"$row[id]\" selected>$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
 												}
 											}
-											$query->closeCursor();
+											$qry->closeCursor();
 											if ($globalrow['type']==0 && $_POST['type']==0) echo "<option value=\"\" selected></option>";
 										?>
 										</select>
 										<select id="manufacturer" name="manufacturer" onchange="submit();" >
 										<?php
 											if ($_POST['type'])
-											{$query= $db->query("SELECT DISTINCT tassets_manufacturer.id, tassets_manufacturer.name FROM `tassets_manufacturer`,tassets_model WHERE tassets_manufacturer.id=tassets_model.manufacturer AND tassets_model.type='$_POST[type]' ORDER BY name ASC");}
-											else
-											{$query= $db->query("SELECT * FROM `tassets_manufacturer` WHERE id LIKE '$globalrow[manufacturer]' ORDER BY name ASC");}
-											
-											while ($row = $query->fetch()) 
 											{
-												if ($_POST['manufacturer'])
+												$qry=$db->prepare("SELECT DISTINCT tassets_manufacturer.id, tassets_manufacturer.name FROM `tassets_manufacturer`,tassets_model WHERE tassets_manufacturer.id=tassets_model.manufacturer AND tassets_model.type=:type ORDER BY name ASC");
+												$qry->execute(array('type' => $_POST['type']));
+												while($row=$qry->fetch()) 
 												{
-													if ($_POST['manufacturer']==$row['id']) echo "<option value=\"$row[id]\" selected>$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
+													if ($_POST['manufacturer'])
+													{
+														if ($_POST['manufacturer']==$row['id']) echo "<option value=\"$row[id]\" selected>$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
+													}
+													else
+													{
+														if ($globalrow['manufacturer']==$row['id']) echo "<option value=\"$row[id]\" selected>$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
+													}
 												}
-												else
+												$qry->closeCursor();
+											}
+											else
+											{
+												$query= $db->query("SELECT * FROM `tassets_manufacturer` WHERE id LIKE '$globalrow[manufacturer]' ORDER BY name ASC");
+												
+												$qry=$db->prepare("SELECT id,name FROM `tassets_manufacturer` WHERE id LIKE :manufacturer ORDER BY name ASC");
+												$qry->execute(array('manufacturer' => $globalrow['manufacturer']));
+												while($row=$qry->fetch()) 
 												{
-													if ($globalrow['manufacturer']==$row['id']) echo "<option value=\"$row[id]\" selected>$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
+													if ($_POST['manufacturer'])
+													{
+														if ($_POST['manufacturer']==$row['id']) echo "<option value=\"$row[id]\" selected>$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
+													}
+													else
+													{
+														if ($globalrow['manufacturer']==$row['id']) echo "<option value=\"$row[id]\" selected>$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
+													}
 												}
-											} 
-											$query->closeCursor();
+												$qry->closeCursor();
+											}
 											if ($globalrow['manufacturer']==0 && $_POST['manufacturer']==0) echo "<option value=\"\" selected></option>";
 											?>
 										</select>
 										<select  id="model" name="model" onchange="submit();" >
 										<?php
 											if ($_POST['type'])
-											{$query= $db->query("SELECT * FROM `tassets_model` WHERE type LIKE '$_POST[type]' order by name ASC");}
-											else
-											{$query= $db->query("SELECT * FROM `tassets_model` WHERE type LIKE '$globalrow[type]' order by name ASC");}
-											
-											while ($row = $query->fetch()) 
 											{
-												if ($_POST['model'])
+												$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_model` WHERE type LIKE :type ORDER BY name ASC");
+												$qry->execute(array('type' => $_POST['type']));
+												while($row=$qry->fetch()) 
 												{
-													if ($_POST['model']==$row['id']) echo "<option value=\"$row[id]\" selected>$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
+													if ($_POST['model'])
+													{
+														if ($_POST['model']==$row['id']) echo "<option value=\"$row[id]\" selected>$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
+													}
+													else
+													{
+														if ($globalrow['model']==$row['id']) echo "<option value=\"$row[id]\" selected>$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
+													}
 												}
-												else
+												$qry->closeCursor();
+											}
+											else
+											{
+												$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_model` WHERE type LIKE :type ORDER BY name ASC");
+												$qry->execute(array('type' => $globalrow['type']));
+												while($row=$qry->fetch()) 
 												{
-													if ($globalrow['model']==$row['id']) echo "<option value=\"$row[id]\" selected>$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
+													if ($_POST['model'])
+													{
+														if ($_POST['model']==$row['id']) echo "<option value=\"$row[id]\" selected>$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
+													}
+													else
+													{
+														if ($globalrow['model']==$row['id']) echo "<option value=\"$row[id]\" selected>$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
+													}
 												}
-											} 
-											$query->closeCursor();
-											if ($globalrow['model']==0 && $_POST['model']==0) echo "<option value=\"\" selected></option>";
+												$qry->closeCursor();
+											}
+											if($globalrow['model']==0 && $_POST['model']==0) echo "<option value=\"\" selected></option>";
 										?>
 										</select>
 									</div>
@@ -206,54 +236,3 @@ if($_POST['save'])
 		</div> <!-- div end sm -->
 	</div> <!-- div end x12 -->
 </div> <!-- div end row -->
-
-<?php include ('./wysiwyg.php'); ?>
-
-<!-- date picker script -->
-<script type="text/javascript">
-	window.jQuery || document.write("<script src='assets/js/jquery-2.0.3.min.js'>"+"<"+"/script>");
-</script>
-	<script src="template/assets/js/date-time/bootstrap-timepicker.min.js"></script>
-<script type="text/javascript">
-jQuery(function($) {
-    
-	<?php
-		echo '
-			$.datepicker.setDefaults( $.datepicker.regional["fr"] );
-			jQuery(function($){
-			   $.datepicker.regional["fr"] = {
-				  closeText: "Fermer",
-				  prevText: "'.T_('<Préc').'",
-				  nextText: "'.T_('Suiv>').'",
-				  currentText: "Courant",
-				  monthNames: ["'.T_('Janvier').'","'.T_('Février').'","'.T_('Mars').'","'.T_('Avril').'","'.T_('Mai').'","'.T_('Juin').'","'.T_('Juillet').'","'.T_('Août').'","'.T_('Septembre').'","'.T_('Octobre').'","'.T_('Novembre').'","'.T_('Décembre').'"],
-				  monthNamesShort: ["Jan","Fév","Mar","Avr","Mai","Jun",
-				  "Jul","Aoû","Sep","Oct","Nov","Déc"],
-				  dayNames: ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"],
-				  dayNamesShort: ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"],
-				  dayNamesMin: ["'.T_('Di').'","'.T_('Lu').'","'.T_('Ma').'","'.T_('Me').'","'.T_('Je').'","'.T_('Ve').'","'.T_('Sa').'"],
-				  weekHeader: "Sm",
-				  dateFormat: "dd/mm/yy",
-				  timeFormat:  "hh:mm:ss",
-				  firstDay: 1,
-				  isRTL: false,
-				  showMonthAfterYear: false,
-				  yearSuffix: ""};
-			   $.datepicker.setDefaults($.datepicker.regional["fr"]);
-				});
-		';
-	?>
-		$( "#date_install" ).datepicker({ 
-			dateFormat: 'yy-mm-dd'
-		});
-		$( "#date_stock" ).datepicker({ 
-			dateFormat: 'yy-mm-dd'
-		});
-		$( "#date_recycle" ).datepicker({ 
-			dateFormat: 'yy-mm-dd'
-		});
-		$( "#date_standbye" ).datepicker({ 
-			dateFormat: 'dd/mm/yy'
-		});
-	});		
-</script>		

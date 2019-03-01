@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 06/07/2013
-# @Update : 15/12/2017
-# @Version : 3.1.29
+# @Update : 05/12/2017
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -133,7 +133,7 @@ if ($rright['admin']!=0 || ($rright['admin_groups']!=0 && $cnt_service!=0))
 			<i class="icon-group"></i>  '.T_('Gestion des groupes').'
 			<small>
 				<i class="icon-double-angle-right"></i>
-				&nbsp;'.T_('Nombre').': '.$row['counter'].'
+				&nbsp;'.T_('Nombre').' : '.$row['counter'].'
 			</small>
 		</h1>
 	</div>';
@@ -159,7 +159,7 @@ if ($rright['admin']!=0 || ($rright['admin_groups']!=0 && $cnt_service!=0))
 						<div class="widget-main no-padding">
 							<form id="1" name="form" method="post"  action="">
 								<fieldset>
-									<label for="name">'.T_('Nom').':</label>
+									<label for="name">'.T_('Nom').' :</label>
 									<input name="name" type="text" value="'; if($rgroup['name']) echo "$rgroup[name]"; echo'" />
 								</fieldset>
 								';
@@ -180,7 +180,7 @@ if ($rright['admin']!=0 || ($rright['admin_groups']!=0 && $cnt_service!=0))
 									} elseif($cnt_service>1 || $rright['admin']!=0) { //display select box for service
 										echo '
 											<fieldset>
-												<label for="service">'.T_('Service').'</label>
+												<label for="service">'.T_('Service').' :</label>
 												<select name="service" id="form-field-select-1" >
 												';
 													if($rright['dashboard_service_only']!=0 && $rparameters['user_limit_service']==1) {
@@ -225,7 +225,7 @@ if ($rright['admin']!=0 || ($rright['admin_groups']!=0 && $cnt_service!=0))
 									</label>
 								</div>
 								<fieldset>
-									<label for="user">'.T_('Ajout d\'un nouveau membre').':</label>
+									<label for="user">'.T_('Ajout d\'un nouveau membre').' :</label>
 									<select name="user" >
 										<option value=""></option>';
 										//display technician or user list
@@ -256,7 +256,7 @@ if ($rright['admin']!=0 || ($rright['admin_groups']!=0 && $cnt_service!=0))
 									</select>
 								</fieldset>
 								<fieldset>
-								<label for="name">'.T_('Membres actuels').':</label><br />';
+								<label for="name">'.T_('Membres actuels').' :</label><br />';
 									//display current users in this group
 									$qry=$db->prepare("SELECT tusers.firstname, tusers.lastname, tusers.id FROM `tusers`,tgroups_assoc WHERE tusers.id=tgroups_assoc.user AND tgroups_assoc.group=:group AND tusers.disable=:disable");
 									$qry->execute(array(
@@ -300,7 +300,7 @@ if ($rright['admin']!=0 || ($rright['admin_groups']!=0 && $cnt_service!=0))
 						<div class="widget-main no-padding">
 							<form id="1" name="form" method="post"  action="">
 								<fieldset>
-									<label for="name">'.T_('Nom').':</label>
+									<label for="name">'.T_('Nom').' :</label>
 									<input name="name" type="text" value="" />
 								</fieldset>
 								';
@@ -321,7 +321,7 @@ if ($rright['admin']!=0 || ($rright['admin_groups']!=0 && $cnt_service!=0))
 									} elseif($cnt_service>1 || $rright['admin']!=0) { //display select box for service
 										echo '
 											<fieldset>
-												<label for="service">'.T_('Service').'</label>
+												<label for="service">'.T_('Service').' :</label>
 												<select name="service" id="form-field-select-1" >
 												';
 													if($rright['dashboard_service_only']!=0 && $rparameters['user_limit_service']==1) {

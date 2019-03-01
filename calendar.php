@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 19/02/2018
-# @Update : 08/06/2018
-# @Version : 3.1.34
+# @Update : 21/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //init var
@@ -73,20 +73,12 @@ else
 </div>
 
 <script type="text/javascript">
-	window.jQuery || document.write("<script src='./template/assets/js/jquery.min.js'>"+"<"+"/script>");
-</script>
-
-<script type="text/javascript">
 	if('ontouchstart' in document.documentElement) document.write("<script src='./template/assets/js/jquery.mobile.custom.min.js'>"+"<"+"/script>");
 </script>
 
-<!--
-<script src="./template/assets/js/bootstrap.min.js"></script>
--->
 <!-- page specific plugin scripts -->
 <script src="./template/assets/js/jquery-ui.custom.min.js"></script>
 <script src="./template/assets/js/jquery.ui.touch-punch.min.js"></script>
-<!-- <script src="./template/assets/js/uncompressed/fullcalendar.js"></script> -->
 
 <script src='./components/fullcalendar/lib/moment.min.js'></script>
 <script src='./components/fullcalendar/fullcalendar.js'></script>
@@ -158,8 +150,8 @@ setTimeout("jQuery('#calendar').fullCalendar( 'render' );",100);
 					//list events
 					$json = array();
 					$db_technician=strip_tags($_POST['technician']);
-					$qry=$db->prepare("SELECT `id`, `title`, `date_start` AS start, `date_end` AS end, `allday` as allDay, `classname` AS className, `incident` FROM `tevents` WHERE `technician` LIKE :technician AND disable=:disable ORDER BY id ");
-					$qry->execute(array('technician' => $db_technician,'disable' => 0));
+					$qry=$db->prepare("SELECT `id`, `title`, `date_start` AS start, `date_end` AS end, `allday` as allDay, `classname` AS className, `incident` FROM `tevents` WHERE `technician` LIKE :technician AND (type=1 OR disable=0) ORDER BY id");
+					$qry->execute(array('technician' => $db_technician));
 					$calendar=json_encode($qry->fetchAll(PDO::FETCH_ASSOC)); 
 					//$calendar=str_replace('"false"', 'false',$calendar);
 					//$calendar=str_replace('"true"', 'true',$calendar);
@@ -199,7 +191,7 @@ setTimeout("jQuery('#calendar').fullCalendar( 'render' );",100);
 				selectable: true,
 				selectHelper: true,
 				select: function(start, end, allDay) {
-					bootbox.prompt("<?php echo T_("Nouvel événement:"); ?>", function(title) {
+					bootbox.prompt("<?php echo T_("Nouvel événement :"); ?>", function(title) {
 						if (title !== null) {
 							start=moment(start).format('YYYY/MM/DD HH:mm:ss');
 							end=moment(end).format('YYYY/MM/DD HH:mm:ss');
@@ -262,7 +254,7 @@ setTimeout("jQuery('#calendar').fullCalendar( 'render' );",100);
 						 <div class="modal-body">\
 						   <button type="button" class="close" data-dismiss="modal" style="margin-top:-10px;">&times;</button>\
 						   <form class="no-margin">\
-							  <label><?php echo T_('Changer le nom:'); ?> &nbsp;</label>\
+							  <label><?php echo T_('Changer le nom :'); ?> &nbsp;</label>\
 							  <input size="25" class="middle" autocomplete="off" type="text" value="' + calEvent.title + '" />\
 							 &nbsp;&nbsp;<button type="submit" class="btn btn-sm btn-success"><i class="icon-save"></i> <?php echo T_("Sauvegarder"); ?></button>\
 						   </form>\

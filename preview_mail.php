@@ -6,8 +6,8 @@
 # @Parameters: mail.php
 # @Author : Flox
 # @Create : 01/10/2014
-# @Update : 14/09/2018
-# @Version : 3.1.35
+# @Update : 08/11/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -15,16 +15,25 @@ if(!isset($send)) $send = '';
 if(!isset($_POST['mail'])) $_POST['mail'] = '';
 if(!isset($_POST['return'])) $_POST['return'] = '';
 
-$db_id=strip_tags($db->quote($_GET['id']));
-
 //send message and trace in thread
 if ($_POST['mail'])
 {
-	//trace mail in thread
-	$db->exec("INSERT INTO tthreads (ticket,date,author,text,type) VALUES ($db_id,'$datetime', '$_SESSION[user_id]', '','3')");
 	//send
 	$send=1;
 	require('./core/mail.php');
+	
+	if($mail_send_error==false)
+	{
+		//trace mail in thread
+		$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`text`,`type`) VALUES (:ticket,:date,:author,:text,:type)");
+		$qry->execute(array(
+			'ticket' => $_GET['id'],
+			'date' => $datetime,
+			'author' => $_SESSION['user_id'],
+			'text' => '',
+			'type' => 3
+			));
+	}
 }
 //return to previous page
 elseif ($_POST['return'])
@@ -78,14 +87,18 @@ else
 											{
 												echo '	
 												<select id="receiver" name="receiver" >';
-													$qgroup = $db->query("SELECT * FROM `tgroups` WHERE tgroups.id=$globalrow[u_group] AND tgroups.disable='0'");
-													$rgroup=$qgroup->fetch();
+													$qry=$db->prepare("SELECT `name` FROM `tgroups` WHERE id=:id  AND disable='0'");
+													$qry->execute(array('id' => $globalrow['u_group']));
+													$rgroup=$qry->fetch();
+													$qry->closeCursor();
 													echo '<option selected value="group" > Groupe '.$rgroup['name'].'</option>
 													<option value="none">'.T_('Aucun').'</option>
 												</select>
 												';
-												$qgroup = $db->query("SELECT mail FROM `tusers`, `tgroups_assoc` WHERE tgroups_assoc.user=tusers.id AND tgroups_assoc.group=$globalrow[u_group] AND tusers.disable=0");
-												while ($row = $qgroup->fetch()) echo $row[0].' ';
+												$qry=$db->prepare("SELECT `tusers`.`mail` FROM `tusers`, `tgroups_assoc` WHERE tgroups_assoc.user=tusers.id AND tgroups_assoc.group=:group AND tusers.disable='0'");
+												$qry->execute(array('group' => $globalrow['u_group']));
+												while($row=$qry->fetch()) {echo $row['mail'].' ';}
+												$qry->closeCursor();
 											} else {
 												echo '
 													<select id="receiver" name="receiver" >
@@ -108,52 +121,62 @@ else
 											<select id="usercopy" name="usercopy">
 												';
 												//display users
-												$quser = $db->query("SELECT * FROM `tusers` WHERE (mail!='' AND disable='0') OR id='0' ORDER BY id!='0', lastname ASC, firstname ASC");
-												while ($row=$quser->fetch()) {echo '<option value="'.$row['mail'].'">'.$row['lastname'].' '.$row['firstname'].' </option>';}
-												$quser->closeCursor();
+												$qry=$db->prepare("SELECT `mail`,`firstname`,`lastname` FROM `tusers` WHERE (mail!='' AND disable='0') OR id='0' ORDER BY id!='0', lastname ASC, firstname ASC");
+												$qry->execute();
+												while($row=$qry->fetch()) {echo '<option value="'.$row['mail'].'">'.$row['lastname'].' '.$row['firstname'].' </option>';}
+												$qry->closeCursor();
+												
 												//display groups
-												$qgroup = $db->query("SELECT * FROM `tgroups` WHERE tgroups.disable='0'");
-												while ($row=$qgroup->fetch()) {
+												$qry=$db->prepare("SELECT `id`,`name` FROM `tgroups` WHERE disable='0'");
+												$qry->execute();
+												while($row=$qry->fetch()) 
+												{
 													//auto select technician group if ticket is assigned to technician group
 													if($globalrow['t_group']==$row['id']) 
 													{echo '<option selected value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';} 
 													else 
 													{echo '<option value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
 												}
-												$qgroup->closeCursor();
+												$qry->closeCursor();
+												
 												//auto select tech if it's not the current tech
 												$different_tech=0;
 												if (($_SESSION['user_id']!=$techrow['id']) && ($globalrow['t_group']==0)) {echo '<option selected value="'.$techrow['mail'].'">'.$techrow['lastname'].' '.$techrow['firstname'].'</option>'; $different_tech=1;}
+												
 												//auto select mail agency if parameters is enable and if agency have mail and user have no mail
 												if ($rparameters['user_agency']==1 && $different_tech==0) {
-													
 													//get agency mail
-													$query=$db->query("SELECT mail,name FROM tagencies WHERE id IN (SELECT u_agency FROM tincidents WHERE id=$db_id)");
-													$row=$query->fetch();
-													$query->closeCursor();
+													$qry=$db->prepare("SELECT `mail`,`name` FROM `tagencies` WHERE id IN (SELECT `u_agency` FROM `tincidents` WHERE id=:id)");
+													$qry->execute(array('id' => $_GET['id']));
+													$row=$qry->fetch();
+													$qry->closeCursor();
+													
 													if($row['mail']) {echo '<option selected value="'.$row['mail'].'">'.T_('Agence').' '.$row['name'].' ('.$row['mail'].')</option>';}
 												}
-												//no mail copy if current technician send mail
-												//if ($creatorrow['mail']==$techrow['mail'] && $userrow['mail']!='') {echo '<option selected value=""></option>';}
 												echo '
 											</select>
 											,&nbsp; 
 											<select id="usercopy2" name="usercopy2" >
 												';
 												//display users
-												$quser = $db->query("SELECT * FROM `tusers` WHERE (mail!='' AND disable='0') OR id='0' ORDER BY id!='0', lastname ASC, firstname ASC");
-												while ($row=$quser->fetch()) {echo '<option value="'.$row['mail'].'">'.$row['lastname'].' '.$row['firstname'].' </option>';}
-												$quser->closeCursor();
+												$qry=$db->prepare("SELECT `mail`,`firstname`,`lastname` FROM `tusers` WHERE (mail!='' AND disable='0') OR id='0' ORDER BY id!='0', lastname ASC, firstname ASC");
+												$qry->execute();
+												while($row=$qry->fetch()) {echo '<option value="'.$row['mail'].'">'.$row['lastname'].' '.$row['firstname'].' </option>';}
+												$qry->closeCursor();
+												
 												//display groups
-												$qgroup = $db->query("SELECT * FROM `tgroups` WHERE tgroups.disable='0'");
-												while ($row=$qgroup->fetch()) {echo '<option value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
-												$qgroup->closeCursor();
+												$qry=$db->prepare("SELECT `id`,`name` FROM `tgroups` WHERE disable='0'");
+												$qry->execute();
+												while($row=$qry->fetch()) {echo '<option value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
+												$qry->closeCursor();
+												
 												//auto select mail agency if parameters is enable and if agency have mail and user have no mail
 												if ($rparameters['user_agency']==1 && $different_tech==1) {
 													//get agency mail
-													$query=$db->query("SELECT mail,name FROM tagencies WHERE id IN (SELECT u_agency FROM tincidents WHERE id=$db_id)");
-													$row=$query->fetch();
-													$query->closeCursor();
+													$qry=$db->prepare("SELECT `mail`,`name` FROM `tagencies` WHERE id IN (SELECT `u_agency` FROM `tincidents` WHERE id=:id)");
+													$qry->execute(array('id' => $_GET['id']));
+													$row=$qry->fetch();
+													$qry->closeCursor();
 													if($row['mail']) {echo '<option selected value="'.$row['mail'].'">'.T_('Agence').' '.$row['name'].' ('.$row['mail'].')</option>';}
 													
 												} else {
@@ -166,13 +189,16 @@ else
 											<select id="usercopy3" name="usercopy3" >
 												';
 												//display users
-												$quser = $db->query("SELECT * FROM `tusers` WHERE (mail!='' AND disable='0') OR id='0' ORDER BY id!='0', lastname ASC, firstname ASC");
-												while ($row=$quser->fetch()) {echo '<option value="'.$row['mail'].'">'.$row['lastname'].' '.$row['firstname'].' </option>';}
-												$quser->closeCursor();
+												$qry=$db->prepare("SELECT `mail`,`firstname`,`lastname` FROM `tusers` WHERE (mail!='' AND disable='0') OR id='0' ORDER BY id!='0', lastname ASC, firstname ASC");
+												$qry->execute();
+												while($row=$qry->fetch()) {echo '<option value="'.$row['mail'].'">'.$row['lastname'].' '.$row['firstname'].' </option>';}
+												$qry->closeCursor();
+												
 												//display groups
-												$qgroup = $db->query("SELECT * FROM `tgroups` WHERE tgroups.disable='0'");
-												while ($row=$qgroup->fetch()) {echo '<option value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
-												$qgroup->closeCursor();
+												$qry=$db->prepare("SELECT `id`,`name` FROM `tgroups` WHERE disable='0'");
+												$qry->execute();
+												while($row=$qry->fetch()) {echo '<option value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
+												$qry->closeCursor();
 												echo '
 												<option selected value=""></option>
 											</select>
@@ -180,13 +206,15 @@ else
 											<select id="usercopy4" name="usercopy4" >
 												';
 												//display users
-												$quser = $db->query("SELECT * FROM `tusers` WHERE (mail!='' AND disable='0') OR id='0' ORDER BY id!='0', lastname ASC, firstname ASC");
-												while ($row=$quser->fetch()) {echo '<option value="'.$row['mail'].'">'.$row['lastname'].' '.$row['firstname'].' </option>';}
-												$quser->closeCursor();
+												$qry=$db->prepare("SELECT `mail`,`firstname`,`lastname` FROM `tusers` WHERE (mail!='' AND disable='0') OR id='0' ORDER BY id!='0', lastname ASC, firstname ASC");
+												$qry->execute();
+												while($row=$qry->fetch()) {echo '<option value="'.$row['mail'].'">'.$row['lastname'].' '.$row['firstname'].' </option>';}
+												$qry->closeCursor();
 												//display groups
-												$qgroup = $db->query("SELECT * FROM `tgroups` WHERE tgroups.disable='0'");
-												while ($row=$qgroup->fetch()) {echo '<option value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
-												$qgroup->closeCursor();
+												$qry=$db->prepare("SELECT `id`,`name` FROM `tgroups` WHERE disable='0'");
+												$qry->execute();
+												while($row=$qry->fetch()) {echo '<option value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
+												$qry->closeCursor();
 												echo '
 												<option selected value=""></option>
 											</select>
@@ -194,13 +222,15 @@ else
 											<select id="usercopy5" name="usercopy5" >
 												';
 												//display users
-												$quser = $db->query("SELECT * FROM `tusers` WHERE (mail!='' AND disable='0') OR id='0' ORDER BY id!='0', lastname ASC, firstname ASC");
-												while ($row=$quser->fetch()) {echo '<option value="'.$row['mail'].'">'.$row['lastname'].' '.$row['firstname'].' </option>';}
-												$quser->closeCursor();
+												$qry=$db->prepare("SELECT `mail`,`firstname`,`lastname` FROM `tusers` WHERE (mail!='' AND disable='0') OR id='0' ORDER BY id!='0', lastname ASC, firstname ASC");
+												$qry->execute();
+												while($row=$qry->fetch()) {echo '<option value="'.$row['mail'].'">'.$row['lastname'].' '.$row['firstname'].' </option>';}
+												$qry->closeCursor();
 												//display groups
-												$qgroup = $db->query("SELECT * FROM `tgroups` WHERE tgroups.disable='0'");
-												while ($row=$qgroup->fetch()) {echo '<option value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
-												$qgroup->closeCursor();
+												$qry=$db->prepare("SELECT `id`,`name` FROM `tgroups` WHERE disable='0'");
+												$qry->execute();
+												while($row=$qry->fetch()) {echo '<option value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
+												$qry->closeCursor();
 												echo '
 												<option selected value=""></option>
 											</select>
@@ -208,13 +238,15 @@ else
 											<select id="usercopy6" name="usercopy6" >
 												';
 												//display users
-												$quser = $db->query("SELECT * FROM `tusers` WHERE (mail!='' AND disable='0') OR id='0' ORDER BY id!='0', lastname ASC, firstname ASC");
-												while ($row=$quser->fetch()) {echo '<option value="'.$row['mail'].'">'.$row['lastname'].' '.$row['firstname'].' </option>';}
-												$quser->closeCursor();
+												$qry=$db->prepare("SELECT `mail`,`firstname`,`lastname` FROM `tusers` WHERE (mail!='' AND disable='0') OR id='0' ORDER BY id!='0', lastname ASC, firstname ASC");
+												$qry->execute();
+												while($row=$qry->fetch()) {echo '<option value="'.$row['mail'].'">'.$row['lastname'].' '.$row['firstname'].' </option>';}
+												$qry->closeCursor();
 												//display groups
-												$qgroup = $db->query("SELECT * FROM `tgroups` WHERE tgroups.disable='0'");
-												while ($row=$qgroup->fetch()) {echo '<option value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
-												$qgroup->closeCursor();
+												$qry=$db->prepare("SELECT `id`,`name` FROM `tgroups` WHERE disable='0'");
+												$qry->execute();
+												while($row=$qry->fetch()) {echo '<option value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
+												$qry->closeCursor();
 												echo '
 												<option selected value=""></option>
 											</select>

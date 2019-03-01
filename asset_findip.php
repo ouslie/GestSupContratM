@@ -6,8 +6,8 @@
 # @parameters :  
 # @Author : Flox
 # @Create : 16/12/2015
-# @Update : 04/04/2017
-# @Version : 3.1.19
+# @Update : 28/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -42,9 +42,11 @@ if ($_POST['add'] && $_POST['ip']!='')
 if($_POST['network']!='')
 {
 	//get selected network informations
-	$query=$db->query("SELECT * FROM `tassets_network` WHERE id=$_POST[network]");
-	$row=$query->fetch();
-	$query->closeCursor();
+	$qry=$db->prepare("SELECT `netmask`,`network` FROM `tassets_network` WHERE id=:id");
+	$qry->execute(array('id' => $_POST['network']));
+	$row=$qry->fetch();
+	$qry->closeCursor();
+	
 	$netmask=$row['netmask'];
 	$network=$row['network'];
 	$network=explode('.',$network);
@@ -55,18 +57,20 @@ if($_POST['network']!='')
 		$test_ip=$network[0].'.'.$network[1].'.'.$network[2].'.'.$i;
 		//check if this ip exist
 		$exist_ip=0;
-		$query = $db->query("
+		$qry=$db->prepare("
 		SELECT tassets_iface.ip FROM `tassets_iface` 
 		INNER JOIN tassets ON tassets.id=tassets_iface.asset_id
 		INNER JOIN tassets_state ON tassets_state.id=tassets.state
 		WHERE 
-		tassets_iface.ip='$test_ip' AND
+		tassets_iface.ip=:ip AND
 		tassets_state.block_ip_search=1 AND
 		tassets_iface.disable='0' AND
 		tassets.disable='0'
 		");
-		$row=$query->fetch(); 
-		$query->closeCursor();
+		$qry->execute(array('ip' => $test_ip));
+		$row=$qry->fetch();
+		$qry->closeCursor();
+		
 		if($row[0]) {$exist_ip=1;} 
 		if ($exist_ip!=1) {break;}
 	}
@@ -77,26 +81,28 @@ $boxtitle="<i class='icon-exchange blue bigger-120'></i> ".T_('Recherche d\'adre
 $boxtext= '
 <form name="form" method="POST" action="" id="form">
 	<input  name="add" type="hidden" value="1">
-	<label for=\"network\" >'.T_('Réseau').':</label> 
+	<label for=\"network\" >'.T_('Réseau').' :</label> 
 	<select id="network" name="network" style="width:133px" onchange="submit();">
 		';
 			$boxtext= $boxtext.'<option value="">'.T_('Aucun').'</option>';
-			$query = $db->query("SELECT * FROM `tassets_network` WHERE disable='0' ORDER BY name ASC");
-			while ($row = $query->fetch()) {
+			$qry=$db->prepare("SELECT id,name FROM `tassets_network` WHERE disable='0' ORDER BY name ASC");
+			$qry->execute();
+			while($row=$qry->fetch()) 
+			{
 				if ($_POST['network']==$row['id']) 
 				{
 					$boxtext= $boxtext.'<option value="'.$row['id'].'" selected>'.$row['name'].'</option>';
 				} else {
 					$boxtext= $boxtext.'<option value="'.$row['id'].'">'.$row['name'].'</option>';	
 				}
-			} 
-			$query->closeCursor(); 
+			}
+			$qry->closeCursor();
 			
         	$boxtext= $boxtext.'		
 	</select>
-	<br />
-	<label for="ip">IP:</label> 
-	<input  name="ip" type="text" value="'.$findip.'" size="26">
+	<div class="space-4"></div>
+	<label for="ip">IP :</label> 
+	<input  name="ip" type="text" value="'.$findip.'" size="20">
 </form>
 ';
 $valid=T_('Ajouter');

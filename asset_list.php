@@ -5,8 +5,8 @@
 # @Call : /menu.php
 # @Author : Flox
 # @Create : 20/11/2014
-# @Update : 25/09/2018
-# @Version : 3.1.36
+# @Update : 28/12/2018
+# @Version : 3.1.37 p1
 ################################################################################
 
 //initialize variables 
@@ -92,9 +92,10 @@ if($_POST['model']!=$_GET['model'] && $_GET['cursor']!=0) $_GET['cursor']='0';
 //restrict to view only asset of:
 if($rright['asset_list_department_only']!=0) { //department
 	//get service from this user
-	$query=$db->query("SELECT service_id FROM tusers_services WHERE user_id='$ruser[id]'");
-	$rservice=$query->fetch();
-	$query->closeCursor();
+	$qry=$db->prepare("SELECT `service_id` FROM `tusers_services` WHERE user_id=:user_id");
+	$qry->execute(array('user_id' => $ruser['id']));
+	$rservice=$qry->fetch();
+	$qry->closeCursor();
 	$_POST['department']=$rservice['service_id'];
 } elseif ($rright['asset_list_company_only']!=0) { //company
 	$_POST['company']=$ruser['company'];
@@ -280,6 +281,7 @@ tassets.date_stock,
 tassets.state,
 tassets.department,
 tassets.date_end_warranty,
+tassets.discover_net_scan,
 tassets.sn_internal
 FROM $from $join 
 WHERE $where 
@@ -321,16 +323,19 @@ if($resultcount[0]==1 && $assetkeywords!='')
 		if ($rright['asset_list_department_only']!=0) //for department view only
 		{
 			//get department name
-			$query=$db->query("SELECT name FROM tservices WHERE id='$rservice[service_id]'");
-			$row=$query->fetch();
-			$query->closeCursor(); 
+			$qry=$db->prepare("SELECT `name` FROM `tservices` WHERE id=:id");
+			$qry->execute(array('id' => $rservice['service_id']));
+			$row=$qry->fetch();
+			$qry->closeCursor();
 			echo T_(' du service').' '.$row[0];
 		} elseif ($rright['asset_list_company_only']!=0) //for company view only
 		{
 			//get company name
-			$query=$db->query("SELECT name FROM tcompany WHERE id='$ruser[company]'");
-			$row=$query->fetch();
-			$query->closeCursor(); 
+			$qry=$db->prepare("SELECT `name` FROM `tcompany` WHERE id=:id");
+			$qry->execute(array('id' => $ruser['company']));
+			$row=$qry->fetch();
+			$qry->closeCursor();
+			
 			echo T_(' de la société').' '.$row[0];
 		} 
 		//modify title for warranty view only
@@ -395,9 +400,10 @@ if($resultcount[0]==1 && $assetkeywords!='')
 		if ($assetkeywords)
 		{
 			//if virtual asset detected display new select box filter
-			$query=$db->query("SELECT count(id) FROM tassets WHERE virtualization='1' AND disable='0'");
-			$row=$query->fetch();
-			$query->closeCursor();
+			$qry=$db->prepare("SELECT COUNT(id) FROM `tassets` WHERE virtualization='1' AND disable='0'");
+			$qry->execute();
+			$row=$qry->fetch();
+			$qry->closeCursor();
 			
 			if($row[0]>0)
 			{

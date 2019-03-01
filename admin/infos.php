@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 13/10/2017
-# @Version : 3.1.27
+# @Update : 05/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //generate name of current version
@@ -31,34 +31,34 @@ if($dedicated==2) //case current branch
 </div>
 <div class="profile-user-info profile-user-info-striped">
 	<div class="profile-info-row">
-		<div class="profile-info-name"> <?php echo T_('Version'); ?>: </div>
+		<div class="profile-info-name"> <?php echo T_('Version'); ?> : </div>
 		<div class="profile-info-value">
 			<span id="username"><a href="./index.php?page=changelog"><?php echo ''.$rparameters['version'].' <span style="font-size: x-small;">'.$vactuname.'</span>';?></a></span>
 		</div>
 	</div>
 	<div class="profile-info-row">
-		<div class="profile-info-name"> <?php echo T_('Licence'); ?>: </div>
+		<div class="profile-info-name"> <?php echo T_('Licence'); ?> : </div>
 
 		<div class="profile-info-value">
 			<span id="username"><a target="_blank" href="https://fr.wikipedia.org/wiki/Licence_publique_g%C3%A9n%C3%A9rale_GNU">GPL v3</a></span>
 		</div>
 	</div>
 	<div class="profile-info-row">
-		<div class="profile-info-name"> <?php echo T_('Site Officiel'); ?>: </div>
+		<div class="profile-info-name"> <?php echo T_('Site Officiel'); ?> : </div>
 
 		<div class="profile-info-value">
 			<span id="username"><a target="_blank" href="https://gestsup.fr">GestSup.fr</a></span>
 		</div>
 	</div>
 	<div class="profile-info-row">
-		<div class="profile-info-name"> <?php echo T_('Contact'); ?>: </div>
+		<div class="profile-info-name"> <?php echo T_('Contact'); ?> : </div>
 
 		<div class="profile-info-value">
 			<span id="username"><a target="_blank" href="https://gestsup.fr/index.php?page=contact"><?php echo T_('Mail'); ?></a></span>
 		</div>
 	</div>
 	<div class="profile-info-row">
-		<div class="profile-info-name"> <?php echo T_('Communauté'); ?>: </div>
+		<div class="profile-info-name"> <?php echo T_('Communauté'); ?> : </div>
 
 		<div class="profile-info-value">
 			<span id="username"><a target="_blank" href="https://gestsup.fr/index.php?page=forum"><?php echo T_('Forum'); ?></a> (<?php echo T_('Pour toutes vos questions d\'installation, de bugs, de mises à jour'); ?>.)</span>

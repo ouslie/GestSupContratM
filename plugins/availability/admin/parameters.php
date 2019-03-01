@@ -5,8 +5,8 @@
 # @Call : /admin/parameters.php
 # @Author : Flox
 # @Create : 28/04/2015
-# @Update : 21/08/2018
-# @Version : 3.1.35
+# @Update : 05/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -17,7 +17,7 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 <div class="profile-info-row">
 	<div class="profile-info-name"> 
 		<i class="icon-time"></i>
-		<?php echo T_('Disponibilité'); ?>:
+		<?php echo T_('Disponibilité'); ?> :
 	</div>
 	<div class="profile-info-value">
 			<label>

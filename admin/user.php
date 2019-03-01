@@ -5,8 +5,8 @@
 # @Call : admin.php
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 22/10/2018
-# @Version : 3.1.36
+# @Update : 10/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -16,6 +16,7 @@ if(!isset($_POST['Ajouter'])) $_POST['Ajouter'] = '';
 if(!isset($_POST['cancel'])) $_POST['cancel'] = '';
 if(!isset($_POST['addview'])) $_POST['addview'] = '';
 if(!isset($_POST['profil'])) $_POST['profil'] = '';
+if(!isset($_POST['name'])) $_POST['name'] = '';
 if(!isset($_POST['company'])) $_POST['company'] = '';
 if(!isset($_POST['address1'])) $_POST['address1'] = '';
 if(!isset($_POST['address2'])) $_POST['address2'] = '';
@@ -47,7 +48,6 @@ if(!isset($_POST['limit_ticket_days'])) $_POST['limit_ticket_days'] = '';
 if(!isset($_POST['limit_ticket_date_start'])) $_POST['limit_ticket_date_start'] = '';
 if(!isset($_POST['mail'])) $_POST['mail'] = '';
 if(!isset($_POST['login'])) $_POST['login'] = '';
-if(!isset($_POST['useridfacture'])) $_POST['useridfacture'] = '';
 if(!isset($_POST['phone'])) $_POST['phone'] = '';
 if(!isset($_POST['mobile'])) $_POST['mobile'] = '';
 if(!isset($_POST['fax'])) $_POST['fax'] = '';
@@ -103,7 +103,6 @@ $_POST['lastname']=strip_tags($_POST['lastname']);
 $_POST['address1']=strip_tags($_POST['address1']);
 $_POST['address2']=strip_tags($_POST['address2']);
 $_POST['login']=strip_tags($_POST['login']);
-$_POST['useridfacture']=strip_tags($_POST['useridfacture']);
 $_POST['mail']=strip_tags($_POST['mail']);
 $_POST['phone']=strip_tags($_POST['phone']);
 $_POST['mobile']=strip_tags($_POST['mobile']);
@@ -147,7 +146,6 @@ if($_POST['Modifier'])
 		$qry->closeCursor();
 		if($row['password']=='' && $row['salt']=='')
 		{
-			echo 'CASE';
 			$salt = substr(md5(uniqid(rand(), true)), 0, 5); //generate a random key as salt
 			$pwd=substr(str_shuffle(strtolower(sha1(rand() . time() . $salt))),0, 50);
 			$pwd=md5($salt . md5($pwd)); 
@@ -217,7 +215,6 @@ if($_POST['Modifier'])
 		phone=:phone,
 		mobile=:mobile,
 		login=:login,
-		useridfacture=:useridfacture,
 		fax=:fax,
 		function=:function,
 		company=:company,
@@ -246,7 +243,6 @@ if($_POST['Modifier'])
 			'phone' => $_POST['phone'],
 			'mobile' => $_POST['mobile'],
 			'login' => $_POST['login'],
-			'useridfacture' => $_POST['useridfacture'],
 			'fax' => $_POST['fax'],
 			'function' => $_POST['function'],
 			'company' => $_POST['company'],
@@ -747,7 +743,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                             			</ul>
                             			<div class="tab-content">
                             			    <div id="attachment" class="tab-pane'; if ($_GET['tab']=='attachment' || $_GET['tab']=='') echo 'active'; echo '">
-                                                <label class="control-label bolder blue" for="attachment">'.T_('Associer des utilisateurs à ce technicien').':</label>
+                                                <label class="control-label bolder blue" for="attachment">'.T_('Associer des utilisateurs à ce technicien').' :</label>
                                                 <div class="space-4"></div>
                                                 <select name="attachment">
                                                     ';
@@ -766,7 +762,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                                                     <option selected></option>
                                                 </select>
                                                 <hr />
-                                                <label class="control-label bolder blue" for="skin">'.T_('Liste des utilisateurs associés à ce technicien').':</label>
+                                                <label class="control-label bolder blue" for="skin">'.T_('Liste des utilisateurs associés à ce technicien').' :</label>
                                                 <div class="space-4"></div>
                                                 ';
 													$qry = $db->prepare("SELECT `id`,`user` FROM `tusers_tech` WHERE tech=:tech");
@@ -791,7 +787,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                                                     
                             			    </div>
                                             <div id="parameters" class="tab-pane'; if ($_GET['tab']=='parameters' || $_GET['tab']=='') echo 'active'; echo '">
-													<label class="control-label bolder blue" for="language">'.T_('Langue').':</label>
+													<label class="control-label bolder blue" for="language">'.T_('Langue').' :</label>
                                                     <div class="space-4"></div>
                     								<select name="language">
                     									<option '; if ($user1['language']=='fr_FR'){echo "selected";} echo ' value="fr_FR">'.T_('Français (France)').'</option>
@@ -800,7 +796,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                     									<option '; if ($user1['language']=='es_ES'){echo "selected";} echo ' value="es_ES">'.T_('Espagnol (Espagne)').'</option>
                     								</select>
                     								<hr />
-                                                    <label class="control-label bolder blue" for="skin">'.T_('Thème').':</label>
+                                                    <label class="control-label bolder blue" for="skin">'.T_('Thème').' :</label>
                                                     <div class="space-4"></div>
                     								<select name="skin">
                     									<option style="background-color:#438EB9;" '; if ($user1['skin']==''){echo "selected";} echo ' value="">'.T_('Bleu (Défaut)').'</option>
@@ -820,7 +816,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                     								if ($row[0]!=0)
                     								{
                     									echo '<hr />';
-                    									echo '<label class="control-label bolder blue" for="group">'.T_('Membre des groupes').':</label>';
+                    									echo '<label class="control-label bolder blue" for="group">'.T_('Membre des groupes').' :</label>';
 														$qry = $db->prepare("SELECT tgroups.id AS id, tgroups.name AS name FROM tgroups, tgroups_assoc WHERE tgroups.id=tgroups_assoc.group AND tgroups_assoc.user=:user AND tgroups.disable=:disable");
 														$qry->execute(array(
 															'user' => $_GET['userid'],
@@ -837,7 +833,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                     								{
                     									echo '
                     									<hr />
-                    									<label class="control-label bolder blue" for="profile">'.T_('Profil').':</label>
+                    									<label class="control-label bolder blue" for="profile">'.T_('Profil').' :</label>
                     									<div class="controls">
                     										<div class="radio">
                     											<label>
@@ -866,7 +862,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                     										</div>
                     									</div>
                     									<hr />
-                    									<label class="control-label bolder blue" for="chgpwd">'.T_('Forcer le changement du mot de passe').':</label>
+                    									<label class="control-label bolder blue" for="chgpwd">'.T_('Forcer le changement du mot de passe').' :</label>
                     									<br />
                     									<label>
                     											<input type="radio" class="ace" disable="disable" name="chgpwd" value="1" '; if ($user1['chgpwd']=='1')echo "checked"; echo '> <span class="lbl"> '.T_('Oui').' </span>
@@ -883,7 +879,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                     								{
                     									echo '
                     										<hr />
-                    										<label class="control-label bolder blue" for="view">'.T_('Vues personnelles').': </label>
+                    										<label class="control-label bolder blue" for="view">'.T_('Vues personnelles').' : </label>
                         									<i title="'.T_('associe des catégories à l\'utilisateur').'" class="icon-question-sign blue bigger-110"></i>
                     										<div class="space-4"></div>';
                     											//check if selected user have view
@@ -978,7 +974,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                     											//display default ticket state
                     										    echo '
                         										    <hr />
-                        										    <label class="control-label bolder blue" for="default_ticket_state">'.T_('État par défaut à la connexion').'</label>
+                        										    <label class="control-label bolder blue" for="default_ticket_state">'.T_('État par défaut à la connexion').' :</label>
                         										    <i title="'.T_("État qui est directement affiché, lors de la connexion à l'application, si ce paramètre n'est pas renseigné, alors l'état par défaut est celui définit par l'administrateur").'." class="icon-question-sign blue bigger-110"></i>
                         										    <div class="space-4"></div>
                         										    <select name="default_ticket_state">
@@ -1002,7 +998,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                     										    //display default ticket order
                     										    echo '
                         										    <hr />
-                        										    <label class="control-label bolder blue" for="dashboard_ticket_order">'.T_('Ordre de trie personnel par défaut').':</label>
+                        										    <label class="control-label bolder blue" for="dashboard_ticket_order">'.T_('Ordre de trie personnel par défaut').' :</label>
                         										    <i title="'.T_('Modifie l\'ordre de trie des tickets dans la liste des tickets, si ce paramètre n\'est pas renseigné, c\'est le réglage par défaut dans la section administration qui est prit en compte').'." class="icon-question-sign blue bigger-110"></i>
                         										    <div class="space-4"></div>
                         										    <select name="dashboard_ticket_order">
@@ -1022,55 +1018,52 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 															if($_SESSION['profile_id']==1 || $_SESSION['profile_id']==2) $readonly='readonly'; else $readonly='';
 															echo '
 																<hr />
-																<label class="control-label bolder blue" for="limit_ticket_number">'.T_('Limite de tickets').':</label>
+																<label class="control-label bolder blue" for="limit_ticket_number">'.T_('Limite de tickets').' :</label>
 																<i title="'.T_('Permet de limiter un utilisateur a un nombre de ticket définit, passer la limite l\'ouverture de nouveau ticket n\'est plus possible').'." class="icon-question-sign blue bigger-110"></i>
 																<div class="space-4"></div>
-																<label for="limit_ticket_number">'.T_('Nombre limite de ticket').':</label>
+																<label for="limit_ticket_number">'.T_('Nombre limite de ticket').' :</label>
 																<input '.$readonly.' size="3" name="limit_ticket_number" type="text" value="'; if($user1['limit_ticket_number']) echo "$user1[limit_ticket_number]"; else echo ""; echo'" />
 																<div class="space-4"></div>
-																<label for="limit_ticket_days">'.T_('Durée de validé jours').':</label>
+																<label for="limit_ticket_days">'.T_('Durée de validé jours').' :</label>
 																<input '.$readonly.' size="4" name="limit_ticket_days" type="text" value="'; if($user1['limit_ticket_days']) echo "$user1[limit_ticket_days]"; else echo ""; echo'" />
 																<div class="space-4"></div>
-																<label for="limit_ticket_date_start">'.T_('Date de début de validité (YYYY-MM-DD)').':</label>
+																<label for="limit_ticket_date_start">'.T_('Date de début de validité (YYYY-MM-DD)').' :</label>
 																<input '.$readonly.' size="10" name="limit_ticket_date_start" type="text" value="'; if($user1['limit_ticket_date_start']) echo "$user1[limit_ticket_date_start]"; else echo ""; echo'" />
 															';
 														}
                     								echo'
                                             </div>
                                             <div id="infos" class="tab-pane'; if ($_GET['tab']=='infos' || $_GET['tab']=='') echo 'active'; echo '">
-												<label for="useridfacture">'.T_('useridfacture').':</label>
-												<input name="useridfacture" type="text" value="'; if($user1['useridfacture']) echo "$user1[useridfacture]"; else echo ""; echo'" />
-												<div class="space-4"></div>
-												<label for="firstname">'.T_('Prénom').':</label>
+                                    			<label for="firstname">'.T_('Prénom').' :</label>
                 								<input name="firstname" type="text" value="'; if($user1['firstname']) echo "$user1[firstname]"; else echo ""; echo'" />
                 								<div class="space-4"></div>
-                								<label for="lastname">'.T_('Nom').':</label>
+                								<label for="lastname">'.T_('Nom').' :</label>
 												';if($mobile==1) {echo '<br />';} echo '
                 								<input name="lastname" type="text" value="'; if($user1['lastname']) echo "$user1[lastname]"; else echo ""; echo'" />
                 								<div class="space-4"></div>';
                 								//not display login field for users for security
                 								if ($_SESSION['profile_id']==0 || $_SESSION['profile_id']==4) $hide=''; else $hide='hidden';
                                                 echo '
-                								<label '.$hide.' for="login">'.T_('Identifiant').':</label>
+                								<label '.$hide.' for="login">'.T_('Identifiant').' :</label>
                 								<input autocomplete="off" '.$hide.' name="login" type="text" value="'; if($user1['login']) echo "$user1[login]"; else echo ""; echo'"  />
                 								<div class="space-4"></div>
-                								<label for="password">'.T_('Mot de passe').':</label>
+                								<label for="password">'.T_('Mot de passe').' :</label>
                 								<input  name="password" type="password" value="'; if($user1['password']) echo "$user1[password]"; else echo ""; echo'" />
                 								<div class="space-4"></div>
-                								<label for="mail">'.T_('Adresse mail').':</label>
+                								<label for="mail">'.T_('Adresse mail').' :</label>
                 								<input name="mail" type="text" value="'; if($user1['mail']) echo "$user1[mail]"; else echo ""; echo'" />
                 								<div class="space-4"></div>
-                								<label for="phone">'.T_('Téléphone fixe').':</label>
+                								<label for="phone">'.T_('Téléphone fixe').' :</label>
                 								<input name="phone" type="text" value="'; if($user1['phone']) echo "$user1[phone]"; else echo ""; echo'" />
                 								<div class="space-4"></div>
-												<label for="mobile">'.T_('Téléphone portable').':</label>
+												<label for="mobile">'.T_('Téléphone portable').' :</label>
                 								<input name="mobile" type="text" value="'; if($user1['mobile']) echo "$user1[mobile]"; else echo ""; echo'" />
                 								<div class="space-4"></div>
-                								<label for="fax">'.T_('Fax').':</label>
+                								<label for="fax">'.T_('Fax').' :</label>
 												';if($mobile==1) {echo '<br />';} echo '
                 								<input name="fax" type="text" value="'; if($user1['fax']) echo "$user1[fax]"; else echo ""; echo'" />
                 								<div class="space-4"></div>
-                								<label for="service_1">'.T_('Service').':</label>
+                								<label for="service_1">'.T_('Service').' :</label>
 												
 												';
 												if($mobile==1) {echo '<br />';} 
@@ -1118,7 +1111,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 												if($rparameters['user_agency'])
 												{
 													echo '<div class="space-4"></div>
-													<label for="agency_1">'.T_('Agence').':</label>
+													<label for="agency_1">'.T_('Agence').' :</label>
 													';
 													$cnt=0;
 													$qry = $db->prepare("SELECT `id`,`agency_id` FROM `tusers_agencies` WHERE `user_id`=:user_id");
@@ -1163,7 +1156,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 												
 												echo '
                 								<div class="space-4"></div>
-                								<label for="function">'.T_('Fonction').':</label>
+                								<label for="function">'.T_('Fonction').' :</label>
                 								<input name="function" size="25" type="text" value="'; if($user1['function']) {echo $user1['function'];} echo '" />
                 								';
                 								//display advanced user informations
@@ -1171,7 +1164,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                 								{
                 								echo '
                 									<div class="space-4"></div>
-                									<label for="company">'.T_('Société').':</label>
+                									<label for="company">'.T_('Société').' :</label>
 													';if($mobile==1) {echo '<br />';} echo '
                 									<select name="company" '; if ($rright['user_profil_company']==0) {echo 'disabled="disabled"';} echo '>
                     									';
@@ -1192,23 +1185,23 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 													}
 													echo '
                 									<div class="space-4"></div>
-                									<label for="address1">'.T_('Adresse').' 1:</label>
+                									<label for="address1">'.T_('Adresse').' 1 :</label>
                 									<input name="address1" type="text" value="'; if($user1['address1']) echo "$user1[address1]"; else echo ""; echo'" />
                 									<div class="space-4"></div>
-                									<label  for="address2">'.T_('Adresse').' 2:</label>
+                									<label  for="address2">'.T_('Adresse').' 2 :</label>
                 									<input name="address2" type="text" value="'; if($user1['address2']) echo "$user1[address2]"; else echo ""; echo'" />
                 									<div class="space-4"></div>
-                									<label  for="city">'.T_('Ville').':</label>
+                									<label  for="city">'.T_('Ville').' :</label>
 													';if($mobile==1) {echo '<br />';} echo '
                 									<input name="city" type="text" value="'; if($user1['city']) echo "$user1[city]"; else echo ""; echo'" />
                 									<div class="space-4"></div>
-                									<label for="zip">'.T_('Code Postal').':</label>
+                									<label for="zip">'.T_('Code Postal').' :</label>
                 									<input name="zip" type="text" value="'; if($user1['zip']) echo "$user1[zip]"; else echo ""; echo'" />
 													<div class="space-4"></div>
-                									<label for="custom1">'.T_('Champ personnalisé').' 1:</label>
+                									<label for="custom1">'.T_('Champ personnalisé').' 1 :</label>
                 									<input name="custom1" type="text" value="'; if($user1['custom1']) echo "$user1[custom1]"; else echo ""; echo'" />
                 									<div class="space-4"></div>
-                									<label for="custom2">'.T_('Champ personnalisé').' 2:</label>
+                									<label for="custom2">'.T_('Champ personnalisé').' 2 :</label>
                 									<input name="custom2" type="text" value="'; if($user1['custom2']) echo "$user1[custom2]"; else echo ""; echo'" />
                 									<div class="space-4"></div>
                 								';
@@ -1266,31 +1259,31 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 					<div class="widget-main no-padding">
 						<form id="1" name="form" method="POST"  action="">
 							<fieldset>
-								<label for="firstname">'.T_('Prénom').':</label>
+								<label for="firstname">'.T_('Prénom').' :</label>
 								<input name="firstname" type="text" value="'.$_POST['firstname'].'" />
 								<div class="space-4"></div>
-								<label  for="lastname">'.T_('Nom').':</label>
+								<label  for="lastname">'.T_('Nom').' :</label>
 								<input name="lastname" type="text" value="'.$_POST['lastname'].'" />
 								<div class="space-4"></div>
-								<label for="login">'.T_('Identifiant').':</label>
+								<label for="login">'.T_('Identifiant').' :</label>
 								<input autocomplete="off" name="login" type="text" value="'.$_POST['login'].'" />
 								<div class="space-4"></div>
-								<label  for="password">'.T_('Mot de passe').':</label>
+								<label  for="password">'.T_('Mot de passe').' :</label>
 								<input autocomplete="off" name="password" type="password" value="'.$_POST['password'].'" />
 								<div class="space-4"></div>
-								<label for="mail">'.T_('Adresse mail').':</label>
+								<label for="mail">'.T_('Adresse mail').' :</label>
 								<input name="mail" type="text" value="'.$_POST['mail'].'" />
 								<div class="space-4"></div>
-								<label  for="phone">'.T_('Téléphone fixe').':</label>
+								<label  for="phone">'.T_('Téléphone fixe').' :</label>
 								<input name="phone" type="text" value="'.$_POST['phone'].'" />
 								<div class="space-4"></div>
-								<label  for="mobile">'.T_('Téléphone portable').':</label>
+								<label  for="mobile">'.T_('Téléphone portable').' :</label>
 								<input name="mobile" type="text" value="'.$_POST['mobile'].'" />
 								<div class="space-4"></div>
-								<label  for="fax">'.T_('Fax').':</label>
+								<label  for="fax">'.T_('Fax').' :</label>
 								<input name="fax" type="text" value="'.$_POST['fax'].'" />
 								<div class="space-4"></div>
-								<label for="service">'.T_('Service').':</label>
+								<label for="service">'.T_('Service').' :</label>
 								<select  name="service" '; if ($rright['user_profil_service']==0) {echo 'disabled="disabled"';} echo '>
 									<option value=""></option>';
 									$qry = $db->prepare("SELECT `id`,`name` FROM `tservices` ORDER BY `name`");
@@ -1307,7 +1300,7 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 								{
 									echo '
 									<div class="space-4"></div>
-									<label for="agency">'.T_('Agence').':</label>
+									<label for="agency">'.T_('Agence').' :</label>
 									<select  name="agency" '; if ($rright['user_profil_agency']==0) {echo 'disabled="disabled"';} echo '>
 										<option value=""></option>';
 										$qry = $db->prepare("SELECT `id`,`name` FROM `tagencies` ORDER BY `name`");
@@ -1323,7 +1316,7 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 								}
 								echo '
 								<div class="space-4"></div>
-								<label for="function">'.T_('Fonction').':</label>
+								<label for="function">'.T_('Fonction').' :</label>
 								<input name="function" type="text" value="'.$_POST['function'].'" />
 								';
 								//display advanced user informations
@@ -1331,7 +1324,7 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 								{
 								echo '
 									<div class="space-4"></div>
-									<label  for="company">'.T_('Société').':</label>
+									<label  for="company">'.T_('Société').' :</label>
 									<select name="company" '; if ($rright['user_profil_company']==0) {echo 'disabled="disabled"';} echo '>
     									<option value=""></option>';
 										$qry = $db->prepare("SELECT `id`,`name` FROM `tcompany` ORDER BY `name`");
@@ -1345,29 +1338,29 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 							    	</select>
 									
 									<div class="space-4"></div>
-									<label for="address1">'.T_('Adresse').' 1:</label>
+									<label for="address1">'.T_('Adresse').' 1 :</label>
 									<input name="address1" type="text" value="" />
 									<div class="space-4"></div>
-									<label for="address2">'.T_('Adresse').' 2:</label>
+									<label for="address2">'.T_('Adresse').' 2 :</label>
 									<input name="address2" type="text" value="" />
 									<div class="space-4"></div>
-									<label for="city">'.T_('Ville').':</label>
+									<label for="city">'.T_('Ville').' :</label>
 									<input name="city" type="text" value="" />
 									<div class="space-4"></div>
-									<label for="zip">'.T_('Code Postal').':</label>
+									<label for="zip">'.T_('Code Postal').' :</label>
 									<input name="zip" type="text" value="" />
 									<div class="space-4"></div>
-									<label for="custom1">'.T_('Champ personnalisé').' 1:</label>
+									<label for="custom1">'.T_('Champ personnalisé').' 1 :</label>
 									<input name="custom1" type="text" value="" />
 									<div class="space-4"></div>
-									<label for="custom2">'.T_('Champ personnalisé').' 2:</label>
+									<label for="custom2">'.T_('Champ personnalisé').' 2 :</label>
 									<input name="custom2" type="text" value="" />
 								';
 								}
 								//display theme selection
 								echo '
 								<hr />
-								<label class="control-label bolder blue" for="skin">'.T_('Thème').':</label>
+								<label class="control-label bolder blue" for="skin">'.T_('Thème').' :</label>
 								<select name="skin">
 									<option style="background-color:#438EB9;" value="">'.T_('Bleu (Défaut)').'</option>
 									<option style="background-color:#222A2D;" value="skin-1">'.T_('Noir').'</option>
@@ -1380,7 +1373,7 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 								{
 									echo '
 									<hr />
-									<label class="control-label bolder blue" for="profile">'.T_('Profil').':</label>
+									<label class="control-label bolder blue" for="profile">'.T_('Profil').' :</label>
 									<div class="controls">
 										<div class="radio">
 											<label>
@@ -1409,7 +1402,7 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 										</div>
 									</div>
 									<hr />
-									<label class="control-label bolder blue" for="chgpwd">'.T_('Forcer le changement du mot de passe').':</label>
+									<label class="control-label bolder blue" for="chgpwd">'.T_('Forcer le changement du mot de passe').' :</label>
 									<div class="controls">
 										<label>
 											<input type="radio" class="ace" disable="disable" name="chgpwd" value="1"> <span class="lbl"> '.T_('Oui').' </span>
@@ -1427,7 +1420,7 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 								{
 									echo '
 										<hr />
-										<label class="control-label bolder blue" for="view">'.T_('Vues personnelles').': <i>('.T_('associe des catégories à l\'utilisateur').')</i></label>
+										<label class="control-label bolder blue" for="view">'.T_('Vues personnelles').' :<i> ('.T_('associe des catégories à l\'utilisateur').')</i></label>
 										<div class="controls">
 											';
 											//check if connected user have view
@@ -1721,7 +1714,7 @@ else
 					        echo '
 					</th>
 					<th>
-					    <a href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=mail&way='.$nextway.'">
+					    <a href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=tusers.mail&way='.$nextway.'">
 					        <i class="icon-envelope-alt"></i> '.T_('Adresse Mail').'&nbsp;&nbsp;
 					        ';
 					            if($_GET['order']=='mail')

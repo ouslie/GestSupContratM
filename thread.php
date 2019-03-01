@@ -5,8 +5,8 @@
 # @Description : display tickets thread
 # @Author : Flox
 # @Create : 27/01/2013
-# @Update : 25/10/2018
-# @Version : 3.1.36
+# @Update : 21/12/2018
+# @Version : 3.1.37
 ################################################################################
 
 //initialize variables 
@@ -42,9 +42,9 @@ if ($globalrow['creator']!='')
 if($_GET['action']!='new') //case for edit ticket not new ticket
 {
 	echo '
-    <table '; if($mobile==0) {echo 'border="1" style="border: 1px solid #D8D8D8;"';} echo ' CELLPADDING="15">
-		<tr>
-			<td>
+    <table '; if($mobile==0) {echo 'style="border: 1px solid #D8D8D8;"';} echo '>
+		<tr >
+			<td style="padding:15px;">
 				<div id="timeline-1">
 					<div class="row">
 							<div class="timeline-container">
@@ -81,7 +81,7 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 												//get author name
 												$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
 												$qry2->execute(array('id' => $row['author']));
-												$ruser=$qry2->fetch();
+												$author=$qry2->fetch();
 												$qry2->closeCursor();
 												
 												//state name
@@ -105,13 +105,13 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 														echo '
 														<div class="timeline-item clearfix">
 															<div class="timeline-info">
-																<img title="'.$ruser['firstname'].' '.$ruser['lastname'].'" alt="avatar" src="./images/avatar/'.$ruserprofile[0].'">
+																<img title="'.$author['firstname'].' '.$author['lastname'].'" alt="avatar" src="./images/avatar/'.$ruserprofile[0].'">
 															</div>
 															<div class="widget-box transparent">
 																<div class="widget-header widget-header-small hidden"></div>
 																<div class="widget-header widget-header-small">
 																	<h5 class="smaller">
-																		<a href="#" class="blue"><i class="icon-user bigger-110"></i> '; if($mobile==0) {echo $ruser['firstname'];} echo ' '.$ruser['lastname'].'</a>';
+																		<a href="#" class="blue"><i class="icon-user bigger-110"></i> '; if($mobile==0) {echo $author['firstname'];} echo ' '.$author['lastname'].'</a>';
 																			if($mobile==0){echo '&nbsp;<span class="grey"><i class="icon-time bigger-110"></i> '.$date_thread.'</span>';} //compress text for mobile display
 																			echo '
 																	</h5>
@@ -190,7 +190,7 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 															';
 															//compress text for mobile display
 															if($mobile==1){echo'<i class="icon-user"></i> '.$date_thread.': <b>'.T_('Attribution').'</b>';}
-															else {echo'<i class="icon-user"></i> '.$date_thread.': <b>'.T_('Attribution').'</b> '.T_('du ticket').' '.T_($name).' <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';}
+															else {echo'<i class="icon-user"></i> '.$date_thread.': <b>'.T_('Attribution').'</b> '.T_('du ticket').' '.T_($name).' <span style="font-size: x-small;">('.T_('Effectué par').'  '.$author['firstname'].' '.$author['lastname'].')</span>';}
 															echo '
 														</span>
 													</div>
@@ -228,7 +228,7 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 															';
 															//compress text for mobile display
 															if($mobile==1){echo'<i class="icon-exchange"></i> '.$date_thread.': <b>'.T_('Transfert').'</b>';}
-															else {echo '<i class="icon-exchange"></i> '.$date_thread.': <b>'.T_('Transfert').'</b> '.T_('du ticket').' '.$dispname.'  <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';}
+															else {echo '<i class="icon-exchange"></i> '.$date_thread.': <b>'.T_('Transfert').'</b> '.T_('du ticket').' '.$dispname.'  <span style="font-size: x-small;">('.T_('Effectué par').'  '.$author['firstname'].' '.$author['lastname'].')</span>';}
 															echo '
 														</span>
 													</div>
@@ -243,7 +243,7 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 														';
 															//compress text for mobile display
 															if($mobile==1){echo '<i class="icon-envelope"></i> '.$date_thread.': <b>'.T_('Envoi de mail').'</b>';} 
-															else {echo '<i class="icon-envelope"></i> '.$date_thread.': <b>'.T_('Envoi de mail').'</b> <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';}
+															else {echo '<i class="icon-envelope"></i> '.$date_thread.': <b>'.T_('Envoi de mail').'</b> <span style="font-size: x-small;">('.T_('Effectué par').'  '.$author['firstname'].' '.$author['lastname'].')</span>';}
 															echo '
 														</span>
 													</div>
@@ -258,7 +258,7 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 														';
 															//compress text for mobile display
 															if($mobile==1){echo '<i class="icon-ok"></i> '.$date_thread.': <b>'.T_('Clôture').'</b>';
-															} else {echo '<i class="icon-ok"></i> '.$date_thread.': <b>'.T_('Clôture').'</b> <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';}
+															} else {echo '<i class="icon-ok"></i> '.$date_thread.': <b>'.T_('Clôture').'</b> <span style="font-size: x-small;">('.T_('Effectué par').'  '.$author['firstname'].' '.$author['lastname'].')</span>';}
 															echo '
 														</span>
 													</div>
@@ -273,7 +273,7 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 														';
 															//compress text for mobile display
 															if($mobile==1){echo '<i class="icon-adjust"></i> '.$date_thread.': <b>'.T_('Modif. état').'</b>';
-															} else {echo '<i class="icon-adjust"></i> '.$date_thread.': <b>'.T_('Changement d\'état').'</b> '.T_($rstate['name']).' <span style="font-size: x-small;">('.T_('Effectué par').'  '.$ruser['firstname'].' '.$ruser['lastname'].')</span>';}
+															} else {echo '<i class="icon-adjust"></i> '.$date_thread.': <b>'.T_('Changement d\'état').'</b> '.T_($rstate['name']).' <span style="font-size: x-small;">('.T_('Effectué par').'  '.$author['firstname'].' '.$author['lastname'].')</span>';}
 															echo '
 														</span>
 													</div>
