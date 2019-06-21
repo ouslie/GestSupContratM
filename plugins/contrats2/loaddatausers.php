@@ -29,6 +29,7 @@ function fetch_pairs($db, $query)
 $grid = new EditableGrid();
 $grid->addColumn('status', 'Status', 'string',[0 => "Inactif", 1 => "Actif"], false);
 $grid->addColumn('type', 'Type', 'integer', fetch_pairs($db, 'SELECT id, nom  FROM tcontratstype'), false);
+$grid->addColumn('user', 'Client', 'integer', fetch_pairs($db, 'SELECT id, login  FROM tusers'), false, NULL, true, true);
 $grid->addColumn('periode', 'Période', 'string', ["Mensuel" => "Mensuel","Annuel" => "Annuel"], false);
 $grid->addColumn('service', 'Service', 'date', null, false);
 $grid->addColumn('date_souscription', 'Date de souscription', 'date', null, false);
@@ -77,8 +78,8 @@ switch($type)
     tcontrats.prepaye, 
     tcontrats.tarifcontrat, 
     tcontrats.facturelink,
-    tcontrats.type
-    
+    tcontrats.type,
+    tcontrats.user
     FROM tincidents
     INNER JOIN tcontrats ON (tincidents.contrats=tcontrats.id)
     WHERE tcontrats.type = 1 AND tcontrats.user = $user_id
@@ -96,7 +97,8 @@ switch($type)
     tcontrats.periode, 
     tcontrats.tarifcontrat, 
     tcontrats.facturelink,
-    tcontrats.type
+    tcontrats.type, 
+    tcontrats.user
     FROM tcontrats
     WHERE tcontrats.type = 2  AND tcontrats.user = $user_id
     GROUP BY tcontrats.id";
@@ -118,7 +120,8 @@ switch($type)
     tcontrats.prepaye, 
     tcontrats.tarifcontrat, 
     tcontrats.facturelink,
-    tcontrats.type
+    tcontrats.type, 
+    tcontrats.user
     FROM tincidents
     INNER JOIN tcontrats ON (tincidents.contrats=tcontrats.id)
     WHERE tcontrats.type = 3  AND tcontrats.user = $user_id
