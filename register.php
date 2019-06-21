@@ -4,9 +4,9 @@
 # @Description : create gestsup user
 # @Call : /index.php
 # @Author : Flox
-# @Version : 3.1.37
+# @Version : 3.1.40
 # @Create : 20/03/2014
-# @Update : 21/12/2018
+# @Update : 21/03/2019
 ################################################################################
 
 //init language
@@ -78,16 +78,13 @@ if ($rparameters['user_register']==1)
 									{
 										$message='<div class="alert alert-danger"><strong><i class="icon-remove"></i> '.T_('Erreur').':</strong> '.T_("L'identifiant ou l'adresse mail renseignée existe déjà.").'<br></div>';
 									} else {
-										//crypt password md5 + salt
-										$salt = substr(md5(uniqid(rand(), true)), 0, 5); // Generate a random key
-										$_POST['password']=md5($salt . md5($_POST['password'])); // store in md5, md5 password + salt
+										$hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
 										//insert user
-										$qry=$db->prepare("INSERT INTO `tusers` (`firstname`,`lastname`,`password`,`salt`,`mail`,`profile`,`login`,`chgpwd`,`company`) VALUES (:firstname,:lastname,:password,:salt,:mail,:profile,:login,:chgpwd,:company)");
+										$qry=$db->prepare("INSERT INTO `tusers` (`firstname`,`lastname`,`password`,`mail`,`profile`,`login`,`chgpwd`,`company`) VALUES (:firstname,:lastname,:password,:mail,:profile,:login,:chgpwd,:company)");
 										$qry->execute(array(
 											'firstname' => $_POST['firstname'],
 											'lastname' => $_POST['lastname'],
-											'password' => $_POST['password'],
-											'salt' => $salt,
+											'password' => $hash,
 											'mail' => $_POST['mail'],
 											'profile' => $defaultprofile,
 											'login' => $_POST['login'],
@@ -95,7 +92,7 @@ if ($rparameters['user_register']==1)
 											'company' => $_POST['company']
 											));
 										//message to display
-										$message='<div class="alert alert-block alert-success"><center><i class="icon-ok green"></i> '.T_('Votre compte à été crée avec succès').'.</center></div>';
+										$message='<div class="alert alert-block alert-success"><center><i class="icon-ok green"></i> '.T_('Votre compte a été crée avec succès').'.</center></div>';
 									}
             	                } else {$message='<div class="alert alert-danger"><strong><i class="icon-remove"></i> '.T_('Erreur').':</strong> '.T_("Vos mots de passes ne sont pas identiques").'.<br></div>';}
             	              } else {$message='<div class="alert alert-danger"><strong><i class="icon-remove"></i> '.T_('Erreur').':</strong> '.T_("Vous devez spécifier une adresse mail").'.<br></div>';}

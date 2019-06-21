@@ -6,9 +6,12 @@
 # @Parameters : ticket id destinataires
 # @Author : Flox
 # @Create : 15/07/2014
-# @Update : 21/12/2018
-# @Version : 3.1.37
+# @Update : 21/03/2019
+# @Version : 3.1.40
 ################################################################################
+
+//call functions
+if(file_exists('./core/functions.php')) {require_once('./core/functions.php');}
 
 //initialize variables 
 if(!isset($_POST['usercopy'])) $_POST['usercopy'] = '';
@@ -33,12 +36,8 @@ if(!isset($rtech5['firstname'])) $rtech5['firstname'] = '';
 if(!isset($rtech5['lastname'])) $rtech5['lastname'] = '';
 if(!isset($rtechgroup4['name'])) $rtechgroup4['name'] = '';
 if(!isset($rtechgroup5['name'])) $rtechgroup5['name'] = '';
-if(!isset($from_mail2ticket)) $from_mail2ticket=0;
 
 $mail_send_error=false;
-
-//call crypt function if not call from mail2ticket
-if(!$from_mail2ticket){require_once('./core/crypt.php');}
 
 $db_id=strip_tags($_GET['id']);
 
@@ -342,7 +341,7 @@ $msg.='
 							}
 							$msg.='
 							<tr>
-								<td style="padding:5px;" width="400"><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Date de résolution estimé').' :</b> '.$date_hope.'</font></td>
+								<td style="padding:5px;" width="400"><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Date de résolution estimée').' :</b> '.$date_hope.'</font></td>
 								<td style="padding:5px;"  width="400"><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Date de résolution').' :</b> '.$date_res.'</font></td>
 							</tr>
 						</table>
@@ -550,7 +549,7 @@ if ($send==1)
 	{
 		if (!$mail->Send()){
 			echo '<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>'.T_('Message non envoyé, vérifier la configuration de votre serveur de messagerie').'.</b> (';
-				echo $mail->ErrorInfo;
+			echo $mail->ErrorInfo;
 			echo ')</center></div>';
 			$mail_send_error=true;
 		} elseif(isset($_SESSION['user_id'])) {
@@ -573,8 +572,4 @@ if ($send==1)
 		echo '<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>'.T_('Erreur').'.</b> '.T_('Aucune adresse mail renseignée.').' </center></div>';
 	}
 }
-
-// Date conversion
-function date_cnv ($date) 
-{return substr($date,8,2) . "/" . substr($date,5,2) . "/" . substr($date,0,4);}
 ?>

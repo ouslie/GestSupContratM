@@ -5,8 +5,8 @@
 # @Call : ./ticket.php
 # @Author : Flox
 # @Create : 28/10/2013
-# @Update : 28/12/2018
-# @Version : 3.1.37 p1
+# @Update : 14/03/2019
+# @Version : 3.1.40 p1
 ################################################################################
 
 //initialize variable
@@ -49,7 +49,6 @@ if($_GET['action']=='new')
 //action delete ticket
 if (($_GET['action']=="delete") && ($rright['ticket_delete']!=0) && $_GET['id'])
 {
-	
 	$qry=$db->prepare("DELETE FROM `tincidents` WHERE id=:id"); //delete ticket
 	$qry->execute(array('id' => $_GET['id']));
 	$qry=$db->prepare("DELETE FROM `tevents` WHERE incident=:incident"); //delete associate events
@@ -134,12 +133,10 @@ if($rparameters['debug']==1){ echo "<b><u>DEBUG MODE:</u></b><br /> <b>VAR:</b> 
 if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1"||$_POST['send']||$_POST['action']) 
 {
 	//check mandatory fields
-	if(($rright['ticket_date_hope_mandatory']!=0) && ($_POST['date_hope']=='') && ($_POST['technician']==$_SESSION['user_id'])) {$error=T_('Merci de renseigner la date de résolution estimé');}
     if(($rright['ticket_priority_mandatory']!=0) && ($_POST['priority']=='')) {$error=T_('Merci de renseigner la priorité');}
     if(($rright['ticket_criticality_mandatory']!=0) && ($_POST['criticality']=='')) {$error=T_('Merci de renseigner la criticité');}
 	if(($rright['ticket_description_mandatory']!=0) && (ctype_space($_POST['text']) || $_POST['text']=='' || ctype_space(strip_tags($_POST['text']))==1 ) || strip_tags($_POST['text'])=='') {$error=T_('Merci de renseigner la description de ce ticket');} 
     if(($rright['ticket_asset_mandatory']!=0) && ($rparameters['asset']==1) && ($_POST['asset_id']==0)) {$error=T_("Merci de renseigner l'équipement");}
-	if(($rright['ticket_title_mandatory']!=0) && ($_POST['title']=='')) {$error=T_('Merci de renseigner le titre de ce ticket');}
     if(($rright['ticket_agency_mandatory']!=0) && ($rparameters['user_agency']==1) && ($_POST['u_agency']==0)) {
 		//check if current user have multiple agencies to display empty mandatory alert
 		$qry2=$db->prepare("SELECT COUNT(*) FROM `tusers_agencies` WHERE user_id=:user_id");
@@ -150,7 +147,6 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 		if ($row2[0]>1 && $_SESSION['profile_id']!=4) {$error=T_("Merci de renseigner l'agence");}
 	}
 	if(($rright['ticket_tech_mandatory']!=0) && ($_POST['technician']=='0')) {$error=T_('Merci de renseigner le technicien associé à ce ticket');}
-	if(($rright['ticket_service_mandatory']!=0) && ($_POST['u_service']==0)) {$error=T_('Merci de renseigner le service');}
 	//check user ticket limit 
 	if ($rparameters['user_limit_ticket']==1 && $ruser['limit_ticket_number']!=0 && $ruser['limit_ticket_days']!=0 && $ruser['limit_ticket_date_start']!='0000-00-00' &&($_SESSION['profile_id']==1 || $_SESSION['profile_id']==2))
 	{
@@ -255,7 +251,7 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 			$qry->execute(array('ticket' => $_GET['id'],'date' => $datetime,'author' => $_SESSION['user_id'],'text' => '','type' => 2,'group1' => $globalrow['t_group'],'group2' => $t_group));
 		}
 		//detect transfert tech change to tech
-		if ($_POST['technician']!=$globalrow['technician'] && $globalrow['technician']!=0 && $_POST['technician']!='') {
+		if ($rright['ticket_tech']!=0 && $_POST['technician']!=$globalrow['technician'] && $globalrow['technician']!=0 && $_POST['technician']!='') {
 			$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`text`,`type`,`tech1`,`tech2`) VALUES (:ticket,:date,:author,:text,:type,:tech1,:tech2)");
 			$qry->execute(array('ticket' => $_GET['id'],'date' => $datetime,'author' => $_SESSION['user_id'],'text' => '','type' => 2,'tech1' => $globalrow['technician'],'tech2' => $_POST['technician']));
 		}
@@ -270,7 +266,7 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 			$qry->execute(array('ticket' => $_GET['id'],'date' => $datetime,'author' => $_SESSION['user_id'],'text' => '','type' => 2,'tech1' => $globalrow['technician'],'group2' => $t_group));
 		}
 		//detect technician attribution
-		if ($globalrow['technician']==0 && $_POST['technician']!='' && $_POST['technician']!='0' && $globalrow['t_group']==0 && $globalrow['creator']!=$_SESSION['user_id'])
+		if ($rright['ticket_tech']!=0 && $globalrow['technician']==0 && $_POST['technician']!='' && $_POST['technician']!='0' && $globalrow['t_group']==0 && $globalrow['creator']!=$_SESSION['user_id'])
 		{
 			$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`type`,`tech1`) VALUES (:ticket,:date,:author,:type,:tech1)");
 			$qry->execute(array('ticket' => $_GET['id'],'date' => $datetime,'author' => $_SESSION['user_id'],'type' => 1,'tech1' => $_POST['technician']));
@@ -282,7 +278,7 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 			$qry->execute(array('ticket' => $_GET['id'],'date' => $datetime,'author' => $_SESSION['user_id'],'type' => 1,'group1' => $t_group));
 		}
 		//generate thread for switch state
-		if ($globalrow['state']!=$_POST['state'] && $_POST['state']!=3 && $_POST['technician']!='')
+		if ($rright['ticket_state']!=0 && $globalrow['state']!=$_POST['state'] && $_POST['state']!=3 && $_POST['technician']!='')
 		{
 			$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`type`,`state`) VALUES (:ticket,:date,:author,:type,:state)");
 			$qry->execute(array('ticket' => $_GET['id'],'date' => $datetime,'author' => $_SESSION['user_id'],'type' => 5,'state' => $_POST['state']));
@@ -371,7 +367,7 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 	//convert posted datetime to SQL format, if yyyy-mm-dd is detected
 	if($_POST['date_create'] && !strpos($_POST['date_create'], "-"))
 	{
-		//convert datatime if time is specified
+		//convert datetime if time is specified
 		if(strpos($_POST['date_create'], ":"))
 		{$_POST['date_create'] = DateTime::createFromFormat('d/m/Y H:i:s', $_POST['date_create']);}
 		else 
@@ -381,7 +377,7 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 	}
 	if($_POST['date_hope'] && !strpos($_POST['date_hope'], "-"))
 	{
-		//convert datatime if time is specified
+		//convert datetime if time is specified
 		if(strpos($_POST['date_hope'], ":"))
 		{$_POST['date_hope'] = DateTime::createFromFormat('d/m/Y H:i:s', $_POST['date_hope']);}
 		else 
@@ -391,7 +387,7 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 	}
 	if($_POST['date_res'] && !strpos($_POST['date_res'], "-"))
 	{
-		//convert datatime if time is specified
+		//convert datetime if time is specified
 		if(strpos($_POST['date_res'], ":"))
 		{$_POST['date_res'] = DateTime::createFromFormat('d/m/Y H:i:s', $_POST['date_res']);}
 		else 
@@ -442,14 +438,22 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 			'end_availability' => $end_availability,
 			'availability_planned' => $_POST['availability_planned'],
 			'contrats' => $_POST['contrats']
-			));
+		));
 			
 		
 	} elseif ($error=="0")  {	
 		//modify read state
 		if($_POST['technician']==$_SESSION['user_id']) {$techread=1; $techread_date=date("Y-m-d H:i:s");} //read ticket  
 		if($globalrow['technician']=='') {$techread=1; $techread_date=date("Y-m-d H:i:s");} //read ticket case when it's an unassigned ticket.
-	
+		
+		//check previous change, before update, concomitant user change #4471
+		$qry=$db->prepare("SELECT `technician`,`state` FROM `tincidents` WHERE id=:id");
+		$qry->execute(array('id' => $_GET['id']));
+		$row=$qry->fetch();
+		$qry->closeCursor();
+		if($rright['ticket_tech']==0) {if($row['technician']!=$_POST['technician']) {$_POST['technician']=$row['technician'];}}
+		if($rright['ticket_state']==0) {if($row['state']!=$_POST['state']) {$_POST['state']=$row['state'];}}
+		
 		//update ticket
 		$query = "UPDATE tincidents SET 
 		user='$_POST[user]',
@@ -514,6 +518,7 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 		`end_availability`=:end_availability,
 		`availability_planned`=:availability_planned,
 		`contrats`=:contrats
+
 		WHERE `id`=:id");
 		$qry->execute(array(
 			'user' => $_POST['user'],
@@ -609,7 +614,10 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 	include "./core/upload.php";
 	
 	//auto send mail
-	if(($rparameters['mail_auto_user_newticket']==1) || ($rparameters['survey']==1) || ($rparameters['mail_auto']==1) || ($rparameters['mail_auto_user_modify']==1) || ($rparameters['mail_auto_tech_modify']==1) || ($rparameters['mail_auto_tech_attribution']==1) || ($rparameters['mail_auto_tech_modify']==1) || ($rparameters['mail_newticket']==1) && ($_POST['upload']=='')){include('./core/auto_mail.php');}
+	if(!$error)
+	{
+		if(($rparameters['mail_auto_user_newticket']==1) || ($rparameters['survey']==1) || ($rparameters['mail_auto']==1) || ($rparameters['mail_auto_user_modify']==1) || ($rparameters['mail_auto_tech_modify']==1) || ($rparameters['mail_auto_tech_attribution']==1) || ($rparameters['mail_auto_tech_modify']==1) || ($rparameters['mail_newticket']==1) && ($_POST['upload']=='')){include('./core/auto_mail.php');}
+	}
 	
 	//display message
 	if($error=="0")

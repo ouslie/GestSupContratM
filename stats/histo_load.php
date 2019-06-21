@@ -6,16 +6,19 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 15/02/2014
-# @Update : 13/03/2018
-# @Version : 3.1.31
+# @Update : 05/03/2019
+# @Version : 3.1.40
 ################################################################################
 
 //array declaration
 $values = array();
 $xnom = array();
 //count
-$qtotal = $db->query("SELECT count(*) FROM tincidents");
-$rtotal=$qtotal->fetch();
+$qry=$db->prepare("SELECT COUNT(id) FROM `tincidents`");
+$qry->execute();
+$rtotal=$qry->fetch();
+$qry->closeCursor();
+
 $libchart=T_('Charge de travail actuelle par technicien');
 $query = $db->query("
 	SELECT CONCAT_WS('. ', left(tusers.firstname, 1),  tusers.lastname) as Technicien, ROUND((SUM(tincidents.time_hope-tincidents.time))/60) as Charge

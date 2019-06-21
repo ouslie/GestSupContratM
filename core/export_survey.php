@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 01/05/2017
-# @Update : 05/04/2018
-# @Version : 3.1.32
+# @Update : 26/01/2019
+# @Version : 3.1.38
 ################################################################################
 
 //initialize variables 
@@ -32,18 +32,8 @@ T_textdomain($_GET['lang']);
 //database connection
 require "../connect.php"; 
 
-//get last token
-$qry = $db->prepare("SELECT `token` FROM `ttoken` WHERE action=:action ORDER BY id");
-$qry->execute(array('action' => 'export_survey'));
-$token=$qry->fetch();
-$qry->closeCursor();
-
-//delete token
-$qry=$db->prepare("DELETE FROM `ttoken` WHERE action=:action");
-$qry->execute(array('action' => 'export_survey'));
-
 //secure connect from authenticated user
-if ($_GET['token'] && $token['token']==$_GET['token'])
+if ($_GET['token']==$_COOKIE['token'])
 {
 	//get current date
 	$daydate=date('Y-m-d');

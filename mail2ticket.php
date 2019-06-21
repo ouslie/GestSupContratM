@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 07/04/2013
-# @Update : 04/12/2018
-# @Version : 3.1.37
+# @Update : 15/03/2019
+# @Version : 3.1.40 p2
 ################################################################################
 
 //initialize variables 
@@ -42,16 +42,18 @@ use PhpImap\IncomingMail;
 use PhpImap\IncomingMailAttachment;
 
 //functions
-require_once('core/crypt.php');
+require_once('core/functions.php');
 
 //function to add attachment in image on ticket
-function func_attachement($c_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox,$count)
+function func_attachement($c_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox,$count,$contentype)
 {
 	$c_name_dir_ticket = $c_name_dir_upload.$c_ticket_number; 
 	//move attachment to upload directory
 	$tabAttachments = $mail->getAttachments();
 	foreach ($tabAttachments as $tabAttachment){
-		@mkdir($c_name_dir_upload.$c_ticket_number);
+		$oldmask = umask(0);
+		@mkdir($c_name_dir_upload.$c_ticket_number,0777);
+		umask($oldmask);
 		//case image inside in mail
 		//if($tabAttachment->disposition=="inline" || $tabAttachment->disposition==null) #4015
 		if($tabAttachment->disposition=="inline" || $tabAttachment->disposition=="INLINE" || $tabAttachment->disposition==null) 
@@ -60,6 +62,45 @@ function func_attachement($c_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox
 			echo '['.$mailbox.'] [mail '.$count.'] Image into body: <span style="color:green">'.$c_name_file.'</span><br />';
 			$dispo=$tabAttachment->disposition;
 			echo '['.$mailbox.'] [mail '.$count.'] Disposition: <span style="color:green">'.$dispo.'</span><br />';
+			//check if link are not present #4371 from apple mail
+			if($contentype=='textPlain')
+			{
+				//update freeslot
+				$c_name_file = $tabAttachment->name;
+				//black list exclusion for extension
+				$blacklistedfile=0;
+				$blacklist =  array('php', 'php1', 'php2','php3' ,'php4' ,'php5', 'php6', 'php7', 'php8', 'php9', 'php10', 'js', 'htm', 'html', 'phtml', 'exe', 'jsp' ,'pht', 'shtml', 'asa', 'cer', 'asax', 'swf', 'xap', 'phphp', 'inc', 'htaccess', 'sh', 'py', 'pl', 'jsp', 'asp', 'cgi', 'json', 'svn', 'git', 'lock', 'yaml', 'com', 'bat', 'ps1', 'cmd', 'vb', 'hta', 'reg', 'ade', 'adp', 'app', 'asp', 'bas', 'bat', 'cer', 'chm', 'cmd', 'com', 'cpl', 'crt', 'csh', 'der', 'exe', 'fxp', 'gadget', 'hlp', 'hta', 'inf', 'ins', 'isp', 'its', 'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt', 'mdw', 'mdz', 'msc', 'msh', 'msh1', 'msh2', 'mshxml', 'msh1xml', 'msh2xml', 'msi', 'msp', 'mst', 'ops', 'pcd', 'pif', 'plg', 'prf', 'prg', 'pst', 'reg', 'scf', 'scr', 'sct', 'shb', 'shs', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'tmp', 'url', 'vb', 'vbe', 'vbs', 'vsmacros', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xnk');
+				$ext=explode('.',$c_name_file);
+				foreach ($ext as &$value) {
+					$value=strtolower($value);
+					if(in_array($value,$blacklist)) {$blacklistedfile=1;} 
+				}
+				if(!$blacklistedfile)
+				{
+					$qry=$db->prepare("SELECT `img1`,`img2`,`img3`,`img4`,`img5` FROM `tincidents` WHERE id=:id");
+					$qry->execute(array('id' => $c_ticket_number));
+					$row=$qry->fetch();
+					$qry->closeCursor();
+					
+					//find the first free slot else not display attach input
+					if ($row['img1']=="") {$freeslot="img1";}
+					else if ($row['img2']=="") {$freeslot="img2";}
+					else if ($row['img3']=="") {$freeslot="img3";}
+					else if ($row['img4']=="") {$freeslot="img4";}
+					else if ($row['img5']=="") {$freeslot="img5";}
+
+					if(isset($freeslot)){
+						echo '['.$mailbox.'] [mail '.$count.'] Freeslot selected: <span style="color:green">'.$freeslot.'</span><br />';
+						$db_file_name=strip_tags($db->quote($c_name_file));
+						$db->query("UPDATE tincidents SET $freeslot=$db_file_name WHERE id='$c_ticket_number'");
+					} else {
+						echo '['.$mailbox.'] [mail '.$count.'] Freeslot selected: <span style="color:red">no free slot found</span><br />';
+					}
+				} else {
+					echo '['.$mailbox.'] [mail '.$count.'] Blacklisted file: <span style="color:red">'.$c_name_file.'</span><br />';
+				}
+			}
+			
 			
 		} 
 		//case attachment in mail
@@ -97,6 +138,8 @@ function func_attachement($c_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox
 					echo '['.$mailbox.'] [mail '.$count.'] Freeslot selected: <span style="color:green">'.$freeslot.'</span><br />';
 					$db_file_name=strip_tags($db->quote($c_name_file));
 					$db->query("UPDATE tincidents SET $freeslot=$db_file_name WHERE id='$c_ticket_number'");
+				} else {
+					echo '['.$mailbox.'] [mail '.$count.'] Freeslot selected: <span style="color:red">no free slot found</span><br />';
 				}
 			} else {
 				echo '['.$mailbox.'] [mail '.$count.'] Blacklisted file: <span style="color:red">'.$c_name_file.'</span><br />';
@@ -224,7 +267,7 @@ foreach ($mailboxes as $mailbox)
 				$mail = $con_mailbox ->getMail($tab_MailsInfo->uid);
 				$from = $mail->fromAddress;
 				$subject = $mail->subject;
-				$datetime = $mail->date;
+				if($rparameters['server_timezone']){date_default_timezone_set($rparameters['server_timezone']); $datetime = date('Y-m-d H:i:s');} else {$datetime = $mail->date;}
 				$blacklist_mail=0;
 				if(!$subject){$subject=T_('(Sans objet)');} //default subject 
 				//detect blacklist mail or domain for exclusion
@@ -273,13 +316,14 @@ foreach ($mailboxes as $mailbox)
 					$c_reg = "/n°(.*?):/i"; //regex for extract ticket number
 					preg_match($c_reg, $subject, $matches); // extract ticket number
 					@$find_ticket_number = $matches[1];
+					$find_ticket_number=str_replace(' ','',$find_ticket_number);
 					if ($find_ticket_number!="")
 					{
 						//get attachement and image 
 						if($contentype=='textHtml') { 
-							$message = (isset($c_FromMessage)?$c_FromMessage:'').func_attachement($find_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox,$count);
+							$message = (isset($c_FromMessage)?$c_FromMessage:'').func_attachement($find_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox,$count,$contentype);
 						} else { //case plaintext with attachment
-							(isset($c_FromMessage)?$c_FromMessage:'').func_attachement($find_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox,$count);
+							(isset($c_FromMessage)?$c_FromMessage:'').func_attachement($find_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox,$count,$contentype);
 						}
 						//delete ticket part from mail to keep only answer
 						$end_tag='---- '.T_('Repondre au dessus du ticket').' ----';
@@ -367,7 +411,7 @@ foreach ($mailboxes as $mailbox)
 							echo '['.$mailbox.'] [mail '.$count.'] Content type detected: <span style="color:green">'.$contentype.'</span><br />';
 						}
 						//get attachement and images from mail
-						$message = (isset($c_FromMessage)?$c_FromMessage:'').func_attachement($c_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox,$count);
+						$message = (isset($c_FromMessage)?$c_FromMessage:'').func_attachement($c_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox,$count,$contentype);
 						
 						if($contentype=='textPlain')
 						{
@@ -395,7 +439,6 @@ foreach ($mailboxes as $mailbox)
 						if($rparameters['mail_auto_user_newticket'])
 						{
 							$send=1;
-							$from_mail2ticket=1;
 							$_GET['id']=$c_ticket_number;
 							include('core/mail.php');
 							echo '['.$mailbox.'] [mail '.$count.'] SEND Mail to sender: <span style="color:green">OK (mail_auto_user_newticket parameter enable)</span><br />';

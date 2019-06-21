@@ -4,9 +4,9 @@
 # @Description : page to print ticket
 # @Call : /ticket.php
 # @Author : Flox
-# @Version : 3.1.36
+# @Version : 3.1.38
 # @Create : 09/02/2014
-# @Update : 09/11/2018
+# @Update : 11/03/2019
 ################################################################################
 
 //initialize variables 
@@ -55,18 +55,8 @@ $qry->execute(array('id' => $_GET['id']));
 $globalrow=$qry->fetch();
 $qry->closeCursor();
 
-//get last token
-$qry=$db->prepare("SELECT token FROM `ttoken` WHERE action='ticket_print' ORDER BY id DESC LIMIT 1");
-$qry->execute();
-$token=$qry->fetch();
-$qry->closeCursor();
-
-//delete token
-$qry=$db->prepare("DELETE FROM `ttoken` WHERE action='ticket_print'");
-$qry->execute();
-
 //secure connect
-if ($_GET['token'] && $token['token']==$_GET['token'])
+if($_GET['token']==$_COOKIE["token"])
 {
 	//database queries to find values for create print
 	$qry=$db->prepare("SELECT * FROM `tusers` WHERE id=:id");
@@ -100,12 +90,12 @@ if ($_GET['token'] && $token['token']==$_GET['token'])
 	$staterow=$qry->fetch();
 	$qry->closeCursor();
 		
-	$qry=$db->prepare("SELECT * FROM `tcategory` WHERE id=:id");
+	$qry=$db->prepare("SELECT name FROM `tcategory` WHERE id=:id");
 	$qry->execute(array('id' => $globalrow['category']));
 	$catrow=$qry->fetch();
 	$qry->closeCursor();
 		
-	$qry=$db->prepare("SELECT * FROM `tsubcat` WHERE id=:id");
+	$qry=$db->prepare("SELECT name FROM `tsubcat` WHERE id=:id");
 	$qry->execute(array('id' => $globalrow['subcat']));
 	$subcatrow=$qry->fetch();
 	$qry->closeCursor();
@@ -130,10 +120,10 @@ if ($_GET['token'] && $token['token']==$_GET['token'])
 	//generate resolution
 	if($rparameters['mail_order']==1)
 	{
-		$qry=$db->prepare("SELECT * FROM `tthreads` WHERE ticket=:ticket AND private='0' ORDER BY date DESC");
+		$qry=$db->prepare("SELECT date,type,text,author,group1,group2,tech1,tech2,state FROM `tthreads` WHERE ticket=:ticket AND private='0' ORDER BY date DESC");
 		$qry->execute(array('ticket' => $_GET['id']));
 	} else {
-		$qry=$db->prepare("SELECT * FROM `tthreads` WHERE ticket=:ticket AND private='0' ORDER BY date ASC");
+		$qry=$db->prepare("SELECT date,type,text,author,group1,group2,tech1,tech2,state FROM `tthreads` WHERE ticket=:ticket AND private='0' ORDER BY date ASC");
 		$qry->execute(array('ticket' => $_GET['id']));
 	}
 	while($row = $qry->fetch())
@@ -250,25 +240,25 @@ if ($_GET['token'] && $token['token']==$_GET['token'])
 					$qry2->execute(array('id' => $row['tech1']));
 					$rtech4=$qry2->fetch();
 					$qry2->closeCursor();
-				}
+				} else {$rtech4['firstname']='';$rtech4['lastname']='';}
 				if ($row['tech2']!=0) {
 					$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
 					$qry2->execute(array('id' => $row['tech2']));
 					$rtech5=$qry2->fetch();
 					$qry2->closeCursor();
-				}
+				} else {$rtech5['firstname']='';$rtech5['lastname']='';}
 				if ($row['group1']!=0) {
 					$qry2=$db->prepare("SELECT `name` FROM `tgroups` WHERE id=:id");
 					$qry2->execute(array('id' => $row['group1']));
 					$rtechgroup4=$qry2->fetch();
 					$qry2->closeCursor();
-				}
+				} else {$rtechgroup4['name']='';}
 				if ($row['group2']!=0) {
 					$qry2=$db->prepare("SELECT `name` FROM `tgroups` WHERE id=:id");
 					$qry2->execute(array('id' => $row['group2']));
 					$rtechgroup5=$qry2->fetch();
 					$qry2->closeCursor();
-				}
+				} else {$rtechgroup5['name']='';}
 				$resolution=$resolution.' <b>'.$date_thread.':</b> '.T_('Transfert du ticket de').' '.$rtechgroup4['name'].$rtech4['firstname'].' '.$rtech4['lastname'].' '.T_('à ').' '.$rtechgroup5['name'].$rtech5['firstname'].' '.$rtech5['lastname'].'. <br /><br />';
 		}elseif($row['tech1']!=0 && $row['tech2']!=0) { //case tech to tech
 				$qry2=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
@@ -358,7 +348,7 @@ if ($_GET['token'] && $token['token']==$_GET['token'])
 							}
 							echo '
 							<tr>
-								<td width="400"><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Date de résolution estimé').':</b></b> '.$date_hope.'</font></td>
+								<td width="400"><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Date de résolution estimée').':</b></b> '.$date_hope.'</font></td>
 								<td width="400"><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Date de résolution').':</b> '.$date_res.'</font></td>
 							</tr>
 						</table>

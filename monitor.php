@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 15/02/2014
-# @Update : 09/01/2019
-# @Version : 3.1.37 p1
+# @Update : 21/03/2019
+# @Version : 3.1.40
 ################################################################################
 
 //initialize variables 
@@ -22,18 +22,20 @@ if(!$_GET['user_id']) {$_GET['user_id']=1;}
 $_SESSION['user_id']=$_GET['user_id'];
 
 //get key
-$query=$db->query("SELECT server_private_key FROM `tparameters`");
-$key=$query->fetch();
-$query->closeCursor(); 
+$qry=$db->prepare("SELECT `server_private_key` FROM `tparameters`");
+$qry->execute();
+$key=$qry->fetch();
+$qry->closeCursor();
 
 $_GET['key']=str_replace(' ','+',$_GET['key']);
 
 if($_GET['key']==$key['server_private_key'])
 {
 	//load user table
-	$quser=$db->query("SELECT * FROM tusers WHERE id=$_SESSION[user_id]");
-	$ruser=$quser->fetch();
-	$quser->closeCursor(); 
+	$qry=$db->prepare("SELECT `language` FROM `tusers` WHERE id=:id");
+	$qry->execute(array('id' => $_SESSION['user_id']));
+	$ruser=$qry->fetch();
+	$qry->closeCursor();
 
 	//define current language
 	require "localization.php";
@@ -45,39 +47,46 @@ if($_GET['key']==$key['server_private_key'])
 	$daydate=date('Y-m-d');
 
 	//query today open ticket
-	$query=$db->query("SELECT COUNT(*) FROM `tincidents` WHERE date_create LIKE '$daydate%' AND disable='0'");
-	$nbday=$query->fetch();
-	$query->closeCursor(); 
+	$qry=$db->prepare("SELECT COUNT(id) FROM `tincidents` WHERE date_create LIKE :date AND disable='0'");
+	$qry->execute(array('date' => "$daydate%"));
+	$nbday=$qry->fetch();
+	$qry->closeCursor();
 
 	//query new ticket not associate to technician
-	$query=$db->query("SELECT COUNT(*) FROM `tincidents` WHERE technician='0' AND t_group='0' AND disable='0'");
-	$cnt5=$query->fetch();
-	$query->closeCursor(); 
+	$qry=$db->prepare("SELECT COUNT(id) FROM `tincidents` WHERE technician='0' AND t_group='0' AND disable='0'");
+	$qry->execute();
+	$cnt5=$qry->fetch();
+	$qry->closeCursor();
 
 	//query today resolve ticket
-	$query=$db->query("SELECT COUNT(*) FROM `tincidents` WHERE date_res LIKE '$daydate%' AND state='3' AND disable='0'");
-	$nbdayres=$query->fetch();
-	$query->closeCursor(); 
+	$qry=$db->prepare("SELECT COUNT(id) FROM `tincidents` WHERE date_res LIKE :date AND state='3' AND disable='0'");
+	$qry->execute(array('date' => "$daydate%"));
+	$nbdayres=$qry->fetch();
+	$qry->closeCursor();
 
 	//query all open ticket 
-	$query=$db->query("SELECT COUNT(*) FROM `tincidents` WHERE (state='5' OR state='1' OR state='2' OR state='6') AND disable='0'");
-	$nbopen=$query->fetch();
-	$query->closeCursor();
+	$qry=$db->prepare("SELECT COUNT(id) FROM `tincidents` WHERE (state='5' OR state='1' OR state='2' OR state='6') AND disable='0'");
+	$qry->execute();
+	$nbopen=$qry->fetch();
+	$qry->closeCursor();
 
 	//query all to do ticket
-	$query=$db->query("SELECT COUNT(*) FROM `tincidents` WHERE (state='1' OR state='2' OR state='6') AND disable='0'");
-	$nbtodo=$query->fetch();
-	$query->closeCursor();
+	$qry=$db->prepare("SELECT COUNT(id) FROM `tincidents` WHERE (state='1' OR state='2' OR state='6') AND disable='0'");
+	$qry->execute();
+	$nbtodo=$qry->fetch();
+	$qry->closeCursor();
 
 	//query all critical ticket
-	$query=$db->query("SELECT COUNT(*) FROM `tincidents` WHERE (state='5' OR state='1' OR state='2' OR state='6') AND criticality=(SELECT id FROM tcriticality WHERE name='Critique') AND disable='0'");
-	$nbcritical=$query->fetch();
-	$query->closeCursor();
+	$qry=$db->prepare("SELECT COUNT(tincidents.id) FROM `tincidents`,`tcriticality` WHERE tincidents.criticality=tcriticality.id AND (tincidents.state='5' OR tincidents.state='1' OR tincidents.state='2' OR tincidents.state='6') AND tcriticality.name LIKE 'Critique' AND disable='0'");
+	$qry->execute();
+	$nbcritical=$qry->fetch();
+	$qry->closeCursor();
 
 	//query ticket wait user state
-	$query=$db->query("SELECT COUNT(*) FROM `tincidents` WHERE state='6' AND disable='0'");
-	$nbwaituser=$query->fetch();
-	$query->closeCursor();
+	$qry=$db->prepare("SELECT COUNT(id) FROM `tincidents` WHERE state='6' AND disable='0'");
+	$qry->execute();
+	$nbwaituser=$qry->fetch();
+	$qry->closeCursor();
 
 	session_start();
 	//initialize variables
@@ -119,6 +128,7 @@ if($_GET['key']==$key['server_private_key'])
 			if($cnt5[0]>1) $ticket=T_('tickets'); else $ticket=T_('ticket');
 			if($nbday[0]>1) $open=T_('Ouverts'); else $open=T_('Ouvert');
 			if($nbdayres[0]>1) $res=T_('Résolus'); else $res=T_('Résolu');
+			
 			echo '
 			<a href="#" class="btn btn-'.$color.' btn-app radius-4">
 				'.$new.'<br />'.$ticket.' <br /><br />
@@ -173,7 +183,7 @@ if($_GET['key']==$key['server_private_key'])
 	</html>
 	';
 } else {
-	echo '<br /><br /><center><div style="color:red;">Cette page à été déplacé utiliser le lien présent dans Administration > Paramètres > Général "Ecran de supervision"</div></center>';
+	echo '<br /><br /><center><div style="color:red;">Cette page a été déplacée, utiliser le lien présent dans Administration > Paramètres > Général "Écran de supervision"</div></center>';
 }
 
 //close database access

@@ -6,15 +6,15 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 07/03/2010
-# @Update : 21/12/2018
-# @Version : 3.1.37
+# @Update : 21/03/2019
+# @Version : 3.1.40
 ################################################################################
 
 //initialize variables 
 if(!isset($state)) $state = ''; 
 if(!isset($userid)) $userid = ''; 
 if(!isset($techread)) $techread = '';
-if(!isset($findnom)) $findnom = '';
+if(!isset($find_login)) $find_login = '';
 if(!isset($profile)) $profile = '';
 if(!isset($newpassword)) $newpassword = '';
 if(!isset($salt)) $salt= '';
@@ -32,65 +32,63 @@ if(!isset($_GET['id'])) $_GET['id'] = '';
 
 //default values
 if($_GET['state']=='') $_GET['state'] = '%';
-
 	//actions on submit
 	if (isset($_POST['submit']))
 	{
-		$login = (isset($_POST['login'])) ? $_POST['login'] : '';
-		$pass =  (isset($_POST['pass']))  ? $_POST['pass']  : '';
+		$login=(isset($_POST['login'])) ? $_POST['login'] : '';
+		$pass= (isset($_POST['pass'])) ? $_POST['pass']  : '';
 		
-		$qry = $db->prepare("SELECT * FROM `tusers`");
+		$qry=$db->prepare("SELECT `id`,`login`,`password`,`salt`,`profile`,`disable` FROM `tusers`");
 		$qry->execute();
 		while ($row = $qry->fetch()) 
 		{
-			//uppercase login converter
-			$login = strtoupper($login);
-			$nom = strtoupper($row['login']);
+			//uppercase login converter to compare
+			$login=strtoupper($login);
+			$db_login=strtoupper($row['login']);
 			
-			//double (OR) test for encrypted password transition
-			if ($nom == $login && ($row['password']==$pass || $row['password']==md5($row['salt'] . md5($pass))) && $row['password']!='' && $row['disable']==0) 
+			if($login && $pass && ($db_login == $login) && $row['password']!='' && $row['disable']==0) //check existing login
 			{
-				$findnom=$row['login'];
-				$findpwd=$row['password'];
-				$user_id=$row['id'];
-				$profile=$row['profile'];
-				$findsalt=$row['salt'];
-				
-				//update no encrypted password to encrypted password
-				if($row['password']==$pass)
+				if(strlen($row['password'])>33) //hash detection
 				{
-					//password conversion
-					$salt = substr(md5(uniqid(rand(), true)), 0, 5); // Generate a random key
-					$newpassword=md5($salt . md5($row['password'])); // store in md5, md5 password + salt
-					//update password
-					$db->exec("UPDATE tusers SET password='$newpassword', salt='$salt' WHERE id LIKE '$user_id'");
+					if(password_verify($pass, $row['password'])) {
+						$find_login=$row['login'];
+						$user_id=$row['id'];
+						$profile=$row['profile'];
+					}
+				}elseif($row['password']==md5($row['salt'] . md5($pass))) //md5 has detect allow and convert hash, using for hash transition
+				{ 
+					$find_login=$row['login'];
+					$user_id=$row['id'];
+					$profile=$row['profile'];
+					//update hash
+					$hash=password_hash($pass, PASSWORD_DEFAULT);
+					$qry2=$db->prepare("UPDATE `tusers` SET `password`=:password WHERE `id`=:id");
+					$qry2->execute(array('password' => $hash,'id' => $row['id']));
 				}
 			}	
 		}
 		$qry->closeCursor();
-		if ($findnom != "") 
+		if($find_login) 
 		{	
-			$_SESSION['login'] = "$findnom";
-			$_SESSION['user_id'] = "$user_id";
-			
+			$_SESSION['login']=$find_login;
+			$_SESSION['user_id']=$user_id;
+			//reset attempt counter
+			if($rparameters['user_disable_attempt'])
+			{
+				$qry=$db->prepare("UPDATE `tusers` SET `auth_attempt`=0 WHERE `id`=:id");
+				$qry->execute(array('id' => $_SESSION['user_id']));
+			}
 			//update last time connection
-			$qry=$db->prepare("UPDATE `tusers` SET `last_login`=:last_login WHERE `id`=:id");
-			$qry->execute(array(
-				'last_login' => $datetime,
-				'id' => $user_id
-				));
-			
+			$qry=$db->prepare("UPDATE `tusers` SET `last_login`=:last_login,`ip`=:ip WHERE `id`=:id");
+			$qry->execute(array('last_login' => $datetime,'ip' => $_SERVER['REMOTE_ADDR'],'id' => $user_id));
+			//display loading 
 			echo '<i class="icon-spinner icon-spin"></i>&nbsp;Chargement...';
-			
 			//user pref default redirection state
 			$qry = $db->prepare("SELECT * FROM `tusers` WHERE id=:id");
-			$qry->execute(array(
-				'id' => $_SESSION['user_id']
-				));
+			$qry->execute(array('id' => $_SESSION['user_id']));
 			$ruser=$qry->fetch();
 			$qry->closeCursor();
 			if($ruser['default_ticket_state']) $redirectstate=$ruser['default_ticket_state']; else $redirectstate=1;
-			
 			//select page to redirect for email link case
 			if($_GET['id']) {
 			    $www='./index.php?page=ticket&id='.$_GET['id'].'';
@@ -113,7 +111,7 @@ if($_GET['state']=='') $_GET['state'] = '%';
 						-->
 					</SCRIPT>";
 		}
-		else if (($rparameters['ldap'])=='1' && ($rparameters['ldap_auth']=='1'))
+		elseif(($rparameters['ldap'])=='1' && ($rparameters['ldap_auth']=='1'))
 		{
 			/////////// if Gestsup user is not found and LDAP is enable search in LDAP///////////
 			// LDAP connect
@@ -125,7 +123,7 @@ if($_GET['state']=='') $_GET['state'] = '%';
 			if ($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) 
 			{
 				$ldapbind = @ldap_bind($ldap, "$login@$domain", $pass);
-			} else {
+			} else { //open LDAP case
 				//generate DC Chain from domain parameter
 				$dcpart=explode(".",$domain);
 				$i=0;
@@ -133,19 +131,25 @@ if($_GET['state']=='') $_GET['state'] = '%';
 					$dcgen="$dcgen,dc=$dcpart[$i]";
 					$i++;
 				}
-				$ldapbind = @ldap_bind($ldap, "uid=$login,$rparameters[ldap_url]$dcgen", $pass);	
+				require_once('./core/functions.php');
+				if(preg_match('/gs_en/',$rparameters['ldap_password'])) {$rparameters['ldap_password']=gs_crypt($rparameters['ldap_password'], 'd' , $rparameters['server_private_key']);}
+				$dn='cn='.$rparameters['ldap_user'].$dcgen;
+				$ldapbind_as_admin = @ldap_bind($ldap, $dn, $rparameters['ldap_password']);
+				if($ldapbind_as_admin)
+				{
+					$dn='cn='.$login.','.$rparameters['ldap_url'].$dcgen;
+					$ldapbind = @ldap_bind($ldap, $dn, $pass);
+				} else {
+					if($rparameters['debug']==1) {echo 'ERROR: unable to bind as admin on OpenLDAP Server';}
+					$ldapbind=0;
+				}
 			}
 
 			if ($ldapbind && $pass!='') 
 			{
-				
 				$_SESSION['login'] = "$login";
-				
 				$qry = $db->prepare("SELECT `id`,`password` FROM `tusers` WHERE `login`=:login AND `disable`=:disable");
-				$qry->execute(array(
-					'login' => $login,
-					'disable' => 0
-					));
+				$qry->execute(array('login' => $login,'disable' => 0));
 				$r=$qry->fetch();
 				$qry->closeCursor();
 				$_SESSION['user_id'] = "$r[id]";
@@ -177,31 +181,18 @@ if($_GET['state']=='') $_GET['state'] = '%';
 						</SCRIPT>";
 				} else {
 					//update last time connection
-					$qry=$db->prepare("UPDATE `tusers` SET `last_login`=:last_login WHERE `id`=:id");
-					$qry->execute(array(
-						'last_login' => $datetime,
-						'id' => $r['id']
-						));
-						
+					$qry=$db->prepare("UPDATE `tusers` SET `last_login`=:last_login,`ip`=:ip WHERE `id`=:id");
+					$qry->execute(array('last_login' => $datetime,'ip' => $_SERVER['REMOTE_ADDR'],'id' => $r['id']));
+					
 					//update GS db pwd
-					if($r['password']=='')
-					{
-						$salt = substr(md5(uniqid(rand(), true)), 0, 5); //generate a random key
-						$newpassword=md5($salt . md5($pass)); //store in md5, md5 password + salt
-						//update password
-						$qry=$db->prepare("UPDATE `tusers` SET `password`=:password, `salt`=:salt WHERE `id`=:id");
-						$qry->execute(array(
-							'password' => $newpassword,
-							'salt' => $salt,
-							'id' => $r['id']
-							));
-					}
+					$newpassword = password_hash($pass, PASSWORD_DEFAULT);
+					//update password
+					$qry=$db->prepare("UPDATE `tusers` SET `password`=:password WHERE `id`=:id");
+					$qry->execute(array('password' => $newpassword,	'id' => $r['id']));
 					
 					//user pref default redirection state
 					$qry=$db->prepare("SELECT * FROM `tusers` WHERE `id`=:id");
-					$qry->execute(array(
-						'id' => $_SESSION['user_id']
-						));
+					$qry->execute(array('id' => $_SESSION['user_id']));
 					$ruser=$qry->fetch();
 					$qry->closeCursor();
 					
@@ -265,18 +256,50 @@ if($_GET['state']=='') $_GET['state'] = '%';
 		}
 		else
 		{
+			//secure check user attempt
+			if($rparameters['user_disable_attempt'])
+			{
+				//check if user exist
+				$qry=$db->prepare("SELECT `id`,`auth_attempt`,`disable` FROM `tusers` WHERE login=:login");
+				$qry->execute(array('login' => $_POST['login']));
+				$row=$qry->fetch();
+				$qry->closeCursor();
+				if($row)
+				{
+					$attempt=$row['auth_attempt']+1;
+					$qry=$db->prepare("UPDATE `tusers` SET `auth_attempt`=:auth_attempt WHERE `id`=:id");
+					$qry->execute(array('auth_attempt' => $attempt,'id' => $row['id']));
+					$attempt_remaing=$rparameters['user_disable_attempt_number']-$attempt;
+					if($attempt_remaing>0)
+					{
+						$attempt_remaing=T_('Il reste').' '.$attempt_remaing.' '.T_('tentatives avant la désactivation de votre compte');
+					} else {
+						if($row['disable'])
+						{
+							$attempt_remaing=T_('Votre compte est désactivé, contacter votre administrateur');
+						} else {
+							$qry=$db->prepare("UPDATE `tusers` SET `disable`=1 WHERE `id`=:id");
+							$qry->execute(array('id' => $row['id']));
+							$attempt_remaing=T_('Votre compte a été désactivé, suite à').' '.$rparameters['user_disable_attempt_number'].' '.T_('tentatives de connexion infructueuses');
+						}
+					}
+				} else {$attempt_remaing='';}
+			} else {$attempt_remaing='';}
 			// if error with login or password 
-			$message= '<div class="alert alert-danger">
-						<button type="button" class="close" data-dismiss="alert">
-							<i class="icon-remove"></i>
-						</button>
-						<strong>
-							<i class="icon-remove"></i>
-							'.T_('Erreur').'
-						</strong>
-						'.T_('Votre nom d\'utilisateur ou mot de passe, n\'est pas correct.').'
-						<br>
-				</div>';
+			$message= '
+			<div class="alert alert-danger">
+			<button type="button" class="close" data-dismiss="alert">
+				<i class="icon-remove"></i>
+			</button>
+			<strong>
+				<i class="icon-remove"></i>
+				'.T_('Erreur').' : '.T_('Identifiant ou mot de passe invalide').'
+			</strong>
+			';
+			if($attempt_remaing) {$message.='<br />'.$attempt_remaing;} else {$message.=T_("Votre nom d'utilisateur ou mot de passe, n'est pas correct.");}
+			echo '
+			<br>
+			</div>';
 			$www = "./index.php";
 			$login_error=1;
 			session_destroy();

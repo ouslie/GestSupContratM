@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 06/07/2013
-# @Update : 05/12/2017
-# @Version : 3.1.37
+# @Update : 27/02/2019
+# @Version : 3.1.39
 ################################################################################
 
 //initialize variables 
@@ -29,7 +29,11 @@ if($rparameters['debug']==1) {
 }
 
 //security check
-if ($rright['admin']!=0 || ($rright['admin_groups']!=0 && $cnt_service!=0))
+if (
+	$rright['admin']!=0 || 
+	($rright['admin_groups']!=0 && $cnt_service!=0) ||
+	($rright['admin_groups']!=0 && $rright['dashboard_service_only']==0)
+)
 {
 	//submit actions
 	if($_POST['Modifier'])

@@ -5,8 +5,8 @@
 # @call : /admin/user.php
 # @Author : Flox
 # @Create : 15/10/2012
-# @Update : 09/11/2018
-# @Version : 3.1.37
+# @Update : 06/02/2019
+# @Version : 3.1.40 p1
 ################################################################################
 
 //initialize variables
@@ -23,7 +23,7 @@ if(!isset($rparameters['ldap_user']))
 {
 	//database connection
 	require_once(__DIR__."/../connect.php");
-	require_once(__DIR__."/../core/crypt.php");
+	require_once(__DIR__."/../core/functions.php");
 	
 	//switch SQL MODE to allow empty values with lastest version of MySQL
 	$db->exec('SET sql_mode = ""');
@@ -54,7 +54,7 @@ if(!isset($rparameters['ldap_user']))
 	T_textdomain($_GET['lang']);
 } else {
 	//no external execution
-	require_once('./core/crypt.php');
+	require_once('./core/functions.php');
 }
 
 if(!isset($ldap_query)) $ldap_query = '';
@@ -74,7 +74,12 @@ $user=$rparameters['ldap_user'];
 if(preg_match('/gs_en/',$rparameters['ldap_password'])) {$rparameters['ldap_password']=gs_crypt($rparameters['ldap_password'], 'd' , $rparameters['server_private_key']);}
 $password=$rparameters['ldap_password']; 
 $domain=$rparameters['ldap_domain'];
-if($rparameters['ldap_port']==636) {$hostname='ldaps://'.$rparameters['ldap_server'];} else {$hostname=$rparameters['ldap_server'];}
+if($rparameters['ldap_port']==636) {
+	putenv('LDAPTLS_REQCERT=never') or die('Failed to setup the env'); //enable AD self sign cert
+	$hostname='ldaps://'.$rparameters['ldap_server'];
+} else {
+	$hostname=$rparameters['ldap_server'];
+}
 
 //Generate DC Chain from domain parameter
 $dcpart=explode(".",$domain);
@@ -109,7 +114,7 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 	ldap_set_option($ldap, LDAP_OPT_PROTOCOL_VERSION, 3);
 	//if ($rparameters['ldap_type']==1) {ldap_set_option($ldap, LDAP_OPT_PROTOCOL_VERSION, 3);} NOT WORK WITH PAGEFILE
 	//check LDAP type for bind
-	if ($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) $ldapbind = ldap_bind($ldap, "$user@$domain", $password); else $ldapbind = ldap_bind($ldap, "cn=$user$dcgen", $password);	
+	if ($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) {$ldapbind = ldap_bind($ldap, "$user@$domain", $password);} else {$ldapbind = ldap_bind($ldap, "cn=$user$dcgen", $password);}	
 	//check ldap authentication
 	if ($ldapbind) {$ldap_connection='<i title="'.T_('Connecteur opérationnel').'" class="icon-ok-sign icon-large green"></i> '.T_('Connecteur opérationnel').'.';} else {$ldap_connection='<i title="'.T_('Le connecteur ne fonctionne pas vérifier vos paramètres').'" class="icon-remove-sign icon-large red"></i> '.T_('Le connecteur ne fonctionne pas vérifier vos paramètres').'';}
 	if ($ldapbind) 
@@ -124,9 +129,6 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 					$ldap_url="$value$dcgen";
 					//change query filter for OpenLDAP or AD
 					if ($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) {$filter="(&(objectClass=user)(objectCategory=person)(cn=*))";} else {$filter="(uid=*)";}	
-					
-					//NEW VERSION enable page-size to avoid partial search du to size-limit on 2008r2
-					
 					$pagesize = 100;
 					$cookie = '';
 					$justthese = array('samaccountname', 'useraccountcontrol', 'givenname', 'sn', 'telephonenumber', 'mobile', 'streetaddress', 'postalcode', 'l', 'mail', 'company', 'facsimiletelephonenumber', 'userAccountControl', 'title', 'department', 'uid', 'manager');
@@ -139,19 +141,6 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 						$cnt_ldap += @ldap_count_entries($ldap, $query);
 						ldap_control_paged_result_response($ldap, $query, $cookie);
 					} while($cookie !== null && $cookie != '');
-					
-					/* OLD VERSION
-					$query = ldap_search($ldap, $ldap_url, $filter);
-					if($rparameters['debug']==1){
-						echo "<u>DEBUG:</u><br />query ldap_search($ldap, $ldap_url, $filter)<br /><br />";
-					}
-					//put all data to $data
-					$data_temp = @ldap_get_entries($ldap, $query);
-					$data = array_merge($data, $data_temp);
-					//count LDAP number of users
-					$cnt_ldap += @ldap_count_entries($ldap, $query);
-					*/
-					
 				}
 				//count GESTSUP number of users
 				$qry=$db->prepare("SELECT COUNT(*) FROM `tusers` WHERE disable=:disable");
@@ -590,7 +579,6 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 							$cnt_disable=$cnt_disable+1;
 							if($_GET['action']=='run')
 							{
-								echo "debug $samaccountname == $row[login]";
 								echo '<i class="icon-remove-sign icon-large red"></i><font color="red"> '.T_('Utilisateur').' <b>'.$row['firstname'].' '.$row['lastname'].'</b> ('.$row['login'].'), '.T_('désactivé').'.</font><br />';
 								$qry2=$db->prepare("UPDATE `tusers` SET `disable`=:disable WHERE `login`=:login");
 								$qry2->execute(array(
@@ -598,7 +586,6 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 									'login' => $row['login']
 									));
 							} else {
-								echo "debug $samaccountname == $row[login]";
 								echo '<i class="icon-remove-sign icon-large red"></i><font color="red"> '.T_('Désactivation de l\'utilisateur').' <b>'.$row['firstname'].' '.$row['lastname'].'</b> ('.$row['login'].'). <span style="font-size: x-small;">'.T_('Raison').': '.T_('Utilisateur non présent dans l\'annuaire LDAP').'.</span></font><br />';
 							}
 						}

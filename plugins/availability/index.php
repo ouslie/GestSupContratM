@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 18/04/2014
-# @Update : 21/12/2018
-# @Version : 3.1.37
+# @Update : 26/01/2019
+# @Version : 3.1.38
 ################################################################################
 
 //initialize variables 
@@ -25,11 +25,6 @@ if(!isset($_GET['year']))$year=date('Y'); else $year=$_GET['year'];
 
 //get median calculate
 include('median.php');
-
-//generate token
-$token=uniqid(); 
-$db->exec("DELETE FROM ttoken WHERE action='availability_print'");
-$db->exec("INSERT INTO ttoken (token,action,ticket_id) VALUES ('$token','availability_print','0')");
 
 //display head
 echo '
@@ -53,7 +48,7 @@ echo '
 	$queryyears->closeCursor(); 
 	echo '
             
-    <a href="./plugins/availability/print.php?year='.$year.'&token='.$token.'" target="_blank" <i title="'.T_('Imprimer').'" class="icon-print green bigger-130"></i></a>
+    <a href="./plugins/availability/print.php?year='.$year.'&token='.$_COOKIE['token'].'" target="_blank" <i title="'.T_('Imprimer').'" class="icon-print green bigger-130"></i></a>
 
 </div>
 <div class="sidebar-shortcuts-large" id="sidebar-shortcuts-large"></div>

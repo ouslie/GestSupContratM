@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 07/01/2007
-# @Update : 08/01/2018
-# @Version : 3.1.37 p2
+# @Update : 29/03/2019
+# @Version : 3.1.40 p4
 ################################################################################
 
 //initialize variables 
@@ -157,25 +157,39 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								}
 							}
     						//display clock if alarm 
-							$query=$db->query('SELECT * FROM tevents WHERE incident='.$db_id.' and disable=0 and type=1');
-							$alarm=$query->fetch();
-							$query->closeCursor();
-    						if($alarm) echo ' <i class="icon-bell-alt orange" title="'.T_('Alarme activée le').' '.$alarm['date_start'].'" /></i>';
+							$qry=$db->prepare("SELECT `date_start` FROM `tevents` WHERE incident=:incident AND disable=0 AND type=1");
+							$qry->execute(array('incident' => $_GET['id']));
+							$alarm=$qry->fetch();
+							$qry->closeCursor();
+    						if($alarm) {echo ' <i class="icon-bell-alt orange" title="'.T_('Alarme activée le').' '.$alarm['date_start'].'" /></i>';}
 							//display calendar if planned
-							$query=$db->query('SELECT * FROM tevents WHERE incident='.$db_id.' and disable=0 and type=2');
-							$plan=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `date_start` FROM `tevents` WHERE incident=:incident AND disable=0 AND type=2");
+							$qry->execute(array('incident' => $_GET['id']));
+							$plan=$qry->fetch();
+							$qry->closeCursor();
     						if($plan) echo '&nbsp;<a target="_blank" href="./index.php?page=calendar"><i class="icon-calendar green" title="'.T_('Ticket planifié dans le calendrier le').' '.$plan['date_start'].'" /></i></a>';
+							//display member of project
+							if($rparameters['project']==1 && $rright['project'])
+							{
+								//check if current ticket is a task of project
+								$qry=$db->prepare("SELECT `tprojects`.`name`,`tprojects_task`.`project_id` FROM `tprojects_task`,`tprojects` WHERE `tprojects_task`.project_id=`tprojects`.id AND `tprojects_task`.ticket_id=:ticket_id");
+								$qry->execute(array('ticket_id' => $_GET['id']));
+								$row=$qry->fetch();
+								$qry->closeCursor();
+								if($row) echo '&nbsp;<a target="_blank" href="./index.php?page=project"><i class="icon-tasks purple" title="'.T_('Le ticket est une tâche du projet').' '.$row['name'].'" /></i></a>';
+							}
+							
 						?>
 					</h4>
 					<span class="widget-toolbar">
 						<?php 
 							if($rparameters['asset']==1 && $rparameters['asset_vnc_link']==1 && $_POST['user'] ){
 								//check if user have asset with IP
-								$query=$db->query("SELECT tassets_iface.ip FROM tassets_iface,tassets WHERE tassets_iface.asset_id=tassets.id AND user='$_POST[user]'");
-								$row=$query->fetch();
-								$query->closeCursor();
-								if ($row) {echo '<a target="_blank" href="http://'.$row['ip'].':5800"><img title="'.T_('Ouvre un nouvel onglet sur le prise de contrôle distant web VNC').'" src="./images/remote.png" /></a>&nbsp;&nbsp;';}
+								$qry=$db->prepare("SELECT `tassets_iface`.`ip` FROM `tassets_iface`,`tassets` WHERE tassets_iface.asset_id=tassets.id AND user=:user");
+								$qry->execute(array('user' => $_POST['user']));
+								$row=$qry->fetch();
+								$qry->closeCursor();
+								if($row) {echo '<a target="_blank" href="http://'.$row['ip'].':5800"><img title="'.T_('Ouvre un nouvel onglet sur le prise de contrôle distant web VNC').'" src="./images/remote.png" /></a>&nbsp;&nbsp;';}
 							}
 							if ($rright['ticket_next']!=0)
 							{
@@ -184,17 +198,21 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 							}
 							if ($rright['ticket_print']!=0 && $_GET['action']!='new')
 							{
-								//generate token
-								$token=uniqid(); 
-								$db->exec("DELETE FROM ttoken WHERE action='ticket_print'");
-								$db->exec("INSERT INTO ttoken (token,action) VALUES ('$token','ticket_print')");
 								echo "&nbsp;";
-								echo '<a target="_blank" href="./ticket_print.php?id='.$_GET['id'].'&user_id='.$_SESSION['user_id'].'&token='.$token.'"><i title="'.T_('Imprimer ce ticket').'" class="icon-print purple bigger-130"></i></a>';
+								echo '<a target="_blank" href="./ticket_print.php?id='.$_GET['id'].'&user_id='.$_SESSION['user_id'].'&token='.$_COOKIE['token'].'"><i title="'.T_('Imprimer ce ticket').'" class="icon-print purple bigger-130"></i></a>';
 							}
 							if ($rright['ticket_template']!=0 && $_GET['action']=='new')
 							{
-								echo "&nbsp;";
-								echo '<a href="./index.php?page=ticket&id='.$_GET['id'].'&userid='.$_GET['userid'].'&state='.$_GET['state'].'&action=template"><i title="'.T_('Modèle de tickets').'" class="icon-tags pink bigger-130"></i></a>';
+								//check if template exist
+								$qry=$db->prepare("SELECT `id` FROM `ttemplates`");
+								$qry->execute(array('id' => $_GET['id']));
+								$template=$qry->fetch();
+								$qry->closeCursor();
+								if($template[0])
+								{
+									echo "&nbsp;";
+									echo '<a href="./index.php?page=ticket&id='.$_GET['id'].'&userid='.$_GET['userid'].'&state='.$_GET['state'].'&action=template"><i title="'.T_('Modèle de tickets').'" class="icon-tags pink bigger-130"></i></a>';
+								}
 							}
 							if ($rright['ticket_event']!=0)
 							{
@@ -226,30 +244,31 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 						<!-- START sender part -->	
 						<div class="form-group <?php if(($rright['ticket_user_disp']==0 && $_GET['action']!='new') || ($rright['ticket_new_user_disp']==0 && $_GET['action']=='new')) echo 'hide';?>" >
 							<label class="col-sm-2 control-label no-padding-right" for="user">
-								<?php if (($_POST['user']==0) && ($globalrow['user']==0) && ($u_group=='')) echo '<i title="'.T_('Sélectionner un demandeur').'" class="icon-warning-sign red bigger-130"></i>&nbsp;'; ?>
+								<?php if (($_POST['user']==0) && ($globalrow['user']==0) && ($u_group=='')) echo '<i id="user_warning" title="'.T_('Sélectionner un demandeur').'" class="icon-warning-sign red bigger-130"></i>&nbsp;'; ?>
 								<?php echo T_('Demandeur').' :'; ?>
 							</label>
 							<div class="col-sm-9">
 								<!-- START sender list part -->
-								<!-- <select autofocus id="user" name="user" onchange="loadVal(); submit();" <?php if(($rright['ticket_user']==0 && $_GET['action']!='new') || ($rright['ticket_new_user']==0 && $_GET['action']=='new')) echo ' disabled="disabled" ';?> > -->
 								<select autofocus <?php if($mobile==0) {echo 'class="chosen-select"';}  else {echo ' style="max-width: 225px;" ';} ?> id="user" name="user" onchange="loadVal(); submit();" <?php if(($rright['ticket_user']==0 && $_GET['action']!='new') || ($rright['ticket_new_user']==0 && $_GET['action']=='new')) echo ' disabled="disabled" ';?> >
 									<?php
 									//define order of user list in case with company prefix
 									if($rright['ticket_user_company']!=0)
 									{
-										$query = $db->query("SELECT DISTINCT tusers.* FROM `tusers` LEFT JOIN tcompany ON tusers.company=tcompany.id WHERE (tusers.lastname!='' OR tusers.firstname!='')  ORDER BY tcompany.name, tusers.lastname");
+										$qry=$db->prepare("SELECT DISTINCT tusers.id,tusers.company,tusers.firstname,tusers.lastname,tusers.disable FROM `tusers` LEFT JOIN tcompany ON tusers.company=tcompany.id WHERE (tusers.lastname!='' OR tusers.firstname!='')  ORDER BY tcompany.name, tusers.lastname");
 									} else {
-										$query = $db->query("SELECT * FROM `tusers` WHERE (lastname!='' OR firstname!='')  ORDER BY lastname ASC, firstname ASC");
+										$qry=$db->prepare("SELECT id,company,firstname,lastname,disable FROM `tusers` WHERE (lastname!='' OR firstname!='')  ORDER BY lastname ASC, firstname ASC");
 									}
 									//display user list and keep selected an disable user
-									while ($row = $query->fetch()) 
+									$qry->execute();
+									while($row=$qry->fetch())
 									{
 										if($rright['ticket_user_company']!=0 && $row['company']!=0)
 										{
 											//get company name of this user to display if exist
-											$query2=$db->query("SELECT name FROM tcompany WHERE id='$row[company]'"); 
-											$user_company=$query2->fetch();
-											$query2->closeCursor();
+											$qry2=$db->prepare("SELECT `name` FROM `tcompany` WHERE id=:id");
+											$qry2->execute(array('id' => $row['company']));
+											$user_company=$qry2->fetch();
+											$qry2->closeCursor();
 											$user_company='['.$user_company[0].'] ';
 										} else {$user_company='';}
 										if ($_POST['user']==$row['id']) {$selected='selected';} elseif (($_POST['user']=='') && ($globalrow['user']==$row['id'])) {$selected='selected';} else {$selected='';} 
@@ -257,16 +276,17 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 										if ($row['disable']==0) {echo '<option '.$selected.' value="'.$row['id'].'">'.$user_company.$row['lastname'].' '.$row['firstname'].'</option>';} //all enable users and technician
 										if (($row['disable']==1) && ($selected=='selected') && $row['id']!=0) {echo '<option '.$selected.' value="'.$row['id'].'">'.$row['lastname'].' '.$row['firstname'].'</option>';} //case disable user always attached to this ticket
 									}
-									$query->closeCursor(); 
+									$qry->closeCursor(); 
 									//display group list and keep selected an disable group
-									$query = $db->query("SELECT * FROM `tgroups` WHERE type='0' ORDER BY name");
-									while ($row = $query->fetch()) 
+									$qry=$db->prepare("SELECT `id`,`name`,`disable` FROM `tgroups` WHERE type='0' ORDER BY name");
+									$qry->execute();
+									while($row=$qry->fetch()) 
 									{
 										if ($row['id']==$u_group) {$selected='selected';} else {$selected='';}
 										if ($row['disable']==0) {echo '<option '.$selected.' value="G_'.$row['id'].'">[G] '.T_(" $row[name]").'</option>';}
 										if (($row['disable']==1) && ($selected=='selected')) {echo '<option '.$selected.' value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
 									}
-									$query->closeCursor(); 
+									$qry->closeCursor();
 									?>
 								</select>
 								
@@ -293,89 +313,21 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								?>
 								<!-- END sender actions part -->
 								<!-- START user info part -->
-									<?php
-									//Display asset tel fax department if exist
-									if ($u_group=='')
-									{
-										if ($_POST['user']) 
-										{
-											$query = $db->query("SELECT * FROM `tusers` WHERE id LIKE '$_POST[user]'"); 
-										}
-										else
-										{
-											$query = $db->query("SELECT * FROM `tusers` WHERE id LIKE '$globalrow[user]'"); 
-										}
-										$row=$query->fetch();
-										$query->closeCursor(); 
-										if($mobile==0) {echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";} else {echo '<p></p>';}
-										if ($row['phone']!="") echo '<a href="tel:'.$row['phone'].'"><i title="'.T_('Téléphoner au').' '.$row['phone'].'" class="icon-phone-sign blue bigger-130"></i></a> <b>'; if($mobile==0) {echo $row['phone'];} echo'</b>';
-										if ($row['mobile']!="") echo '&nbsp;&nbsp;&nbsp;<a href="tel:'.$row['mobile'].'"><i title="'.T_('Téléphoner au').' '.$row['mobile'].'" class="icon-mobile-phone blue bigger-150"></i></a> <b>'; if($mobile==0) {echo $row['mobile'];} echo'</b>';
-										if ($row['mail']!="") echo '&nbsp;&nbsp;&nbsp;<a href="mailto:'.$row['mail'].'"><i title="'.T_("Envoyer un mail à l'adresse").' '.$row['mail'].'" class="icon-envelope blue bigger-130"></i></a>';
-										if ($row['function']!="") echo '&nbsp;&nbsp;&nbsp;<i title="'.T_('Fonction').'" class="icon-user blue bigger-130"></i> '; if($mobile==0) {echo $row['function'];}
-										if ($row['company']!=0) 
-										{
-											$query=$db->query("SELECT * FROM tcompany WHERE id='$row[company]'"); 
-											$g_company_name=$query->fetch();
-											$query->closeCursor();
-											echo '&nbsp;&nbsp;&nbsp;<i title="'.T_('Société').': '.$g_company_name['name'].' '.$g_company_name['address'].' '.$g_company_name['zip'].' '.$g_company_name['city'].'" class="icon-building blue bigger-130"></i> '.$g_company_name['name'];
-										}
-										//get service from user and display it
-										$service_name='';
-										//$query2=$db->query("SELECT name FROM tservices WHERE id IN (SELECT service_id FROM tusers_services WHERE user_id=$row[id]) AND disable=0");
-										if($row['id'])
-										{
-											$query2=$db->query("SELECT name FROM tservices,tusers_services WHERE tservices.id=tusers_services.service_id AND tusers_services.user_id=$row[id] AND tservices.disable=0");
-											while ($row2=$query2->fetch()){$service_name.=$row2['name'].' ';}
-											$query2->closeCursor();
-											if($service_name){echo '&nbsp;&nbsp;&nbsp;<i title="'.T_('Service').'" class="icon-group blue bigger-120"></i> '.$service_name;}
-										}
-										
-										if($rparameters['user_agency']==1)
-										{
-											//get agency from user and display it
-											$agency_name='';
-											$query2=$db->query("SELECT name FROM tagencies WHERE id IN (SELECT agency_id FROM tusers_agencies WHERE user_id=$row[id]) AND disable=0");
-											while ($row2=$query2->fetch()){$agency_name.=$row2['name'].' ';}
-											$query2->closeCursor();
-											if($agency_name){echo '&nbsp;&nbsp;&nbsp;<i title="'.T_('Agence').'" class="icon-globe blue bigger-120"></i> '.$agency_name;}
-										}
-										//find associated asset
-										if ($_POST['user']) {$query = $db->query("SELECT id,netbios FROM `tassets` WHERE user='$_POST[user]' AND state='2' AND user!='0' ORDER BY id DESC");} else {$query = $db->query("SELECT id,netbios FROM `tassets` WHERE user='$globalrow[user]' AND state='2' AND user!='0' ORDER BY id DESC");}
-										$row=$query->fetch();
-										if ($row['netbios']!='') {echo '&nbsp;&nbsp;&nbsp;<a target="_blank" href="./index.php?page=asset&id='.$row['id'].'"><i title="'.T_('Équipement associé').'" class="icon-desktop blue bigger-120"></i></a> '.$row['netbios'];}
-										$query->closeCursor(); 
-									}
+								<?php
 									if($mobile==0)
 									{
-										//other demands for this user or group
-										if ($u_group)
-										{
-											$umodif=$u_group;
-											$usergroup="u_group";
-										} else {
-											if($_POST['user']) $umodif=$_POST['user']; else $umodif=$globalrow['user'];
-											$usergroup="user";
-										}
-										if ($umodif!='') //case for new ticket without sender
-										{
-											$qn = $db->query("SELECT count(*) FROM `tincidents` WHERE $usergroup LIKE '$umodif' and (state='1' OR state='2' OR state='6' OR state='5') and id NOT LIKE $db_id and disable=0");
-											$rn=$qn->fetch();
-											$qn->closeCursor();
-											$rnn=$rn[0];
-											if ($rnn!=0) echo '&nbsp;&nbsp; <i title="'.T_('Autres tickets de cet utilisateur').'" class="icon-ticket blue bigger-130"></i> ';
-											$c=0;
-											$q = $db->query("SELECT id,title FROM `tincidents` WHERE $usergroup LIKE '$umodif' and (state='1' OR state='2' OR state='6' OR state='5') and id NOT LIKE $db_id and disable=0 ORDER BY id DESC"); 
-											while (($r=$q->fetch()) && ($c<2)) {	
-												$c=$c+1;
-												echo "<a title=\"$r[title]\" href=\"./index.php?page=ticket&amp;id=$r[id]\">#$r[id]</a>";
-												if ($c<$rnn) echo ", ";
-												if ($c==2) echo "...";
-											}  
-											$query->closeCursor();
-											if ($rnn!=0) echo "";
-										}
+										//data get by ajax script refer /includes/
+										echo '<span id="user_phone"></span>';
+										echo '<span id="user_mobile"></span>';
+										echo '<span id="user_mail"></span>';
+										echo '<span id="user_function"></span>';
+										echo '<span id="user_service"></span>';
+										echo '<span id="user_agency"></span>';
+										echo '<span id="user_company"></span>';
+										echo '<span id="user_other_ticket"></span>';
+										echo '<span id="user_asset"></span>';
 									}
-									?>
+								?>
 								<!-- START user info part -->
 							</div>
 						</div>
@@ -384,39 +336,36 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 						<?php
 				            if($rright['ticket_service_disp']!=0)
 				            {
-								if ($rright['ticket_service_mandatory']!=0) {
-									if (($_POST['u_service']==0) && ($globalrow['u_service']==0)){$service_mandatory='has-error';}elseif($_GET['action']=='new'){$service_mandatory='has-success';}else{$service_mandatory='';}
-								} else {$service_mandatory='';}
 				                echo'
-				                <div class="form-group '; if ($rright['ticket_new_service_disp']==0 && $_GET['action']=='new') {echo 'hide';} echo ' '.$service_mandatory.'" >
-        							<label class="col-sm-2 control-label no-padding-right" for="u_service">
-        							    ';
-											if (($_POST['u_service']==0) && ($globalrow['u_service']==0)) {if($rright['ticket_service_mandatory']!=0) {echo '<i title="'.T_('La saisie du service est obligatoire').'"';} else {echo '<i title="'.T_('Sélectionner un service').'"';} echo 'class="icon-warning-sign red bigger-130"></i>&nbsp;';} 
-										echo'
-        							    '.T_('Service').':
-        							</label>
+				                <div class="form-group '; if ($rright['ticket_new_service_disp']==0 && $_GET['action']=='new') {echo 'hide';} echo '" >
+        							<label class="col-sm-2 control-label no-padding-right" for="u_service">'.T_('Service').' :</label>
         							<div class="col-sm-8">
-        							    <select id="u_service" name="u_service" '; if(($rright['ticket_service']==0 && $_GET['action']!='new') || ($rright['ticket_new_service']==0 && $_GET['action']=='new')) {echo 'disabled="disabled"';} echo' onchange="loadVal(); submit();">
+        							    <select id="u_service" name="u_service" '; if(($rright['ticket_service']==0 && $_GET['action']!='new') || ($rright['ticket_new_service']==0 && $_GET['action']=='new')) {echo ' disabled="disabled" ';} if($rright['ticket_service_mandatory']!=0) {echo ' required="required" ';}  echo' onchange="loadVal(); submit();">
 											';
-        									if ($_POST['u_service'])
+        									if($_POST['u_service'])
         									{
-												$query2=$db->query("SELECT * FROM `tservices` WHERE id='$_POST[u_service]'");
-												$row2=$query2->fetch();
-												$query2->closeCursor(); 
+												echo '<option value="">Aucun</option>';
+												$qry2=$db->prepare("SELECT `id`,`name` FROM `tservices` WHERE id=:id");
+												$qry2->execute(array('id' => $_POST['u_service']));
+												$row2=$qry2->fetch();
+												$qry2->closeCursor();
         										echo '<option value="'.$_POST['u_service'].'" selected >'.T_($row2['name']).'</option>';
-        										$query2 = $db->query("SELECT * FROM `tservices` WHERE id!='$_POST[u_service]' AND disable='0' ORDER BY id!=0, name");
-        							    		while ($row2 = $query2->fetch()) echo '<option value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
-												$query2->closeCursor(); 
+												$qry2=$db->prepare("SELECT `id`,`name` FROM `tservices` WHERE id!=:id AND disable='0' ORDER BY id!=0, name");
+												$qry2->execute(array('id' => $_POST['u_service']));
+												while($row2=$qry2->fetch()) {echo '<option value="'.$row2['id'].'">'.T_($row2['name']).'</option>';}
+												$qry2->closeCursor();
         									}
         									else
         									{
-        										$query2=$db->query("SELECT * FROM `tservices` WHERE id='$globalrow[u_service]' ORDER BY id");
-        										$row2=$query2->fetch();
-												$query2->closeCursor();
+												$qry2=$db->prepare("SELECT `id`,`name` FROM `tservices` WHERE id=:id ORDER BY id");
+												$qry2->execute(array('id' => $globalrow['u_service']));
+												$row2=$qry2->fetch();
+												$qry2->closeCursor();
         										echo '<option value="'.$globalrow['u_service'].'" selected >'.T_($row2['name']).'</option>';
-        										$query2 = $db->query("SELECT * FROM `tservices` WHERE id!='$globalrow[u_service]' AND disable='0' ORDER BY id!=0, name");
-        								    	while ($row2 = $query2->fetch()) echo '<option value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
-												$query2->closeCursor(); 
+												$qry2=$db->prepare("SELECT `id`,`name` FROM `tservices` WHERE id!=:id AND disable='0' AND id!='0' ORDER BY name");
+												$qry2->execute(array('id' => $globalrow['u_service']));
+												while($row2=$qry2->fetch()) {echo '<option value="'.$row2['id'].'">'.T_($row2['name']).'</option>';}
+												$qry2->closeCursor();
         									}
         									echo'			
         								</select>
@@ -444,13 +393,13 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
         							</label>
         							<div class="col-sm-8">
         							    <select  id="type" name="type"'; if(($rright['ticket_type']==0 && $_GET['action']!='new') || ($rright['ticket_new_type']==0 && $_GET['action']=='new')) {echo 'disabled="disabled"';} echo'>';
-        									
 											//limit service type
 											if($rparameters['user_limit_service']==1 && $rright['ticket_type_service_limit']!=0)
 											{
-												if($_POST['u_service']) {$where=' service='.$_POST['u_service'].' ';} else {$where=' service='.$globalrow['u_service'].' ';}
+												if($_POST['u_service']) {$where=' service=\''.$_POST['u_service'].'\' ';} else {$where=' service=\''.$globalrow['u_service'].'\' ';}
 												$old_type=1;
-												$query2 = $db->query("SELECT * FROM `ttypes` WHERE $where OR id=0 ORDER BY id=0 ASC,name");
+												
+												$query2 = $db->query("SELECT id,name FROM `ttypes` WHERE $where OR id=0 ORDER BY id=0 ASC,name");
 												while ($row2 = $query2->fetch()) {
 													//select entry
 													$selected='';
@@ -464,31 +413,36 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 												$query2->closeCursor(); 
 												//keep old data
 												if($old_type==1 && $_GET['action']!='new') {
-													$query2=$db->query("SELECT * FROM `ttypes` WHERE id='$globalrow[type]'");
-													$row2=$query2->fetch();
-													$query2->closeCursor(); 
+													$qry2=$db->prepare("SELECT `id`,`name` FROM `ttypes` WHERE id=:id");
+													$qry2->execute(array('id' => $globalrow['type']));
+													$row2=$qry2->fetch();
+													$qry2->closeCursor();
 													echo '<option selected value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
 												}
 											} else {
 												if ($_POST['type']!='')
 												{
-													$query2=$db->query("SELECT * FROM `ttypes` WHERE id='$_POST[type]'");
-													$row2=$query2->fetch();
-													$query2->closeCursor(); 
+													$qry2=$db->prepare("SELECT `id`,`name` FROM `ttypes` WHERE id=:id");
+													$qry2->execute(array('id' => $_POST['type']));
+													$row2=$qry2->fetch();
+													$qry2->closeCursor();
 													echo '<option value="'.$_POST['type'].'" selected >'.T_($row2['name']).'</option>';
-													$query2 = $db->query("SELECT * FROM `ttypes` WHERE id!='$_POST[type]' ORDER BY name");
-													while ($row2 = $query2->fetch()) echo '<option value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
-													$query2->closeCursor(); 
+													$qry2=$db->prepare("SELECT `id`,`name` FROM `ttypes` WHERE id!=:id ORDER BY name");
+													$qry2->execute(array('id' => $_POST['type']));
+													while($row2=$qry2->fetch()) {echo '<option value="'.$row2['id'].'">'.T_($row2['name']).'</option>';}
+													$qry2->closeCursor();
 												}
 												else
 												{
-													$query2=$db->query("SELECT * FROM `ttypes` WHERE id='$globalrow[type]' ORDER BY name");
-													$row2=$query2->fetch();
-													$query2->closeCursor();
+													$qry2=$db->prepare("SELECT `id`,`name` FROM `ttypes` WHERE id=:id ORDER BY name");
+													$qry2->execute(array('id' => $globalrow['type']));
+													$row2=$qry2->fetch();
+													$qry2->closeCursor();
 													echo '<option value="'.$globalrow['type'].'" selected >'.T_($row2['name']).'</option>';
-													$query2 = $db->query("SELECT * FROM `ttypes` WHERE id!='$globalrow[type]' ORDER BY name");
-													while ($row2 = $query2->fetch()) echo '<option value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
-													$query2->closeCursor(); 
+													$qry2=$db->prepare("SELECT `id`,`name` FROM `ttypes` WHERE  id!=:id ORDER BY name");
+													$qry2->execute(array('id' => $globalrow['type']));
+													while($row2=$qry2->fetch()) {echo '<option value="'.$row2['id'].'">'.T_($row2['name']).'</option>';}
+													$qry2->closeCursor();
 												}
 											}
         									echo'			
@@ -542,7 +496,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 							?>
 							</label>
 							<div class="col-sm-8 ">
-								<select id="technician" name="technician" onchange="loadVal(); submit();" <?php if($rright['ticket_tech']==0 || $lock_tech==1) echo ' disabled="disabled" ';?> >
+								<select id="technician" name="technician" onchange="loadVal(); submit();" <?php if($rright['ticket_tech']==0 || $lock_tech==1) {echo ' disabled="disabled" ';}?> >
 									<?php
 									//filter is service is send for technicians
 									if($rparameters['user_limit_service']==1 && $rright['dashboard_service_only']!=0) //case for user who open ticket to auto-select categories of the service
@@ -550,23 +504,27 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 										if($_POST['u_service']) {$where_service=$_POST['u_service'];} else {$where_service=$globalrow['u_service'];}
 										if ($rright['ticket_tech_super']!=0) //display supervisor in technician list
 										{
-											$query="SELECT * FROM `tusers` WHERE (profile='0' || profile='4' || profile='3') AND ( id IN (SELECT user_id FROM tusers_services WHERE service_id=$where_service)) OR id='0' ORDER BY lastname ASC, firstname ASC";
+											$query="SELECT id,lastname,firstname,disable FROM `tusers` WHERE (profile='0' || profile='4' || profile='3') AND ( id IN (SELECT user_id FROM tusers_services WHERE service_id=$where_service)) OR id='0' ORDER BY id!=0, lastname ASC, firstname ASC";
 										} elseif ($rright['ticket_tech_admin']!=0)  { //display technician and admin in technician list
-											$query="SELECT * FROM `tusers` WHERE (profile='0' || profile='4') AND ( id IN (SELECT user_id FROM tusers_services WHERE service_id=$where_service)) OR id='0' ORDER BY lastname ASC, firstname ASC";
+											$query="SELECT id,lastname,firstname,disable FROM `tusers` WHERE (profile='0' || profile='4') AND ( id IN (SELECT user_id FROM tusers_services WHERE service_id=$where_service)) OR id='0' ORDER BY id!=0, lastname ASC, firstname ASC";
 										} else { //display only technician in technician list
-											$query="SELECT * FROM `tusers` WHERE profile='0' AND ( id IN (SELECT user_id FROM tusers_services WHERE service_id=$where_service)) OR id='0' ORDER BY lastname ASC, firstname ASC";
+											$query="SELECT id,lastname,firstname,disable FROM `tusers` WHERE profile='0' AND ( id IN (SELECT user_id FROM tusers_services WHERE service_id=$where_service)) OR id='0' ORDER BY id!=0, lastname ASC, firstname ASC";
 										}
+										//display technician groups
+										$query2="SELECT id,name,disable FROM `tgroups` WHERE type='1' AND service=$where_service ORDER BY name";
 									} else {
 										//display technician and admin in technician list
 										if ($rright['ticket_tech_super']!=0)
 										{
-											$query = "SELECT * FROM `tusers` WHERE (profile='0' || profile='4' || profile='3') OR id=0 ORDER BY lastname ASC, firstname ASC" ;
+											$query = "SELECT id,lastname,firstname,disable FROM `tusers` WHERE (profile='0' || profile='4' || profile='3') OR id=0 ORDER BY id!=0, lastname ASC, firstname ASC" ;
 										} elseif ($rright['ticket_tech_admin']!=0)
 										{
-											$query = "SELECT * FROM `tusers` WHERE (profile='0' || profile='4') OR id=0 ORDER BY lastname ASC, firstname ASC" ;
+											$query = "SELECT id,lastname,firstname,disable FROM `tusers` WHERE (profile='0' || profile='4') OR id=0 ORDER BY id!=0, lastname ASC, firstname ASC" ;
 										} else {
-											$query="SELECT * FROM `tusers` WHERE profile='0' OR id='0' ORDER BY lastname ASC, firstname ASC";
+											$query="SELECT id,lastname,firstname,disable FROM `tusers` WHERE profile='0' OR id='0' ORDER BY id!=0, lastname ASC, firstname ASC";
 										}
+										//display technician groups
+										$query2="SELECT id,name,disable FROM `tgroups` WHERE type='1' ORDER BY name";
 									}
 									
 									//display technician list
@@ -592,13 +550,13 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 									$query->closeCursor();
 									
 									//display technician group list
-									$query = $db->query("SELECT * FROM `tgroups` WHERE type='1' ORDER BY name");
-									while ($row = $query->fetch()) {
+									$query2 = $db->query($query2);
+									while ($row = $query2->fetch()) {
 										if ($row['id']==$t_group) {$selected='selected';} else {$selected='';}
 										if ($row['disable']==0) {echo '<option '.$selected.' value="G_'.$row['id'].'">[G] '.T_($row['name']).'</option>';}
 										if (($row['disable']==1) && ($selected=='selected')) {echo '<option '.$selected.' value="G_'.$row['id'].'">[G] '.$row['name'].'</option>';}
 									}
-									$query->closeCursor(); 
+									$query2->closeCursor(); 
 									?>
 								</select>
 								<?php 
@@ -616,9 +574,10 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								if (($globalrow['creator']!=$globalrow['technician']) && ($globalrow['creator']!="0") && $_GET['action']!='new' && $mobile==0)
 								{
 									//select creator name
-									$query = $db->query("SELECT * FROM `tusers` WHERE id LIKE '$globalrow[creator]'");
-									$row=$query->fetch();
-									$query->closeCursor(); 
+									$qry=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
+									$qry->execute(array('id' => $globalrow['creator']));
+									$row=$qry->fetch();
+									$qry->closeCursor();
 									echo '&nbsp;<i class="icon-user blue bigger-130"></i>&nbsp;'.T_('Ouvert par').' '.$row['firstname'].' '.$row['lastname'];
 								}
 								?>
@@ -647,25 +606,31 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 												';
 												if ($_POST['asset_id'])
 												{
-													$query2=$db->query("SELECT * FROM `tassets` WHERE id='$_POST[asset_id]'");
-													$row2=$query2->fetch();
-													$query2->closeCursor(); 
+													$qry2=$db->prepare("SELECT `id`,`netbios` FROM `tassets` WHERE id=:id");
+													$qry2->execute(array('id' => $_POST['asset_id']));
+													$row2=$qry2->fetch();
+													$qry2->closeCursor();
 													echo '<option value="'.$row2['id'].'" selected >'.T_($row2['netbios']).'</option>';
 													if(($globalrow['asset_id'] && $globalrow['user']) || ($_SESSION['profile_id']==3 || $_SESSION['profile_id']==2))
 													{
-														$query2 = $db->query("SELECT * FROM `tassets` WHERE netbios!='' AND disable='0' AND user='$globalrow[user]' ORDER BY id!=0, netbios");
+														$qry2=$db->prepare("SELECT `id`,`netbios` FROM `tassets` WHERE netbios!='' AND disable='0' AND user=:user ORDER BY id!=0, netbios");
+														$qry2->execute(array('user' => $globalrow['user']));
+														while($row2=$qry2->fetch()) {echo '<option value="'.$row2['id'].'">'.T_($row2['netbios']).'</option>';}
+														$qry2->closeCursor();
 													} else {
-														$query2 = $db->query("SELECT * FROM `tassets` WHERE netbios!='' AND disable='0'  ORDER BY id!=0, netbios");
+														$qry2=$db->prepare("SELECT `id`,`netbios` FROM `tassets` WHERE netbios!='' AND disable='0' ORDER BY id!=0, netbios");
+														$qry2->execute();
+														while($row2=$qry2->fetch()) {echo '<option value="'.$row2['id'].'">'.T_($row2['netbios']).'</option>';}
+														$qry2->closeCursor();
 													}
-													while ($row2 = $query2->fetch()) echo '<option value="'.$row2['id'].'">'.T_($row2['netbios']).'</option>';
-													$query2->closeCursor(); 
 												}
 												else
 												{
 													//find existing value
-													$query2=$db->query("SELECT * FROM `tassets` WHERE id='$globalrow[asset_id]' ORDER BY id");
-													$row2=$query2->fetch();
-													$query2->closeCursor();
+													$qry2=$db->prepare("SELECT `id`,`netbios` FROM `tassets` WHERE id=:id ORDER BY id");
+													$qry2->execute(array('id' => $globalrow['asset_id']));
+													$row2=$qry2->fetch();
+													$qry2->closeCursor();
 													//select none if new ticket 
 													if ($_GET['action']=='new')
 													{
@@ -677,15 +642,15 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 													//user restricted list
 													if($_SESSION['profile_id']==3 || $_SESSION['profile_id']==2)
 													{
-														$query2 = $db->query("SELECT * FROM `tassets` WHERE id!='$globalrow[asset_id]' AND netbios!='' AND disable='0' AND user='$_SESSION[user_id]' ORDER BY id!=0, netbios");
+														$query2 = $db->query("SELECT id,netbios FROM `tassets` WHERE id!='$globalrow[asset_id]' AND netbios!='' AND disable='0' AND user='$_SESSION[user_id]' ORDER BY id!=0, netbios");
 													} elseif($_POST['user']) {
-														$query2 = $db->query("SELECT * FROM `tassets` WHERE id!='$globalrow[asset_id]' AND netbios!='' AND user='$_POST[user]' AND disable='0' ORDER BY id!=0, netbios");
+														$query2 = $db->query("SELECT id,netbios FROM `tassets` WHERE id!='$globalrow[asset_id]' AND netbios!='' AND user='$_POST[user]' AND disable='0' ORDER BY id!=0, netbios");
 													} elseif($globalrow['user']) {
-														$query2 = $db->query("SELECT * FROM `tassets` WHERE id!='$globalrow[asset_id]' AND netbios!='' AND user='$globalrow[user]' AND disable='0' ORDER BY id!=0, netbios");
+														$query2 = $db->query("SELECT id,netbios FROM `tassets` WHERE id!='$globalrow[asset_id]' AND netbios!='' AND user='$globalrow[user]' AND disable='0' ORDER BY id!=0, netbios");
 													} else {
-														$query2 = $db->query("SELECT * FROM `tassets` WHERE id!='$globalrow[asset_id]' AND netbios!='' AND disable='0' ORDER BY id!=0, netbios");
+														$query2 = $db->query("SELECT id,netbios FROM `tassets` WHERE id!='$globalrow[asset_id]' AND netbios!='' AND disable='0' ORDER BY id!=0, netbios");
 													}
-													while ($row2 = $query2->fetch()) echo '<option value="'.$row2['id'].'">'.T_($row2['netbios']).'</option>';
+													while ($row2 = $query2->fetch()) {echo '<option value="'.$row2['id'].'">'.T_($row2['netbios']).'</option>';}
 													$query2->closeCursor(); 
 												}
 												echo'			
@@ -711,22 +676,11 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								<select title="<?php echo T_('Catégorie'); ?>" id="category" name="category" onchange="loadVal(); submit();" <?php if(($rright['ticket_cat']==0 && $_GET['action']!='new') || ($rright['ticket_new_cat']==0 && $_GET['action']=='new')) echo ' disabled="disabled" ';?>>
 								<?php
 									//if user limit service restrict category to associated service
-									//&& ($_SESSION['profile_id']==1 || $_SESSION['profile_id']==2 || $_SESSION['profile_id']==3)
 									if($rparameters['user_limit_service']==1 && $rright['dashboard_service_only']!=0) //case for user who open ticket to auto-select categories of the service
 									{
 										if($_POST['u_service']) {$where='WHERE service='.$_POST['u_service'].' OR id=0 ';} else {$where='WHERE service='.$globalrow['u_service'].' OR id=0 ';}
 									}else {$where='';}
-									/*
-									elseif($rparameters['user_limit_service']==1 && $rright['dashboard_service_only']!=0) //case for technician view
-									{
-										$where='WHERE (';
-										foreach ($user_services as $values) {$where.='service='.$values.' OR ';}
-										$where.=' id=0';
-										$where.=')';
-									}
-									echo "SELECT * FROM tcategory $where ORDER BY id!=0, name";
-									*/
-									$query= $db->query("SELECT * FROM `tcategory` $where ORDER BY id!='0', number,name"); //order to display none in first
+									$query= $db->query("SELECT id,name FROM `tcategory` $where ORDER BY id!='0', number,name"); //order to display none in first
 									while ($row = $query->fetch()) 
 									{
 										if ($row['id']==0) {$row['name']=T_($row['name']);} //translate only none
@@ -741,10 +695,9 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								<select  title="<?php echo T_('Sous-catégorie'); ?>" id="subcat" name="subcat" onchange="loadVal(); submit();" <?php if(($rright['ticket_cat']==0 && $_GET['action']!='new') || ($rright['ticket_new_cat']==0 && $_GET['action']=='new')) echo ' disabled="disabled" ';?> >
 								<?php
 									if ($_POST['category'])
-									{$query= $db->query("SELECT * FROM `tsubcat` WHERE cat LIKE '$_POST[category]' ORDER BY name ASC");}
+									{$query= $db->query("SELECT id,name FROM `tsubcat` WHERE cat LIKE '$_POST[category]' ORDER BY name ASC");}
 									else
-									{$query= $db->query("SELECT * FROM `tsubcat` WHERE cat LIKE '$globalrow[category]' ORDER BY name ASC");}
-									
+									{$query= $db->query("SELECT id,name FROM `tsubcat` WHERE cat LIKE '$globalrow[category]' ORDER BY name ASC");}
 									while ($row = $query->fetch()) 
 									{
 										if ($row['id']==0) {$row['name']=T_($row['name']);}
@@ -784,19 +737,20 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 							} else {$agency_mandatory='';}
 							
 							//check if current user have multiple agencies to display select, else no display select and get value of agency
-							$query2=$db->query("SELECT count(*) FROM `tusers_agencies` WHERE user_id='$_SESSION[user_id]'");
-							$row2=$query2->fetch();
-							$query2->closeCursor();
-							
+							$qry2=$db->prepare("SELECT COUNT(id) FROM `tusers_agencies` WHERE user_id=:user_id");
+							$qry2->execute(array('user_id' => $_SESSION['user_id']));
+							$row2=$qry2->fetch();
+							$qry2->closeCursor();
 							if (($row2[0]==0 && ($_SESSION['profile_id']==1 || $_SESSION['profile_id']==2) || $rright['ticket_agency']==0)) //case no agency for current user
 							{
 								echo '<input type="hidden" name="u_agency" value="'.$globalrow['u_agency'].'" />'; //send data without display
 							}
 							elseif($row2[0]==1 && ($_SESSION['profile_id']==1 || $_SESSION['profile_id']==2)) //case one agency for current user hide field and transmit data
 							{
-								$query3=$db->query("SELECT agency_id FROM `tusers_agencies` WHERE user_id='$_SESSION[user_id]'");
-								$row3=$query3->fetch();
-								$query3->closeCursor();
+								$qry3=$db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE user_id=:user_id");
+								$qry3->execute(array('user_id' => $_SESSION['user_id']));
+								$row3=$qry3->fetch();
+								$qry3->closeCursor();
 								echo '<input type="hidden" name="u_agency" value="'.$row3['agency_id'].'" />'; //send data without display
 							} else //else display field to select agency
 							{
@@ -824,24 +778,15 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 												$query3=$db->query("SELECT id AS agency_id FROM `tagencies` WHERE disable=0 ORDER BY name");
 											}
 											$count = $query3->rowCount();
-											
 											while ($row3 = $query3->fetch())
 											{
 												//get agency name
-												$query4=$db->query("SELECT id,name FROM `tagencies` WHERE id='$row3[agency_id]'");
-												$row4=$query4->fetch();
-												$query4->closeCursor();
+												$qry4=$db->prepare("SELECT `id`,`name` FROM `tagencies` WHERE id=:id");
+												$qry4->execute(array('id' => $row3['agency_id']));
+												$row4=$qry4->fetch();
+												$qry4->closeCursor();
 												if($globalrow['u_agency']==$row4['id']) {$selected='selected';} else {$selected='';}
 												if ($count==1 && $_GET['action']=='new') {$selected='selected'; $find_agency_id=1;}
-												/*
-												if($globalrow['u_agency']==0 && $_GET['action']=='new' && $_SESSION['profile_id']!=1 && $_SESSION['profile_id']!=2 && $_SESSION['profile_id']!=3) //special case auto-select agency for tech
-												{
-													$query5=$db->query("SELECT agency_id FROM tusers_agencies WHERE user_id='$_POST[user]'");
-													$row5=$query5->fetch();
-													$query5->closeCursor();
-													if($row5['agency_id']==$row4['id']){$selected='selected'; $find_agency_id=1;}
-												}
-												*/
 												echo '<option value="'.$row4['id'].'" '.$selected.' >'.T_($row4['name']).'</option>';
 											}
 											//case for no agency selected
@@ -922,9 +867,10 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 									echo '<input type="hidden" name="sender_service" value="'.$globalrow['sender_service'].'" />';
 								} else {
 									//get sender service id to put in database
-									$query2=$db->query("SELECT MAX(id) FROM tservices WHERE id IN (SELECT service_id FROM tusers_services WHERE user_id=$_SESSION[user_id])");
-									$sender_svc_id=$query2->fetch();
-									$query2->closeCursor();
+									$qry2=$db->prepare("SELECT MAX(id) FROM tservices WHERE id IN (SELECT service_id FROM tusers_services WHERE user_id=:user_id)");
+									$qry2->execute(array('user_id' => $_SESSION['user_id']));
+									$sender_svc_id=$qry2->fetch();
+									$qry2->closeCursor();
 									if($sender_svc_id[0]) {echo '<input type="hidden" name="sender_service" value="'.$sender_svc_id[0].'" />';}
 								}
 							}
@@ -942,19 +888,15 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 										';
 										if($_POST['ticket_places'])
 										{
-										    $query = $db->query("SELECT * FROM `tplaces` ORDER BY name ASC");
-    										while ($row = $query->fetch()) 
-    										{
-    											if ($_POST['ticket_places']==$row['id']) echo '<option selected value="'.$row['id'].'">'.T_($row['name']).'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';
-    										}
-											$query->closeCursor();
+											$qry=$db->prepare("SELECT `id`,`name` FROM `tplaces` ORDER BY name ASC");
+											$qry->execute();
+											while($row=$qry->fetch()) {if($_POST['ticket_places']==$row['id']) {echo '<option selected value="'.$row['id'].'">'.T_($row['name']).'</option>';} else {echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';}}
+											$qry->closeCursor();
 										} else {
-    										$query = $db->query("SELECT * FROM `tplaces` ORDER BY name ASC");
-    										while ($row = $query->fetch()) 
-    										{
-    											if ($globalrow['place']==$row['id']) echo '<option selected value="'.$row['id'].'">'.T_($row['name']).'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';
-    										}
-											$query->closeCursor();
+											$qry=$db->prepare("SELECT `id`,`name` FROM `tplaces` ORDER BY name ASC");
+											$qry->execute();
+											while($row=$qry->fetch()){if($globalrow['place']==$row['id']) {echo '<option selected value="'.$row['id'].'">'.T_($row['name']).'</option>';} else {echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';}}
+											$qry->closeCursor();
 										}
 									echo '
 									</select>
@@ -968,23 +910,21 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 						?>
 						<!-- END place part -->
 						<!-- START title part -->
-						<?php
-						//display mandatory field if right is configured
-						if ($rright['ticket_title_disp']!=0) {
-							if ($rright['ticket_title_mandatory']!=0) {
-								if($_POST['title']=='' && $globalrow['title']==''){$ticket_title_mandatory='has-error';} else {$ticket_title_mandatory='has-success';}
-							}else{$ticket_title_mandatory='';}
-						} else {$ticket_title_mandatory='';}
-						?>
-						<div class="form-group <?php if($rright['ticket_title_disp']==0) {echo 'hide';} echo $ticket_title_mandatory; ?>">
-							<label class="col-sm-2 control-label no-padding-right" for="title">
-							<?php
-							if($rright['ticket_title_mandatory']!=0 && $ticket_title_mandatory=='has-error') {echo '<i title="'.T_("La saisie du champ titre est obligatoire.").'" class="icon-warning-sign red bigger-130"></i>&nbsp;';}
-							echo T_('Titre'); 
-							?> :
-							</label>
+						<div class="form-group <?php if($rright['ticket_title_disp']==0) {echo 'hide';} ?>">
+							<label class="col-sm-2 control-label no-padding-right" for="title"><?php echo T_('Titre');?> :</label>
 							<div class="col-sm-8">
-								<input name="title" id="title" type="text" size="<?php if($mobile==0) {echo '50';} else {echo '30';}?>"  maxlength="100" value="<?php if($_POST['title']) {echo htmlspecialchars($_POST['title']);} else {echo htmlspecialchars($globalrow['title']);} ?>" <?php if($rright['ticket_title']==0  && $_GET['action']!='new') echo 'readonly="readonly"';?> />
+								<input 
+									name="title" 
+									id="title" 
+									type="text" 
+									size="<?php if($mobile==0) {echo '50';} else {echo '30';}?>"  
+									maxlength="100" 
+									value="<?php if($_POST['title']) {echo htmlspecialchars($_POST['title']);} else {echo htmlspecialchars($globalrow['title']);} ?>" 
+									<?php 
+									if($rright['ticket_title']==0 && $_GET['action']!='new') {echo ' readonly="readonly" ';} 
+									if($rright['ticket_title_mandatory']!=0) {echo ' required="required" ';}
+									?> 
+								/>
 							</div>
 						</div>
 						<!-- END title part -->
@@ -1014,7 +954,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 											{	
 												//display editor
 												echo '
-												<div id="editor" class="wysiwyg-editor" style="min-height:80px;">';
+												<div  id="editor" class="wysiwyg-editor" style="min-height:80px;">';
 											    	if ($_POST['text'] && $_POST['text']!='') echo "$_POST[text]"; else echo $globalrow['description'];
 										            if ($_GET['action']=='new' && !$_POST['user']) {echo '';}	 echo'
 												</div>
@@ -1033,7 +973,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 						<!-- END description part -->
 						<!-- START resolution part -->
 						<div class="form-group <?php if(($rright['ticket_resolution_disp']==0 && $_GET['action']!='new') || ($rright['ticket_new_resolution_disp']==0 && $_GET['action']=='new')) echo 'hide';?>" >
-							<label class="col-sm-2 control-label" for="resolution"><?php echo T_('Résolution'); ?> :</label>
+							<label class="col-sm-2 control-label no-padding-right" for="tesxt"><?php echo T_('Résolution'); ?> :</label>
 							<div class="col-sm-8">	
 							<?php include "./thread.php"; ?>	
 							</div>
@@ -1075,7 +1015,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 							<label class="col-sm-2 control-label no-padding-right" for="date_create"><?php echo T_('Date de la demande'); ?> :</label>
 							<div class="col-sm-8">
 								<input type="hidden" name="hide" id="hide" value="1"/>
-								<input  data-provide="datepicker" autocomplete="off" type="text" name="date_create" id="date_create" value="<?php if ($_POST['date_create']) echo $_POST['date_create']; else echo $globalrow['date_create']; ?>" <?php if($rright['ticket_date_create']==0) echo 'readonly="readonly"';?> >
+								<input data-provide="datepicker" autocomplete="off" type="text" name="date_create" id="date_create" value="<?php if ($_POST['date_create']) echo $_POST['date_create']; else echo $globalrow['date_create']; ?>" <?php if($rright['ticket_date_create']==0) echo 'readonly="readonly"';?> >
 							</div> 
 						</div>
 						<!-- END create date part -->
@@ -1084,29 +1024,41 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 						//datetime convert SQL format to display
 						if ($globalrow['date_hope']=='0000-00-00')
 						{
+							$date_hope='';
 							$globalrow['date_hope']='';
 						} elseif ($globalrow['date_hope'])
 						{
+							$date_hope=$globalrow['date_hope'];
 							$globalrow['date_hope'] = DateTime::createFromFormat('Y-m-d', $globalrow['date_hope']);
 							$globalrow['date_hope']=$globalrow['date_hope']->format('d/m/Y');
 						}
 						?>
-						<?php if($rright['ticket_date_hope_mandatory']!=0) { if(($_POST['date_hope']=="" && $_GET['action']=='new') || $_POST['date_hope']=="0000-00-00" ||  $globalrow['date_hope']=="0000-00-00") {$date_hope_error="has-error";}  else {$date_hope_error="";}} //check empty field?>
 						<div class="form-group <?php echo $date_hope_error; if($rright['ticket_date_hope_disp']==0) echo ' hide ';?>">
 							<label class=" col-sm-2 control-label no-padding-right" for="date_hope">
-							    <?php if($rright['ticket_date_hope_mandatory']!=0) { if (($_POST['date_hope']==0) && ($globalrow['date_hope']==0)) {echo '<i title="'.T_("La sélection d'une date de résolution estimée est obligatoire.").'" class="icon-warning-sign red bigger-130"></i>&nbsp;';}} ?>
-						    	<?php echo T_('Date de résolution estimée'); ?> :
+							    <?php 
+									//display warning if hope date is passed
+									$qry=$db->prepare("SELECT DATEDIFF(NOW(), :date_hope)");
+									$qry->execute(array('date_hope' => $date_hope));
+									$row=$qry->fetch();
+									$qry->closeCursor();
+									if($row[0]>0 && ($globalrow['state']!="3" && $globalrow['state']!="4")) echo "<i title=\"Date de résolution dépassée de $row[0] jours\" class=\"icon-warning-sign orange bigger-130\" ></i>&nbsp;";
+									echo T_('Date de résolution estimée'); 
+								?> :
 							</label>
 							<div class="col-sm-8">
-								<input data-provide="datepicker" autocomplete="off" type="text" id="date_hope" name="date_hope"  onchange="loadVal();" value="<?php  if ($_POST['date_hope']) echo $_POST['date_hope']; else echo $globalrow['date_hope']; ?>" <?php if($rright['ticket_date_hope']==0) echo 'readonly="readonly"';?>>
-								<?php
-									//display warning if hope date is passed
-									$date_hope=$globalrow['date_hope'];
-									$querydiff=$db->query("SELECT DATEDIFF(NOW(), '$date_hope') "); 
-									$resultdiff=$querydiff->fetch();
-									$query->closeCursor(); 
-									if ($resultdiff[0]>0 && ($globalrow['state']!="3" && $globalrow['state']!="4")) echo "<i title=\"Date de résolution dépassée de $resultdiff[0] jours\" class=\"icon-warning-sign orange bigger-130\" ></i>";
-								?>
+								<input 
+									data-provide="datepicker" 
+									autocomplete="off" 
+									type="text" 
+									id="date_hope" 
+									name="date_hope" 
+									onchange="loadVal();" 
+									value="<?php if ($_POST['date_hope']) {echo $_POST['date_hope'];} else {echo $globalrow['date_hope'];} ?>" 
+									<?php 
+										if($rright['ticket_date_hope']==0) {echo ' readonly="readonly" ';}
+										if($rright['ticket_date_hope_mandatory']!=0) {echo ' required="required" ';}
+									?>
+								>
 							</div>
 						</div>
 						<!-- END hope date part -->
@@ -1134,25 +1086,27 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 							<label class="col-sm-2 control-label no-padding-right" for="time"><?php echo T_('Temps passé'); ?> :</label>
 							<div class="col-sm-8">
 								<select  id="time" name="time" <?php if($rright['ticket_time']==0) echo 'disabled';?> >
-								<?php
-									$query = $db->query("SELECT * FROM `ttime` ORDER BY min ASC");
-									while ($row = $query->fetch()) 
-									{
-										if (($_POST['time']==$row['min'])||($globalrow['time']==$row['min']))
+									<?php
+										$qry=$db->prepare("SELECT `min`,`name` FROM `ttime` ORDER BY min ASC");
+										$qry->execute();
+										while($row=$qry->fetch()) 
 										{
-											echo '<option selected value="'.$row['min'].'">'.$row['name'].'</option>';
-											$selected_time=$row['min'];
-										} else {
-											echo '<option value="'.$row['min'].'">'.$row['name'].'</option>';
+											if (($_POST['time']==$row['min'])||($globalrow['time']==$row['min']))
+											{
+												echo '<option selected value="'.$row['min'].'">'.$row['name'].'</option>';
+												$selected_time=$row['min'];
+											} else {
+												echo '<option value="'.$row['min'].'">'.$row['name'].'</option>';
+											}
 										}
-									}
-									$query->closeCursor();
-									//special case when time entry was modify or delete from admin time list
-									$query=$db->query("SELECT * FROM `ttime` WHERE min='$globalrow[time]'");
-									$row=$query->fetch();
-									$query->closeCursor(); 
-									if(!$row && $_GET['action']!='new') { echo '<option selected value="'.$globalrow['time'].'">'.$globalrow['time'].'m</option>';}
-								?>
+										$qry->closeCursor();
+										//special case when time entry was modify or delete from admin time list
+										$qry=$db->prepare("SELECT `id` FROM `ttime` WHERE min=:min");
+										$qry->execute(array('min' => $globalrow['time']));
+										$row=$qry->fetch();
+										$qry->closeCursor();
+										if(!$row && $_GET['action']!='new') { echo '<option selected value="'.$globalrow['time'].'">'.$globalrow['time'].'m</option>';}
+									?>
 								</select>
 								<?php
 								//send value in lock select case 
@@ -1170,8 +1124,10 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 							<div class="col-sm-8">
 								<select  id="time_hope" name="time_hope" <?php if($rright['ticket_time_hope']==0) echo 'disabled';?> >
 									<?php
-									$query = $db->query("SELECT * FROM `ttime` ORDER BY min ASC");
-									while ($row = $query->fetch()) 
+									
+									$qry=$db->prepare("SELECT `min`,`name` FROM `ttime` ORDER BY min ASC");
+									$qry->execute();
+									while($row=$qry->fetch()) 
 									{
 										if (($_POST['time_hope']==$row['min']) || ($globalrow['time_hope']==$row['min']))
 										{
@@ -1182,11 +1138,12 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 											$selected_time_hope=$row['min'];
 										}
 									}
-									$query->closeCursor(); 
+									$qry->closeCursor();
 									//special case when time entry was modify or delete from admin time list
-									$query=$db->query("SELECT * FROM `ttime` WHERE min='$globalrow[time_hope]'");
-									$row=$query->fetch();
-									$query->closeCursor(); 
+									$qry=$db->prepare("SELECT `id` FROM `ttime` WHERE min=:min");
+									$qry->execute(array('min' => $globalrow['time_hope']));
+									$row=$qry->fetch();
+									$qry->closeCursor();
 									if(!$row) { echo '<option selected value="'.$globalrow['time_hope'].'">'.$globalrow['time_hope'].'m</option>';}
 									?>
 								</select>
@@ -1198,10 +1155,9 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								?>
 							</div>
 						</div>
-						
 						<!-- END time hope part -->
-						<!-- START Contrat ADMIN part -->
-						<?php
+							<!-- START Contrat ADMIN part -->
+							<?php
 if ($rright['admin_contrat'] != 0) {?>
 						<div class="form-group">
 							<label class="col-sm-2 control-label no-padding-right" for="contrats">
@@ -1246,7 +1202,7 @@ while ($row = $query->fetch()) {
         echo ' disabled="disabled" ';
     }
     ?>
-									> <option value="0" selected>Aucun</option>
+									> <option value="0" selected>Aucun TOTO</option>
 
 
 									<?php
@@ -1326,7 +1282,7 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
 									{
 										if($_POST['u_service']) {$where=' service='.$_POST['u_service'].' ';} else {$where=' service='.$globalrow['u_service'].' ';}
 										$old_priority=1;
-										$query2 = $db->query("SELECT * FROM `tpriority` WHERE $where OR id=0 ORDER BY number DESC");
+										$query2 = $db->query("SELECT id,name FROM `tpriority` WHERE $where OR id=0 ORDER BY number DESC");
 										while ($row2 = $query2->fetch()) {
 											//select entry
 											$selected='';
@@ -1340,39 +1296,42 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
 										$query2->closeCursor(); 
 										//keep old data
 										if($old_priority==1 && $_GET['action']!='new') {
-											$query2=$db->query("SELECT * FROM `tpriority` WHERE id='$globalrow[priority]'");
-											$row2=$query2->fetch();
-											$query2->closeCursor(); 
+											$qry2=$db->prepare("SELECT `id`,`name` FROM `tpriority` WHERE id=:id");
+											$qry2->execute(array('id' => $globalrow['priority']));
+											$row2=$qry2->fetch();
+											$qry2->closeCursor();
 											echo '<option selected value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
 										}
 									} else { //case no limit service
 										if ($_POST['priority'])
 										{
 											//find row to select
-											$query = $db->query("SELECT * FROM `tpriority` WHERE id='$_POST[priority]' ORDER BY number DESC");
-											$row=$query->fetch();
-											$query->closeCursor(); 
+											$qry=$db->prepare("SELECT `name` FROM `tpriority` WHERE id=:id");
+											$qry->execute(array('id' => $_POST['priority']));
+											$row=$qry->fetch();
+											$qry->closeCursor();
 											echo '<option value="'.$_POST['priority'].'" selected >'.T_($row['name']).'</option>';
 											//display all entries without selected
 											$selected_priority=$_POST['priority'];
-											$query = $db->query("SELECT DISTINCT(id),name FROM `tpriority` WHERE id!='$_POST[priority]' ORDER BY number DESC");
-											while ($row = $query->fetch()) echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>'; 
-											$query->closeCursor(); 
-											
+											$qry=$db->prepare("SELECT DISTINCT(id),name FROM `tpriority` WHERE id!=:id ORDER BY number DESC");
+											$qry->execute(array('id' => $_POST['priority']));
+											while($row=$qry->fetch()) {echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';}
+											$qry->closeCursor();
 										} else {
 											if($globalrow['priority'])
 											{
 												//find row to select
-												$query = $db->query("SELECT DISTINCT(id),name FROM `tpriority` WHERE id LIKE '$globalrow[priority]' ORDER BY number DESC ");
-												$row=$query->fetch();
-												$query->closeCursor(); 
+												$qry=$db->prepare("SELECT DISTINCT(id),name FROM `tpriority` WHERE id=:id");
+												$qry->execute(array('id' => $globalrow['priority']));
+												$row=$qry->fetch();
+												$qry->closeCursor();
 												echo '<option value="'.$globalrow['priority'].'" selected >'.T_($row['name']).'</option>';
 												$selected_priority=$globalrow['priority'];
 											} else {$selected_priority='';}
-											
-											$query = $db->query("SELECT * FROM `tpriority` WHERE id!='$globalrow[priority]' ORDER BY number DESC");
-											while ($row = $query->fetch()) echo '<option value="'.$row['id'].'" >'.T_($row['name']).'</option>';
-											$query->closeCursor(); 
+											$qry=$db->prepare("SELECT `id`,`name` FROM `tpriority` WHERE id!=:id ORDER BY number DESC");
+											$qry->execute(array('id' => $globalrow['priority']));
+											while($row=$qry->fetch()) {echo '<option value="'.$row['id'].'" >'.T_($row['name']).'</option>';}
+											$qry->closeCursor();
 										}
 									}
 									?>			
@@ -1383,10 +1342,11 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
 								
 								//display priority icon
 								if($_POST['priority']) {$check_id=$_POST['priority'];} elseif($globalrow['priority']) {$check_id=$globalrow['priority'];} else {$check_id=6;}
-								$query = $db->query("SELECT * FROM `tpriority` WHERE id='$check_id'");
-								$row=$query->fetch();
-								$query->closeCursor(); 
-								if ($row['name']) {echo '<i title="'.T_($row['name']).'" class="icon-warning-sign bigger-130" style="color:'.T_($row['color']).'" ></i>';}
+								$qry=$db->prepare("SELECT `name`,`color` FROM `tpriority` WHERE id=:id");
+								$qry->execute(array('id' => $check_id));
+								$row=$qry->fetch();
+								$qry->closeCursor();
+								if ($row['name']) {echo '&nbsp;<i title="'.T_($row['name']).'" class="icon-warning-sign bigger-130" style="color:'.T_($row['color']).'" ></i>';}
 								?>
 							</div>
 						</div>
@@ -1406,7 +1366,7 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
 									{
 										if($_POST['u_service']) {$where=' service='.$_POST['u_service'].' ';} else {$where=' service='.$globalrow['u_service'].' ';}
 										$old_criticality=1;
-										$query2 = $db->query("SELECT * FROM `tcriticality` WHERE $where OR id=0 ORDER BY number DESC");
+										$query2 = $db->query("SELECT id,name FROM `tcriticality` WHERE $where OR id=0 ORDER BY number DESC");
 										while ($row2 = $query2->fetch()) {
 											//select entry
 											$selected='';
@@ -1418,11 +1378,13 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
 											echo '<option '.$selected.' value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
 										}
 										$query2->closeCursor(); 
+										
 										//keep old data
-										if($old_priority==1 && $_GET['action']!='new') {
-											$query2=$db->query("SELECT * FROM `tcriticality` WHERE id='$globalrow[criticality]'");
-											$row2=$query2->fetch();
-											$query2->closeCursor(); 
+										if($old_criticality==1 && $_GET['action']!='new') {
+											$qry2=$db->prepare("SELECT `id`,`name` FROM `tcriticality` WHERE id=:id");
+											$qry2->execute(array('id' => $globalrow['criticality']));
+											$row2=$qry2->fetch();
+											$qry2->closeCursor();
 											echo '<option selected value="'.$row2['id'].'">'.T_($row2['name']).'</option>';
 										}
 										$selected_criticality=''; //init var
@@ -1430,32 +1392,35 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
 										if ($_POST['criticality'])
 										{
 											//find row to select
-											$query = $db->query("SELECT * FROM `tcriticality` WHERE id='$_POST[criticality]' ORDER BY number DESC");
-											$row=$query->fetch();
-											$query->closeCursor(); 
+											$qry=$db->prepare("SELECT `id`,`name` FROM `tcriticality` WHERE id=:id");
+											$qry->execute(array('id' => $_POST['criticality']));
+											$row=$qry->fetch();
+											$qry->closeCursor();
 											echo '<option value="'.$_POST['criticality'].'" selected >'.T_($row['name']).'</option>';
 											//display all entries without selected
 											$selected_criticality=$_POST['criticality'];
-											$query = $db->query("SELECT DISTINCT(id),name FROM `tcriticality` WHERE id!='$_POST[criticality]'  ORDER BY number DESC");
-											while ($row = $query->fetch()) echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>'; 
-											$query->closeCursor(); 
+											$qry=$db->prepare("SELECT DISTINCT(id),name FROM `tcriticality` WHERE id!=:id ORDER BY number DESC");
+											$qry->execute(array('id' => $_POST['criticality']));
+											while($row=$qry->fetch()) {echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';}
+											$qry->closeCursor();
 										}
 										else
 										{
 											if($globalrow['criticality'])
 											{
 												//find row to select
-												$query = $db->query("SELECT DISTINCT(id),name FROM `tcriticality` WHERE id LIKE '$globalrow[criticality]' ORDER BY number DESC ");
-												$row=$query->fetch();
-												$query->closeCursor(); 
+												$qry=$db->prepare("SELECT DISTINCT(id),name FROM `tcriticality` WHERE id=:id");
+												$qry->execute(array('id' => $globalrow['criticality']));
+												$row=$qry->fetch();
+												$qry->closeCursor();
 												echo '<option value="'.$globalrow['criticality'].'" selected >'.T_($row['name']).'</option>';
 												$selected_criticality=$globalrow['criticality'];
 											} else {$selected_criticality='';}
-											
 											//display all entries without selected
-											$query = $db->query("SELECT * FROM `tcriticality` WHERE id!='$globalrow[criticality]' ORDER BY number DESC");
-											while ($row = $query->fetch()) echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>'; 
-											$query->closeCursor(); 
+											$qry=$db->prepare("SELECT `id`,`name` FROM `tcriticality` WHERE id!=:id ORDER BY number DESC");
+											$qry->execute(array('id' => $globalrow['criticality']));
+											while($row=$qry->fetch()) {echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';}
+											$qry->closeCursor();
 										}			
 									}
 									?>			
@@ -1466,10 +1431,11 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
 								
 								//display criticality icon
 								if($_POST['criticality']) {$check_id=$_POST['criticality'];} else { $check_id=$globalrow['criticality'];}
-								$query = $db->query("SELECT * FROM `tcriticality` WHERE id='$check_id'");
-								$row=$query->fetch();
-								$query->closeCursor(); 
-								if ($row['name']) {echo '<i title="'.T_($row['name']).'" class="icon-bullhorn bigger-130" style="color:'.$row['color'].'" ></i>';}
+								$qry=$db->prepare("SELECT `color`,`name` FROM `tcriticality` WHERE id=:id");
+								$qry->execute(array('id' => $check_id));
+								$row=$qry->fetch();
+								$qry->closeCursor();
+								if ($row['name']) {echo '&nbsp;<i title="'.T_($row['name']).'" class="icon-bullhorn bigger-130" style="color:'.$row['color'].'" ></i>';}
 								?>
 							</div>
 						</div>
@@ -1483,26 +1449,28 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
 									//selected value
 									if ($_POST['state'])
 									{
-										$query = $db->query("SELECT * FROM `tstates` WHERE id='$_POST[state]'");
-										$row=$query->fetch();
-										$query->closeCursor(); 
+										$qry=$db->prepare("SELECT `name` FROM `tstates` WHERE id=:id");
+										$qry->execute(array('id' => $_POST['state']));
+										$row=$qry->fetch();
+										$qry->closeCursor();
 										echo '<option value="'.$_POST['state'].'" selected >'.T_($row['name']).'</option>';
 										$selected_state=$_POST['state'];
-									}
-									else
-									{
-										$query = $db->query("SELECT * FROM `tstates` WHERE id='$globalrow[state]'");
-										$row=$query->fetch();
-										$query->closeCursor(); 
+									} else {
+										$qry=$db->prepare("SELECT `name` FROM `tstates` WHERE id=:id");
+										$qry->execute(array('id' => $globalrow['state']));
+										$row=$qry->fetch();
+										$qry->closeCursor();
 										echo '<option value="'.$globalrow['state'].'" selected >'.T_($row['name']).'</option>';
 										$selected_state=$globalrow['state'];
-									}			
-							    	$query = $db->query("SELECT * FROM `tstates` WHERE id!='$_POST[state]' AND id!='$globalrow[state]' ORDER BY number");
-								    while ($row = $query->fetch()) {
+									}
+									$qry=$db->prepare("SELECT `id`,`name` FROM `tstates` WHERE id!=:id1 AND id!=:id2 ORDER BY number");
+									$qry->execute(array('id1' => $_POST['state'],'id2' => $globalrow['state']));
+									while($row=$qry->fetch()) 
+									{
 										if ($_SESSION['profile_id']==2 && $row['id']==3){}  //special case to hide resolve state for user only
 										else {echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';}
-									} 
-									$query->closeCursor(); 
+									}
+									$qry->closeCursor();
 									?>
 								</select>
 								<?php
@@ -1510,10 +1478,11 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
 								if($rright['ticket_state']==0 || $lock_tech==1) {echo '<input type="hidden" name="state" value="'.$selected_state.'" />';}
 								
 								//display state icon
-								$query = $db->query("SELECT * FROM `tstates` WHERE id LIKE '$globalrow[state]'");
-								$row=$query->fetch();
-								$query->closeCursor(); 
-								echo '<span class="'.$row['display'].'" title="'.T_($row['description']).'">&nbsp;</span>';
+								$qry=$db->prepare("SELECT `display`,`description` FROM `tstates` WHERE id=:id");
+								$qry->execute(array('id' => $globalrow['state']));
+								$row=$qry->fetch();
+								$qry->closeCursor();
+								echo '&nbsp;<span class="'.$row['display'].'" title="'.T_($row['description']).'">&nbsp;</span>';
 								?>
 							</div>
 						</div>
@@ -1538,6 +1507,7 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
                                        	$time=(($t2-$t1)/60)/60;
                                        	$time="soit $time h";
         					    	} else $time='';
+        					    	
         					    	if ($_POST['start_availability'])
         					    	{
         					    	    $start_availability=$_POST['start_availability'];
@@ -1664,7 +1634,6 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
 
 <?php include ('./wysiwyg.php'); ?>
 
-<!-- date time picker scripts -->
 <!-- datetime picker scripts  -->
 <script src="./components/moment/min/moment.min.js" charset="UTF-8"></script>
 <?php 
@@ -1675,6 +1644,31 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
 <script src="./components/datetimepicker/build/js/bootstrap-datetimepicker.min.js" charset="UTF-8"></script>
 
 <script type="text/javascript">
+
+// allow past clipboard screenshot with chrome
+document.getElementById("editor").focus();
+document.body.addEventListener("paste", function(e) {
+	for (var i = 0; i < e.clipboardData.items.length; i++) {
+		if (e.clipboardData.items[i].kind == "file" && e.clipboardData.items[i].type == "image/png") {
+			var imageFile = e.clipboardData.items[i].getAsFile();
+			var fileReader = new FileReader();
+			fileReader.onloadend = function(e) {
+				var image = document.createElement("IMG");
+				image.src = this.result;
+				var range = window.getSelection().getRangeAt(0);
+				range.insertNode(image);
+				range.collapse(false);
+				var selection = window.getSelection();
+				selection.removeAllRanges();
+				selection.addRange(range);
+			};
+			fileReader.readAsDataURL(imageFile);
+			e.preventDefault();
+			break;
+		}
+	}
+}); 
+	
 jQuery(function($) {
 	<?php
 		if($rright['ticket_date_create']!=0)
@@ -1697,7 +1691,7 @@ jQuery(function($) {
 		{
 			echo "
 				$('#date_hope').datetimepicker({
-					format: 'DD/MM/YYYY HH:mm:SS',
+					format: 'DD/MM/YYYY',
 				});
 			";
 		}
@@ -1708,7 +1702,47 @@ jQuery(function($) {
 			$('#end_availability').datetimepicker({
 				format: 'DD/MM/YYYY HH:mm:SS',
 			});
+			
 		";
 	?>
 });
+	
+//get user infos
+$(document).ready(function(){
+	//case data read from db
+	var e = document.getElementById("user");
+	var user = e.options[e.selectedIndex].value;
+	if(user!=0){GetUserInfos(user);}
+	//case switch by user
+	$('#user').change(function(){
+		var user = $(this).val(); 
+		if(user!=0){GetUserInfos(user);}
+	});	
+	function GetUserInfos(user) {
+		var dataString = "user="+user; 
+		$.ajax({ 
+			type: "POST", 
+			url: "includes/ticket_userinfos.php?token=<?php echo $_COOKIE["token"]; ?>&ticket=<?php echo $_GET['id']; ?>", 
+			data: dataString, 
+			success: function(result){ 
+				var data = JSON.parse(result);
+				if(data.phone) {$("#user_phone").html('&nbsp;&nbsp;<a href="tel:'+data.phone+'"><i title="<?php echo T_('Téléphoner au'); ?> '+data.phone+'" class="icon-phone-sign blue bigger-130"></i></a> '+data.phone);} else {$("#user_phone").html('');}
+				if(data.mobile) {$("#user_mobile").html('&nbsp;&nbsp;<a href="tel:'+data.mobile+'"><i title="<?php echo T_('Téléphoner au'); ?> '+data.mobile+'" class="icon-mobile-phone blue bigger-150"></i></a> '+data.mobile);} else {$("#user_mobile").html('');}
+				if(data.mail) {$("#user_mail").html('&nbsp;&nbsp;<a href="mailto:'+data.mail+'"><i title="<?php echo T_('Envoyer un mail sur'); ?> '+data.mail+'" class="icon-envelope blue bigger-130"></i></a>');} else {$("#user_mail").html('');}
+				if(data.function) {$("#user_function").html('&nbsp;&nbsp;<i title="<?php echo T_('Fonction'); ?> '+data.function+'" class="icon-user blue bigger-130"></i> '+data.function);} else {$("#user_function").html('');}
+				if(data.service) {$("#user_service").html('&nbsp;&nbsp;<i title="<?php echo T_('Service'); ?> '+data.service+'" class="icon-group blue bigger-120"></i> '+data.service);} else {$("#user_service").html('');}
+				if(data.agency) {$("#user_agency").html('&nbsp;&nbsp;<i title="<?php echo T_('Agence'); ?> '+data.service+'" class="icon-globe blue bigger-120"></i> '+data.agency);} else {$("#user_agency").html('');}
+				if(data.company) {$("#user_company").html('&nbsp;&nbsp;<i title="<?php echo T_('Société'); ?> '+data.company+'" class="icon-building blue bigger-130"></i> '+data.company);} else {$("#user_company").html('');}
+				if(data.other_ticket) {$("#user_other_ticket").html('&nbsp;&nbsp; <i title="<?php echo T_('Autres tickets de cet utilisateur'); ?>" class="icon-ticket blue bigger-130"></i>'+data.other_ticket);} else {$("#user_other_ticket").html('');}
+				if(data.asset_id) {$("#user_asset").html('&nbsp;&nbsp;&nbsp;<a target="_blank" href="./index.php?page=asset&id='+data.asset_id+'"><i title="<?php echo T_('Équipement associé'); ?>" class="icon-desktop blue bigger-120"></i></a> '+data.asset_netbios);} else {$("#user_asset").html('');}
+				$('#user_warning').css('display', 'none');
+			}
+		});
+	}
+});
+
+
+
+        
+  
 </script>		

@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 27/01/2014
-# @Update : 30/08/2018
-# @Version : 3.1.35
+# @Update : 04/02/2019
+# @Version : 3.1.39
 ################################################################################
 
 //locales
@@ -41,18 +41,8 @@ $db_type=strip_tags($_GET['type']);
 $db_criticality=strip_tags($_GET['criticality']);
 $db_category=strip_tags($_GET['category']);
 
-//get last token
-$qry = $db->prepare("SELECT `token` FROM `ttoken` WHERE action=:action ORDER BY id");
-$qry->execute(array('action' => 'export_ticket'));
-$token=$qry->fetch();
-$qry->closeCursor();
-
-//delete token
-$qry=$db->prepare("DELETE FROM `ttoken` WHERE action=:action");
-$qry->execute(array('action' => 'export_ticket'));
-
 //secure connect from authenticated user
-if ($_GET['token'] && $token['token']==$_GET['token']) 
+if($_GET['token']==$_COOKIE['token']) 
 {
 	//get current date
 	$daydate=date('Y-m-d');
@@ -122,7 +112,7 @@ if ($_GET['token'] && $token['token']==$_GET['token'])
 	$select='';
 	
 
-	fputcsv($output, array(T_('Numéro du ticket'), T_('Type'), T_('Technicien'), T_('Demandeur'), T_('Service'), T_('Service du demandeur'), T_('Agence'), T_('Date de première réponse'), T_('Société'),T_('Créateur'), T_('Catégorie'), T_('Sous-catégorie'), T_('Lieu'),T_('Titre'), T_('Temps passé'), T_('Date de création'),T_('Date de résolution estimé'), T_('Date de clôture'), T_('État'), T_('Priorité'), T_('Criticité')),";");
+	fputcsv($output, array(T_('Numéro du ticket'), T_('Type'), T_('Technicien'), T_('Demandeur'), T_('Service'), T_('Service du demandeur'), T_('Agence'), T_('Date de première réponse'), T_('Société'),T_('Créateur'), T_('Catégorie'), T_('Sous-catégorie'), T_('Lieu'),T_('Titre'), T_('Temps passé'), T_('Date de création'),T_('Date de résolution estimée'), T_('Date de clôture'), T_('État'), T_('Priorité'), T_('Criticité')),";");
 	$select.='sender_service,u_agency, img2, img1,';
 	$where.="u_agency LIKE $db_agency AND";
 
@@ -160,7 +150,7 @@ if ($_GET['token'] && $token['token']==$_GET['token'])
 		if ($row['technician']==0)
 		{
 			//check if group exist on this ticket
-			$qry2=$db->prepare("SELECT * FROM tincidents WHERE id=:id");
+			$qry2=$db->prepare("SELECT t_group FROM tincidents WHERE id=:id");
 			$qry2->execute(array('id' => $row['id']));
 			$row2=$qry2->fetch();
 			$qry2->closeCursor();
@@ -199,7 +189,7 @@ if ($_GET['token'] && $token['token']==$_GET['token'])
 		if ($row['user']=='')
 		{
 			//check if group exist on this ticket
-			$qry2=$db->prepare("SELECT * FROM tincidents WHERE id=:id");
+			$qry2=$db->prepare("SELECT u_group FROM tincidents WHERE id=:id");
 			$qry2->execute(array('id' => $row['id']));
 			$row2=$qry2->fetch();
 			$qry2->closeCursor();

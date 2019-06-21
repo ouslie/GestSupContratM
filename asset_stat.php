@@ -6,13 +6,12 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 25/01/2016
-# @Update : 05/12/2018
-# @Version : 3.1.37
+# @Update : 27/02/2019
+# @Version : 3.1.39
 ################################################################################
 
 //initialize variables 
 if(!isset($_POST['model'])) $_POST['model']='';
-
 ?>
 
 <form method="post" action="" name="filter" >
@@ -20,26 +19,30 @@ if(!isset($_POST['model'])) $_POST['model']='';
 	<small><?php echo T_('Filtre global'); ?> :</small>
 	<select style="width:155px" name="tech" onchange=submit()>
 		<?php
-		$query = $db->query("SELECT * FROM tusers WHERE (profile=0 OR profile=4) and disable=0 ORDER BY lastname");				
-		while ($row=$query->fetch()) {
+		$qry=$db->prepare("SELECT `id`,`firstname`,`lastname` FROM `tusers` WHERE (profile=0 OR profile=4) and disable=0 ORDER BY lastname");
+		$qry->execute();
+		while($row=$qry->fetch()) 
+		{
 			if ($row['id'] == $_POST['tech']) $selected1="selected" ;
 			if ($row['id'] == $_POST['tech']) $find="1" ;
 			echo "<option value=\"$row[id]\" $selected1>$row[firstname] $row[lastname]</option>"; 
 			$selected1="";
-		} 
-		$query->closeCursor();
+		}
+		$qry->closeCursor();
 		if ($find!="1") {echo '<option value="%" selected >'.T_('Tous les techniciens').'</option>';} else {echo '<option value="%" >'.('Tous les techniciens').'</option>';}											
 		?>
 	</select>
 	<select style="width:155px" name="service" onchange=submit()>
 		<?php
-		$query = $db->query("SELECT * FROM tservices WHERE disable=0 ORDER BY name");				
-		while ($row=$query->fetch()) {
-			if ($row['id'] == $_POST['service']) {$selected2="selected";}
+		$qry=$db->prepare("SELECT `id`,`name` FROM `tservices` WHERE disable=0 ORDER BY name");
+		$qry->execute();
+		while($row=$qry->fetch()) 
+		{
+			if($row['id']==$_POST['service']) {$selected2="selected";}
 			echo "<option value=\"$row[id]\" $selected2>$row[name]</option>"; 
 			$selected2="";
-		} 
-		$query->closeCursor();
+		}
+		$qry->closeCursor();
 		if ($_POST['service']=="%") {echo '<option value="%" selected>'.T_('Tous les services').'</option>';} else {echo '<option value="%" >'.T_('Tous les services').'</option>';}											
 		?>
 	</select>
@@ -49,13 +52,14 @@ if(!isset($_POST['model'])) $_POST['model']='';
 		echo '
 			<select style="width:155px" name="company" onchange=submit()>
 				';
-				$query = $db->query("SELECT * FROM tcompany WHERE disable='0' ORDER BY name");				
-				while ($row=$query->fetch()) {
-					if ($row['id'] == $_POST['company']) {$selected2="selected";}
+				$qry=$db->prepare("SELECT `id`,`name` FROM `tcompany` WHERE disable='0' ORDER BY name");
+				$qry->execute();
+				while($row=$qry->fetch()) 
+				{
+					if($row['id']==$_POST['company']) {$selected2="selected";}
 					echo "<option value=\"$row[id]\" $selected2>$row[name]</option>"; 
 					$selected2="";
-				} 
-				$query->closeCursor();
+				}
 				if ($_POST['company']=="%") {echo '<option value="%" selected>'.T_('Toutes les sociétés').'</option>';} else {echo '<option value="%" >'.T_('Toutes les sociétés').'</option>';}											
 			echo '
 			</select>
@@ -64,27 +68,31 @@ if(!isset($_POST['model'])) $_POST['model']='';
 	?>
 	<select style="width:155px" name="type" onchange=submit()>
 	<?php
-	$query = $db->query("SELECT * FROM tassets_type ORDER BY name");				
-	while ($row=$query->fetch()) {
+	$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_type` ORDER BY name");
+	$qry->execute();
+	while($row=$qry->fetch()) 
+	{
 		if ($row['id'] == $_POST['type']) $selected2="selected" ;
 		if ($row['id'] == $_POST['type']) $find="1";
 		echo "<option value=\"$row[id]\" $selected2>$row[name]</option>"; 
 		$selected2="";
-	} 
-	$query->closeCursor();
+	}
+	$qry->closeCursor();
 	echo '<option '; if ($_POST['type']=='%') echo 'selected'; echo' value="%" >'.T_('Tous les types').'</option>';										
 	?>
 	</select> 
 	<select style="width:155px" name="model" onchange=submit()>
 	<?php
-	$query = $db->query("SELECT * FROM tassets_model ORDER BY type");				
-	while ($row=$query->fetch()) {
+	$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_model` ORDER BY type");
+	$qry->execute();
+	while($row=$qry->fetch()) 
+	{
 		if ($row['id'] == $_POST['model']) $selected2="selected" ;
 		if ($row['id'] == $_POST['model']) $find="1";
 		echo "<option value=\"$row[id]\" $selected2>$row[name]</option>"; 
 		$selected2="";
-	} 
-	$query->closeCursor();
+	}
+	$qry->closeCursor();
 	echo '<option '; if ($_POST['model']=='%') echo 'selected'; echo' value="%" >'.T_('Tous les modèles').'</option>';										
 	?>
 	</select> 
@@ -107,21 +115,22 @@ if(!isset($_POST['model'])) $_POST['model']='';
 
 	<select style="width:155px" name="year" onchange=submit()>
 		<?php
-		$q1= $db->query("SELECT distinct year(date_install) as year FROM `tassets` WHERE date_install not like '0000-00-00' ORDER BY year(date_install)");
-		while ($row=$q1->fetch()) 
-		{ 
+		$qry=$db->prepare("SELECT distinct year(date_install) as year FROM `tassets` WHERE date_install not like '0000-00-00' ORDER BY year(date_install)");
+		$qry->execute(array('id' => $_GET['id']));
+		while($row=$qry->fetch()) 
+		{
 			$selected=0;
 			if ($_POST['year']==$row['year']) $selected="selected";  
 			echo "<option value=$row[year] $selected>$row[year]</option>";
 		}
-		$q1->closeCursor();
+		$qry->closeCursor();
 		?>
 		<option value="%" <?php if ($_POST['year'] == '%')echo "selected" ?>><?php echo T_('Toutes les années'); ?></option>
 	</select>
 	</center>
 </form>
 
-<br /><br />
+<br /><br />	
 <?php
 	//call all graphics files from ./stats directory
 	require('./stats/line_assets.php');

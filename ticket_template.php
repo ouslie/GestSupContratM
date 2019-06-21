@@ -5,8 +5,8 @@
 # @Call : /core/ticket.php
 # @Author : Flox
 # @Update : 21/10/2014
-# @Update : 24/10/2018
-# @Version : 3.1.36
+# @Update : 21/03/2019
+# @Version : 3.1.40
 ################################################################################
 
 //initialize variables 
@@ -27,6 +27,7 @@ if(!isset($row['type'])) $row['type'] = '';
 
 if($_POST['duplicate'] && $rright['ticket_template'])
 {
+
 	//get data from source ticket
 	$qry=$db->prepare("SELECT * FROM `tincidents` WHERE id=:id");
 	$qry->execute(array('id' => $_POST['template']));
@@ -156,7 +157,7 @@ if($_POST['duplicate'] && $rright['ticket_template'])
 	}
 	$qry->closeCursor();
 	
-	$boxtext= '<div class="alert alert-block alert-success"><center><i class="icon-ok green"></i>	'.T_('Le modèle à été appliqué au ticket en cours').'.</center></div>';
+	$boxtext= '<div class="alert alert-block alert-success"><center><i class="icon-ok green"></i>	'.T_('Le modèle a été appliqué au ticket en cours').'.</center></div>';
 	echo "<SCRIPT LANGUAGE='JavaScript'>
 			<!--
 			function redirect()

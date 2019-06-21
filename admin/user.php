@@ -5,8 +5,8 @@
 # @Call : admin.php
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 10/12/2018
-# @Version : 3.1.37
+# @Update : 21/03/2019
+# @Version : 3.1.40
 ################################################################################
 
 //initialize variables 
@@ -25,6 +25,7 @@ if(!isset($_POST['city'])) $_POST['city'] = '';
 if(!isset($_POST['custom1'])) $_POST['custom1'] = '';
 if(!isset($_POST['custom2'])) $_POST['custom2'] = '';
 if(!isset($_POST['password'])) $_POST['password'] = '';
+if(!isset($_POST['password2'])) $_POST['password2'] = '';
 if(!isset($_POST['category'])) $_POST['category'] = '%';
 if(!isset($_POST['subcat'])) $_POST['subcat'] = '';
 if(!isset($_POST['firstname'])) $_POST['firstname'] = '';
@@ -56,6 +57,7 @@ if(!isset($_POST['default_ticket_state'])) $_POST['default_ticket_state'] = '';
 if(!isset($_POST['dashboard_ticket_order'])) $_POST['dashboard_ticket_order'] = '';
 if(!isset($user1['company'])) $user1['company'] = '';
 if(!isset($password)) $password = '';
+if(!isset($password2)) $password2 = '';
 if(!isset($addeview)) $addview = '';
 if(!isset($category)) $category = '%';
 if(!isset($maxline)) $maxline = '';
@@ -139,80 +141,58 @@ if($_POST['Modifier'])
 	//case user sync from AD without pwd and not already connected
 	if($rparameters['ldap']==1 && $rparameters['ldap_auth']==1 && $_POST['password']=='')
 	{
-		
 		$qry = $db->prepare("SELECT `password`,`salt` FROM `tusers` WHERE id=:id");
-		$qry->execute(array(
-			'id' => $_GET['userid']
-			));
+		$qry->execute(array('id' => $_GET['userid']));
 		$row=$qry->fetch();
 		$qry->closeCursor();
-		if($row['password']=='' && $row['salt']=='')
+		if($row['password']=='')
 		{
-			$salt = substr(md5(uniqid(rand(), true)), 0, 5); //generate a random key as salt
-			$pwd=substr(str_shuffle(strtolower(sha1(rand() . time() . $salt))),0, 50);
-			$pwd=md5($salt . md5($pwd)); 
-			
+			$pwd = substr(md5(uniqid(rand(), true)), 0, 5); //generate a random paswword
+			$hash = password_hash($pwd, PASSWORD_DEFAULT);
 			//update pwd
-			$qry=$db->prepare("UPDATE `tusers` SET `password`=:password,`salt`=:salt WHERE `id`=:id");
-			$qry->execute(array(
-				'password' => $pwd,
-				'salt' => $salt,
-				'id' => $_GET['userid']
-				));
-			
+			$qry=$db->prepare("UPDATE `tusers` SET `password`=:password WHERE `id`=:id");
+			$qry->execute(array('password' => $hash,'id' => $_GET['userid']));
 			$_POST['password']=$pwd;
 		}
 	}
-	
 	$error=0;
-	if ($_POST['password']=='')
+	if($_POST['mail']) //mail control
 	{
-		$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Pour des raisons de sécurité, votre mot de passe ne doit pas être vide').' </div>';
-	}
-	if($_POST['mail'])
-	{
-		if(!strpos($_POST['mail'],'.')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("l'adresse mail doit possèder un point.").' </div>';}
+		if(!strpos($_POST['mail'],'.')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("L'adresse mail doit posséder un point.").' </div>';}
 		if(strpos($_POST['mail'],'@'))
 		{
 			$mail_domain=explode('@',$_POST['mail']);
 			if(!strpos($mail_domain[1],'.')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("Le domaine de l'adresse mail doit posséder un point.").' </div>';}
-		} else {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("l'adresse mail doit possèder un arobase.").' </div>';}
-		
+		} else {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("L'adresse mail doit posséder un arobase.").' </div>';}
 	}
-	if($_POST['login'])
+	if($_POST['login']) //existing account control
 	{
-		$qry=$db->prepare("SELECT `id`,`firstname`,`lastname` FROM `tusers` WHERE login=:login AND disable=:disable AND id!=:id");
-		$qry->execute(array('login' => $_POST['login'],'disable' => 0,'id' => $_GET['userid']));
+		$qry=$db->prepare("SELECT `id`,`firstname`,`lastname` FROM `tusers` WHERE login=:login AND disable=0 AND id!=:id");
+		$qry->execute(array('login' => $_POST['login'],'id' => $_GET['userid']));
 		$row=$qry->fetch();
 		$qry->closeCursor();
-		
-		if($row) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Un autre compte utilise déja cet identifiant ('.$row['lastname'].' '.$row['firstname'].')').' </div>';}
+		if($row) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Un autre compte utilise déjà cet identifiant ('.$row['lastname'].' '.$row['firstname'].')').' </div>';}
 	}
+	if($_POST['password']!=$_POST['password2']) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Les mots de passes ne sont pas identique').' </div>';}
 	
 	if (!$error)
 	{
-		//no update already crytped password if no change
-		$qry = $db->prepare("SELECT `password`,`salt` FROM `tusers` WHERE id=:id");
-		$qry->execute(array(
-			'id' => $_GET['userid']
-			));
-		$row=$qry->fetch();
-		$qry->closeCursor();
-		
-		if($_POST['password']!=$row['password']) 
+		if($_POST['password'])
 		{
-			$salt = substr(md5(uniqid(rand(), true)), 0, 5); //generate a random key as salt
-			$_POST['password']=md5($salt . md5($_POST['password'])); //store in md5, md5 password + salt
+			$hash=password_hash($_POST['password'], PASSWORD_DEFAULT);
 		} else {
-			$salt=$row['salt'];
+			$qry=$db->prepare("SELECT `password` FROM `tusers` WHERE id=:id AND disable=0 ");
+			$qry->execute(array('id' => $_GET['userid']));
+			$row=$qry->fetch();
+			$qry->closeCursor();
+			$hash=$row['password'];
 		}
-		
+		 
 		$qry=$db->prepare("
 		UPDATE tusers SET
 		firstname=:firstname,
 		lastname=:lastname,
 		password=:password,
-		salt=:salt,
 		mail=:mail,
 		phone=:phone,
 		mobile=:mobile,
@@ -240,8 +220,7 @@ if($_POST['Modifier'])
 		$qry->execute(array(
 			'firstname' => $_POST['firstname'],
 			'lastname' => $_POST['lastname'],
-			'password' => $_POST['password'],
-			'salt' => $salt,
+			'password' => $hash,
 			'mail' => $_POST['mail'],
 			'phone' => $_POST['phone'],
 			'mobile' => $_POST['mobile'],
@@ -279,82 +258,52 @@ if($_POST['Modifier'])
 		//multi service update association
 		if ($_POST['service_1']) {
 			$qry = $db->prepare("SELECT `service_id` FROM `tusers_services` WHERE `user_id`=:user_id AND `service_id`=:service_id");
-			$qry->execute(array(
-				'user_id' => $_GET['userid'],
-				'service_id' => $_POST['service_1']
-				));
+			$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_1']));
 			$row=$qry->fetch();
 			$qry->closeCursor();
 			if (!$row) {
 				$qry=$db->prepare("INSERT INTO `tusers_services` (`user_id`,`service_id`) VALUES (:user_id,:service_id)");
-				$qry->execute(array(
-					'user_id' => $_GET['userid'],
-					'service_id' => $_POST['service_1']
-					));
+				$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_1']));
 			} 	
 		}
 		if ($_POST['service_2']) {
 			$qry = $db->prepare("SELECT `service_id` FROM `tusers_services` WHERE `user_id`=:user_id AND `service_id`=:service_id");
-			$qry->execute(array(
-				'user_id' => $_GET['userid'],
-				'service_id' => $_POST['service_2']
-				));
+			$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_2']));
 			$row=$qry->fetch();
 			$qry->closeCursor();
 			if (!$row) {
 				$qry=$db->prepare("INSERT INTO `tusers_services` (`user_id`,`service_id`) VALUES (:user_id,:service_id)");
-				$qry->execute(array(
-					'user_id' => $_GET['userid'],
-					'service_id' => $_POST['service_2']
-					));
+				$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_2']));
 			} 	
 		}
 		if ($_POST['service_3']) {
 			$qry = $db->prepare("SELECT `service_id` FROM `tusers_services` WHERE `user_id`=:user_id AND `service_id`=:service_id");
-			$qry->execute(array(
-				'user_id' => $_GET['userid'],
-				'service_id' => $_POST['service_3']
-				));
+			$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_3']));
 			$row=$qry->fetch();
 			$qry->closeCursor();
 			if (!$row) {
 				$qry=$db->prepare("INSERT INTO `tusers_services` (`user_id`,`service_id`) VALUES (:user_id,:service_id)");
-				$qry->execute(array(
-					'user_id' => $_GET['userid'],
-					'service_id' => $_POST['service_3']
-					));
+				$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_3']));
 			} 	
 		}
 		if ($_POST['service_4']) {
 			$qry = $db->prepare("SELECT `service_id` FROM `tusers_services` WHERE `user_id`=:user_id AND `service_id`=:service_id");
-			$qry->execute(array(
-				'user_id' => $_GET['userid'],
-				'service_id' => $_POST['service_4']
-				));
+			$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_4']));
 			$row=$qry->fetch();
 			$qry->closeCursor();
 			if (!$row) {
 				$qry=$db->prepare("INSERT INTO `tusers_services` (`user_id`,`service_id`) VALUES (:user_id,:service_id)");
-				$qry->execute(array(
-					'user_id' => $_GET['userid'],
-					'service_id' => $_POST['service_4']
-					));
+				$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_4']));
 			} 	
 		}
 		if ($_POST['service_5']) {
 			$qry = $db->prepare("SELECT `service_id` FROM `tusers_services` WHERE `user_id`=:user_id AND `service_id`=:service_id");
-			$qry->execute(array(
-				'user_id' => $_GET['userid'],
-				'service_id' => $_POST['service_5']
-				));
+			$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_5']));
 			$row=$qry->fetch();
 			$qry->closeCursor();
 			if (!$row) {
 				$qry=$db->prepare("INSERT INTO `tusers_services` (`user_id`,`service_id`) VALUES (:user_id,:service_id)");
-				$qry->execute(array(
-					'user_id' => $_GET['userid'],
-					'service_id' => $_POST['service_5']
-					));
+				$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_5']));
 			} 	
 		}
 		if ($rparameters['user_agency'])
@@ -362,103 +311,65 @@ if($_POST['Modifier'])
 			//multi agency update association
 			if ($_POST['agency_1']) {
 				$qry = $db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE `user_id`=:user_id AND `agency_id`=:agency_id");
-				$qry->execute(array(
-					'user_id' => $_GET['userid'],
-					'agency_id' => $_POST['agency_1']
-					));
+				$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_1']));
 				$row=$qry->fetch();
 				$qry->closeCursor();
 				if (!$row) {
 					$qry=$db->prepare("INSERT INTO `tusers_agencies` (`user_id`,`agency_id`) VALUES (:user_id,:agency_id)");
-					$qry->execute(array(
-						'user_id' => $_GET['userid'],
-						'agency_id' => $_POST['agency_1']
-						));
+					$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_1']));
 				} 	
 			}
 			if ($_POST['agency_2']) {
 				$qry = $db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE `user_id`=:user_id AND `agency_id`=:agency_id");
-				$qry->execute(array(
-					'user_id' => $_GET['userid'],
-					'agency_id' => $_POST['agency_2']
-					));
+				$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_2']));
 				$row=$qry->fetch();
 				$qry->closeCursor();
 				if (!$row) {
 					$qry=$db->prepare("INSERT INTO `tusers_agencies` (`user_id`,`agency_id`) VALUES (:user_id,:agency_id)");
-					$qry->execute(array(
-						'user_id' => $_GET['userid'],
-						'agency_id' => $_POST['agency_2']
-						));
+					$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_2']));
 				} 	
 			}
 			if ($_POST['agency_3']) {
 				$qry = $db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE `user_id`=:user_id AND `agency_id`=:agency_id");
-				$qry->execute(array(
-					'user_id' => $_GET['userid'],
-					'agency_id' => $_POST['agency_3']
-					));
+				$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_3']));
 				$row=$qry->fetch();
 				$qry->closeCursor();
 				if (!$row) {
 					$qry=$db->prepare("INSERT INTO `tusers_agencies` (`user_id`,`agency_id`) VALUES (:user_id,:agency_id)");
-					$qry->execute(array(
-						'user_id' => $_GET['userid'],
-						'agency_id' => $_POST['agency_3']
-						));
+					$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_3']));
 				} 	
 			}
 			if ($_POST['agency_4']) {
 				$qry = $db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE `user_id`=:user_id AND `agency_id`=:agency_id");
-				$qry->execute(array(
-					'user_id' => $_GET['userid'],
-					'agency_id' => $_POST['agency_4']
-					));
+				$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_4']));
 				$row=$qry->fetch();
 				$qry->closeCursor();
 				if (!$row) {
 					$qry=$db->prepare("INSERT INTO `tusers_agencies` (`user_id`,`agency_id`) VALUES (:user_id,:agency_id)");
-					$qry->execute(array(
-						'user_id' => $_GET['userid'],
-						'agency_id' => $_POST['agency_4']
-						));
+					$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_4']));
 				} 	
 			}
 			if ($_POST['agency_5']) {
 				$qry = $db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE `user_id`=:user_id AND `agency_id`=:agency_id");
-				$qry->execute(array(
-					'user_id' => $_GET['userid'],
-					'agency_id' => $_POST['agency_5']
-					));
+				$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_5']));
 				$row=$qry->fetch();
 				$qry->closeCursor();
 				if (!$row) {
 					$qry=$db->prepare("INSERT INTO `tusers_agencies` (`user_id`,`agency_id`) VALUES (:user_id,:agency_id)");
-					$qry->execute(array(
-						'user_id' => $_GET['userid'],
-						'agency_id' => $_POST['agency_5']
-						));
+					$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_5']));
 				} 	
 			}
 		}
 		if($_POST['viewname'])
 		{
 			$qry=$db->prepare("INSERT INTO `tviews` (`uid`,`name`,`category`,`subcat`) VALUES (:uid,:name,:category,:subcat)");
-			$qry->execute(array(
-				'uid' => $_GET['userid'],
-				'name' => $_POST['viewname'],
-				'category' => $_POST['category'],
-				'subcat' => $_POST['subcat']
-				));
+			$qry->execute(array('uid' => $_GET['userid'],'name' => $_POST['viewname'],'category' => $_POST['category'],'subcat' => $_POST['subcat']));
 		}
 		//tech attachement insert
 		if($_POST['attachment'])
 		{
 			$qry=$db->prepare("INSERT INTO `tusers_tech` (`user`,`tech`) VALUES (:user,:tech)");
-			$qry->execute(array(
-				'user' => $_POST['attachment'],
-				'tech' => $_GET['userid']
-				));
+			$qry->execute(array('user' => $_POST['attachment'],'tech' => $_GET['userid']));
 		}
 	}
 	//redirect
@@ -474,7 +385,7 @@ if($_POST['Modifier'])
 			{
 				window.location='$url'	
 			}
-			setTimeout('redirect()',$rparameters[time_display_msg]+500);
+			setTimeout('redirect()',$rparameters[time_display_msg]+1000);
 			-->
 		</SCRIPT>";
 	} else {
@@ -484,25 +395,24 @@ if($_POST['Modifier'])
 		// -->
 		</script>';
 	}
-	
 }
 
 if($_POST['Ajouter'] && $rright['admin']!=0)
 {
-	
 	$error=0;
+	if(!$_POST['password']) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Vous devez spécifier un mot de passe').' </div>';}
+	if($_POST['password']!=$_POST['password2']) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Les mots de passe ne sont pas identique').' </div>';}
 	if($_POST['mail'])
 	{
 		//email check
-		$error=0;
 		if($_POST['mail'])
 		{
-			if(!strpos($_POST['mail'],'.')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("l'adresse mail doit possèder un point.").' </div>';}
+			if(!strpos($_POST['mail'],'.')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("l'adresse mail doit posséder un point.").' </div>';}
 			if(strpos($_POST['mail'],'@'))
 			{
 				$mail_domain=explode('@',$_POST['mail']);
 				if(!strpos($mail_domain[1],'.')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("Le domaine de l'adresse mail doit posséder un point.").' </div>';}
-			} else {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("l'adresse mail doit possèder un arobase.").' </div>';}
+			} else {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("l'adresse mail doit posséder un arobase.").' </div>';}
 		}
 	}
 	if($_POST['login'])
@@ -512,21 +422,19 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 		$row=$qry->fetch();
 		$qry->closeCursor();
 		
-		if($row) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Un autre compte utilise déja cet identifiant').' </div>';}
+		if($row) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Un autre compte utilise déjà cet identifiant').' </div>';}
 	}
 	
 	if(!$error)
 	{
-		//crypt password md5 + salt
-		$salt = substr(md5(uniqid(rand(), true)), 0, 5); // Generate a random key
-		$_POST['password']=md5($salt . md5($_POST['password'])); // store in md5, md5 password + salt
+		//hash password
+		$hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
 		
 		$qry=$db->prepare("
 		INSERT INTO tusers (
 		firstname,
 		lastname,
 		password,
-		salt,
 		mail,
 		phone,
 		mobile,
@@ -547,7 +455,6 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 		:firstname,
 		:lastname,
 		:password,
-		:salt,
 		:mail,
 		:phone,
 		:mobile,
@@ -568,8 +475,7 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 		$qry->execute(array(
 			'firstname' => $_POST['firstname'],
 			'lastname' => $_POST['lastname'],
-			'password' => $_POST['password'],
-			'salt' => $salt,
+			'password' => $hash,
 			'mail' => $_POST['mail'],
 			'phone' => $_POST['phone'],
 			'mobile' => $_POST['mobile'],
@@ -587,31 +493,21 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 			'skin' => $_POST['skin'],
 			'function' => $_POST['function']
 			));
-		
 		$last_user_id=$db->lastInsertId();
 		//if post service insert new assoc
 		if ($_POST['service'])
 		{
 			$qry=$db->prepare("INSERT INTO `tusers_services` (`user_id`,`service_id`) VALUES (:user_id,:service_id)");
-			$qry->execute(array(
-				'user_id' => $last_user_id,
-				'service_id' => $_POST['service']
-				));
+			$qry->execute(array('user_id' => $last_user_id,'service_id' => $_POST['service']));
 		}
-		
 		if($rparameters['user_agency'])
 		{
-			//if post agency insert new assoc
-			if ($_POST['agency'])
+			if ($_POST['agency']) //if post agency insert new assoc
 			{
 				$qry=$db->prepare("INSERT INTO `tusers_agencies` (`user_id`,`agency_id`) VALUES (:user_id,:agency_id)");
-				$qry->execute(array(
-					'user_id' => $last_user_id,
-					'agency_id' => $_POST['agency']
-					));
+				$qry->execute(array('user_id' => $last_user_id,'agency_id' => $_POST['agency']));
 			}
 		}
-		
 		//redirect
 		$www = "./index.php?page=admin&subpage=user";
 		echo '<script language="Javascript">
@@ -620,7 +516,6 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 		// -->
 		</script>';
 	} else {echo $error;}
-	
 }
 //cancel
 if($_POST['cancel'])
@@ -637,9 +532,7 @@ if($_POST['cancel'])
 if ($_GET['deleteview']=="1" && $rright['side_view']!=0)
 {
 	$qry=$db->prepare("DELETE FROM `tviews` WHERE id=:id");
-	$qry->execute(array(
-		'id' => $_GET['viewid']
-		));
+	$qry->execute(array('id' => $_GET['viewid']));
 	//redirect
 	$url = "./index.php?page=admin/user&subpage=user&action=edit&tab=parameters&userid=$_GET[userid]";
 	$url=preg_replace('/%/','%25',$url);
@@ -653,28 +546,21 @@ if ($_GET['deleteview']=="1" && $rright['side_view']!=0)
 if($_GET['attachmentdelete'] && ($_SESSION['profile_id']==0 || $_SESSION['profile_id']==4))
 {
 	$qry=$db->prepare("DELETE FROM `tusers_tech` WHERE id=:id");
-	$qry->execute(array(
-		'id' => $_GET['attachmentdelete']
-		));
+	$qry->execute(array('id' => $_GET['attachmentdelete']));
 }
-
 //display head page
 if ($rright['admin_user_profile']!='0')
 {
 	if(!$_GET['ldap'])
 	{
 		//count users
-		$qry = $db->prepare("SELECT COUNT(*) FROM `tusers` WHERE disable=:disable");
-		$qry->execute(array(
-			'disable' => 0
-			));
+		$qry = $db->prepare("SELECT COUNT(*) FROM `tusers` WHERE disable='0'");
+		$qry->execute();
 		$r1=$qry->fetch();
 		$qry->closeCursor();
 		
-		$qry = $db->prepare("SELECT COUNT(*) FROM `tusers` WHERE disable=:disable");
-		$qry->execute(array(
-			'disable' => 1
-			));
+		$qry = $db->prepare("SELECT COUNT(*) FROM `tusers` WHERE disable='1'");
+		$qry->execute();
 		$r2=$qry->fetch();
 		$qry->closeCursor();
 		
@@ -695,9 +581,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 {
 	//get user data
 	$qry = $db->prepare("SELECT * FROM `tusers` WHERE id=:id");
-	$qry->execute(array(
-		'id' => $_GET['userid']
-		));
+	$qry->execute(array('id' => $_GET['userid']));
 	$user1=$qry->fetch();
 	$qry->closeCursor();
 	
@@ -753,10 +637,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                                                     ';
                                                     //display list of user for attachment
 													$qry = $db->prepare("SELECT tusers.* FROM `tusers` WHERE tusers.profile!=0 AND tusers.profile!=:profile AND tusers.disable=:disable AND tusers.id NOT IN (SELECT user FROM tusers_tech) ORDER BY tusers.lastname");
-													$qry->execute(array(
-														'profile' => 4,
-														'disable' => 0
-														));
+													$qry->execute(array('profile' => 4,'disable' => 0));
 													while ($row = $qry->fetch())
                                                     {
                                                         echo '<option value="'.$row['id'].'">'.$row['lastname'].' '.$row['firstname'].'</option>';
@@ -770,16 +651,12 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                                                 <div class="space-4"></div>
                                                 ';
 													$qry = $db->prepare("SELECT `id`,`user` FROM `tusers_tech` WHERE tech=:tech");
-													$qry->execute(array(
-														'tech' => $_GET['userid']
-														));
+													$qry->execute(array('tech' => $_GET['userid']));
                                                     while ($row = $qry->fetch())
                                                     {
                                                         //find tech name
 														$qry2 = $db->prepare("SELECT `lastname`,`firstname` FROM `tusers` WHERE id=:id");
-														$qry2->execute(array(
-															'id' => $row['user']
-															));
+														$qry2->execute(array('id' => $row['user']));
 														$row2=$qry2->fetch();
 														$qry2->closeCursor();
                                                     	echo'<i class="icon-caret-right blue"></i> '.$row2['lastname'].' '.$row2['firstname'].'';
@@ -788,7 +665,6 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                                                     }
 													$qry->closeCursor();
                                                     echo '
-                                                    
                             			    </div>
                                             <div id="parameters" class="tab-pane'; if ($_GET['tab']=='parameters' || $_GET['tab']=='') echo 'active'; echo '">
 													<label class="control-label bolder blue" for="language">'.T_('Langue').' :</label>
@@ -807,14 +683,12 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                     									<option style="background-color:#222A2D;" '; if ($user1['skin']=='skin-1'){echo "selected";} echo ' value="skin-1">'.T_('Noir').'</option>
                     									<option style="background-color:#C6487E;" '; if ($user1['skin']=='skin-2'){echo "selected";} echo ' value="skin-2">'.T_('Rose').'</option>
                     									<option style="background-color:#D0D0D0;" '; if ($user1['skin']=='skin-3'){echo "selected";} echo ' value="skin-3">'.T_('Gris').'</option>
+                    									<option style="background-color:#4A4F56;" '; if ($user1['skin']=='skin-4'){echo "selected";} echo ' value="skin-4">'.T_('Sombre').'</option>
                     								</select>
                     								';
                     								//display group attachment if exist
 													$qry = $db->prepare("SELECT count(*) FROM `tgroups`, `tgroups_assoc` WHERE tgroups.id=tgroups_assoc.group AND tgroups_assoc.user=:user AND tgroups.disable=:disable");
-													$qry->execute(array(
-														'user' => $_GET['userid'],
-														'disable' => 0
-														));
+													$qry->execute(array('user' => $_GET['userid'],'disable' => 0));
 													$row=$qry->fetch();
 													$qry->closeCursor();
                     								if ($row[0]!=0)
@@ -822,10 +696,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                     									echo '<hr />';
                     									echo '<label class="control-label bolder blue" for="group">'.T_('Membre des groupes').' :</label>';
 														$qry = $db->prepare("SELECT tgroups.id AS id, tgroups.name AS name FROM tgroups, tgroups_assoc WHERE tgroups.id=tgroups_assoc.group AND tgroups_assoc.user=:user AND tgroups.disable=:disable");
-														$qry->execute(array(
-															'user' => $_GET['userid'],
-															'disable' => 0
-															));
+														$qry->execute(array('user' => $_GET['userid'],'disable' => 0));
                     									while ($row = $qry->fetch())
                     									{
                     										echo "<div class=\"space-4\"></div><i class=\"icon-caret-right blue\"></i> <a href=\"./index.php?page=admin&subpage=group&action=edit&id=$row[id]\"> $row[name]</a>";
@@ -888,34 +759,26 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                     										<div class="space-4"></div>';
                     											//check if selected user have view
 																$qry = $db->prepare("SELECT `id` FROM `tviews` WHERE uid=:uid");
-																$qry->execute(array(
-																	'uid' => $_GET['userid']
-																	));
+																$qry->execute(array('uid' => $_GET['userid']));
 																$row=$qry->fetch();
 																$qry->closeCursor();
                     											if ($row[0]!='')
                     											{
                     												//display active views
 																	$qry = $db->prepare("SELECT * FROM `tviews` WHERE uid=:uid ORDER BY uid");
-																	$qry->execute(array(
-																		'uid' => $_GET['userid']
-																		));
+																	$qry->execute(array('uid' => $_GET['userid']));
                     												while ($row = $qry->fetch())
                     												{
 																		//get cat name
 																		$qry2 = $db->prepare("SELECT `name` FROM `tcategory` WHERE id=:id");
-																		$qry2->execute(array(
-																			'id' => $row['category']
-																			));
+																		$qry2->execute(array('id' => $row['category']));
 																		$cname=$qry2->fetch();
 																		$qry2->closeCursor();
 																		
                     													if ($row['subcat']!='')
                     													{
 																			$qry2 = $db->prepare("SELECT `name` FROM `tsubcat` WHERE id=:id");
-																			$qry2->execute(array(
-																				'id' => $row['subcat']
-																				));
+																			$qry2->execute(array('id' => $row['subcat']));
 																			$sname=$qry2->fetch();
 																			$qry2->closeCursor();
                     													} else {$sname='';}
@@ -935,9 +798,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 																		if ($rparameters['user_limit_service']==1 && $rright['admin']==0)
 																		{
 																			$qry = $db->prepare("SELECT `id`,`name` FROM `tcategory` WHERE `service` IN (SELECT `service_id` FROM `tusers_services` WHERE `user_id`=:user_id) ORDER BY `name`");
-																			$qry->execute(array(
-																				'user_id' => $_SESSION['user_id']
-																				));
+																			$qry->execute(array('user_id' => $_SESSION['user_id']));
 																		} else {
 																			$qry = $db->prepare("SELECT `id`,`name` FROM `tcategory` ORDER BY `name`");
 																			$qry->execute();
@@ -959,9 +820,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 																		<select name="subcat" onchange="submit()" style="width:90px">
 																			<option value="%"></option>';
 																			$qry = $db->prepare("SELECT `id`,`name` FROM `tsubcat` WHERE `cat`=:cat ORDER BY `name`");
-																			$qry->execute(array(
-																				'cat' => $_POST['category']
-																				));
+																			$qry->execute(array('cat' => $_POST['category']));
 																			while ($row = $qry->fetch())
 																			{
 																				echo "<option value=\"$row[id]\">$row[name]</option>";
@@ -973,7 +832,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 																	}
 																	echo '
                     												<div class="space-4"></div>
-                    												Nom: <input name="viewname" type="" value="'.$_POST['name'].'" size="20" />';
+                    												Nom: <input autocomplete="off" name="viewname" type="" value="'.$_POST['name'].'" size="20" />';
                     											
                     											//display default ticket state
                     										    echo '
@@ -1008,8 +867,8 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                         										    <select name="dashboard_ticket_order">
                         										        <option '; if ($user1['default_ticket_state']==''){echo "selected";} echo ' value="">'.T_('Aucun (Géré par l\'administrateur)').'</option>
                                     									<option '; if ($user1['dashboard_ticket_order']=='tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_create'){echo "selected";} echo ' value="tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_create">'.T_('État  > Priorité > Criticité > Date de création').'</option>
-                                    									<option '; if ($user1['dashboard_ticket_order']=='tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_hope'){echo "selected";} echo ' value="tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_hope">'.T_('État > Priorité > Criticité > Date de résolution estimé').'</option>
-                                    									<option '; if ($user1['dashboard_ticket_order']=='tincidents.date_hope'){echo "selected";} echo ' value="tincidents.date_hope"> '.T_('Date de résolution estimé').'</option>
+                                    									<option '; if ($user1['dashboard_ticket_order']=='tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_hope'){echo "selected";} echo ' value="tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_hope">'.T_('État > Priorité > Criticité > Date de résolution estimée').'</option>
+                                    									<option '; if ($user1['dashboard_ticket_order']=='tincidents.date_hope'){echo "selected";} echo ' value="tincidents.date_hope"> '.T_('Date de résolution estimée').'</option>
                                     									<option '; if ($user1['dashboard_ticket_order']=='tincidents.priority'){echo "selected";} echo ' value="tincidents.priority"> '.T_('Priorité').'</option>
                                     									<option '; if ($user1['dashboard_ticket_order']=='tincidents.criticality'){echo "selected";} echo ' value="tincidents.criticality"> '.T_('Criticité').'</option>
                                     									<option '; if ($user1['dashboard_ticket_order']=='id'){echo "selected";} echo ' value="id">'.T_('Numéro de ticket').'</option>
@@ -1040,38 +899,40 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                                             <div id="infos" class="tab-pane'; if ($_GET['tab']=='infos' || $_GET['tab']=='') echo 'active'; echo '">
 												<label for="useridfacture">'.T_('useridfacture').':</label>
 												<input name="useridfacture" type="text" value="'; if($user1['useridfacture']) echo "$user1[useridfacture]"; else echo ""; echo'" />
-												<div class="space-4"></div>
+												<div class="space-4"></div>	
 												<label for="firstname">'.T_('Prénom').' :</label>
-                								<input name="firstname" type="text" value="'; if($user1['firstname']) echo "$user1[firstname]"; else echo ""; echo'" />
+                								<input name="firstname" type="text" value="'.$user1['firstname'].'" />
                 								<div class="space-4"></div>
                 								<label for="lastname">'.T_('Nom').' :</label>
 												';if($mobile==1) {echo '<br />';} echo '
-                								<input name="lastname" type="text" value="'; if($user1['lastname']) echo "$user1[lastname]"; else echo ""; echo'" />
+                								<input name="lastname" type="text" value="'.$user1['lastname'].'" />
                 								<div class="space-4"></div>';
                 								//not display login field for users for security
-                								if ($_SESSION['profile_id']==0 || $_SESSION['profile_id']==4) $hide=''; else $hide='hidden';
+                								if ($_SESSION['profile_id']==0 || $_SESSION['profile_id']==4) {$hide='';} else {$hide='hidden';}
                                                 echo '
                 								<label '.$hide.' for="login">'.T_('Identifiant').' :</label>
-                								<input autocomplete="off" '.$hide.' name="login" type="text" value="'; if($user1['login']) echo "$user1[login]"; else echo ""; echo'"  />
+                								<input autocomplete="off" '.$hide.' name="login" type="text" value="'.$user1['login'].'"  />
                 								<div class="space-4"></div>
                 								<label for="password">'.T_('Mot de passe').' :</label>
-                								<input  name="password" type="password" value="'; if($user1['password']) echo "$user1[password]"; else echo ""; echo'" />
+                								<input autocomplete="new-password" name="password" type="password" value="" />
+												<div class="space-4"></div>
+                								<label for="password2">'.T_('Confirmation mot de passe').' :</label>
+                								<input autocomplete="new-password" name="password2" type="password" value="" />
                 								<div class="space-4"></div>
                 								<label for="mail">'.T_('Adresse mail').' :</label>
-                								<input name="mail" type="text" value="'; if($user1['mail']) echo "$user1[mail]"; else echo ""; echo'" />
+                								<input name="mail" type="text" value="'.$user1['mail'].'" />
                 								<div class="space-4"></div>
                 								<label for="phone">'.T_('Téléphone fixe').' :</label>
-                								<input name="phone" type="text" value="'; if($user1['phone']) echo "$user1[phone]"; else echo ""; echo'" />
+                								<input name="phone" type="text" value="'.$user1['phone'].'" />
                 								<div class="space-4"></div>
 												<label for="mobile">'.T_('Téléphone portable').' :</label>
-                								<input name="mobile" type="text" value="'; if($user1['mobile']) echo "$user1[mobile]"; else echo ""; echo'" />
+                								<input name="mobile" type="text" value="'.$user1['mobile'].'" />
                 								<div class="space-4"></div>
                 								<label for="fax">'.T_('Fax').' :</label>
 												';if($mobile==1) {echo '<br />';} echo '
-                								<input name="fax" type="text" value="'; if($user1['fax']) echo "$user1[fax]"; else echo ""; echo'" />
+                								<input name="fax" type="text" value="'.$user1['fax'].'" />
                 								<div class="space-4"></div>
                 								<label for="service_1">'.T_('Service').' :</label>
-												
 												';
 												if($mobile==1) {echo '<br />';} 
 												//service part
@@ -1164,7 +1025,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 												echo '
                 								<div class="space-4"></div>
                 								<label for="function">'.T_('Fonction').' :</label>
-                								<input name="function" size="25" type="text" value="'; if($user1['function']) {echo $user1['function'];} echo '" />
+                								<input name="function" size="25" type="text" value="'.$user1['function'].'" />
                 								';
                 								//display advanced user informations
                 								if ($rparameters['user_advanced']!='0')
@@ -1276,7 +1137,10 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 								<input autocomplete="off" name="login" type="text" value="'.$_POST['login'].'" />
 								<div class="space-4"></div>
 								<label  for="password">'.T_('Mot de passe').' :</label>
-								<input autocomplete="off" name="password" type="password" value="'.$_POST['password'].'" />
+								<input autocomplete="new-password" name="password" type="password" value="'.$_POST['password'].'" />
+								<div class="space-4"></div>
+								<label  for="password2">'.T_('Confirmation mot de passe').' :</label>
+								<input autocomplete="new-password" name="password2" type="password" value="'.$_POST['password2'].'" />
 								<div class="space-4"></div>
 								<label for="mail">'.T_('Adresse mail').' :</label>
 								<input name="mail" type="text" value="'.$_POST['mail'].'" />
@@ -1499,7 +1363,7 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 													echo '
 												</select>
 												<br />
-												'.T_('Nom').': <input name="viewname" type="" value="'.$_POST['name'].'" size="20" />
+												'.T_('Nom').': <input autocomplete="off" name="viewname" type="" value="'.$_POST['name'].'" size="20" />
 										</div>';
 								}
 								echo'
@@ -1525,10 +1389,7 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 elseif ($_GET['action']=="delete" && $rright['admin']!='0')
 {
 	$qry=$db->prepare("UPDATE `tusers` SET `disable`=:disable WHERE `id`=:id");
-	$qry->execute(array(
-		'disable' => 1,
-		'id' => $_GET['userid']
-		));
+	$qry->execute(array('disable' => 1,'id' => $_GET['userid']));
 	//home page redirection
 	$www = "./index.php?page=admin&subpage=user";
 			echo '<script language="Javascript">
@@ -1552,13 +1413,10 @@ elseif ($_GET['action']=="disable" && $rright['admin']!='0')
 			// -->
 			</script>';
 }
-else if ($_GET['action']=="enable" && $rright['admin']!='0')
+elseif ($_GET['action']=="enable" && $rright['admin']!='0')
 {
 	$qry=$db->prepare("UPDATE `tusers` SET `disable`=:disable WHERE `id`=:id");
-	$qry->execute(array(
-		'disable' => 0,
-		'id' => $_GET['userid']
-		));
+	$qry->execute(array('disable' => 0,'id' => $_GET['userid']));
 	//home page redirection
 	$www = "./index.php?page=admin&subpage=user";
 			echo '<script language="Javascript">
@@ -1811,7 +1669,6 @@ else
 					";
 				}
 				//build each line
-				
 				$qry = $db->prepare("
 					SELECT distinct tusers.* 
 					FROM $from
@@ -1948,7 +1805,6 @@ else
 			$join
 			WHERE $where
 			");
-		
 		if($rparameters['user_agency']) //agency case add name in searchengine
 		{
 			$qry->execute(array(

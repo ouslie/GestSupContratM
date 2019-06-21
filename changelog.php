@@ -1,4 +1,102 @@
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style type="text/css">@media screen and (max-width: 980px) {body{font-size: 18px}}</style>
+#################################<br />
+# @Name : GestSup Release Notes  <br />
+# @Date : 02/04/2019             <br />
+# @Version : 3.1.40     	 	 <br />
+#################################<br />
+<br />
+<u>Update:</u><br />
+- SQL : Optimisation des requêtes (/*)<br />
+- Ticket : Prise en charge du copier coller d'image avec chrome (./ticket.php)<br />
+- Ticket : Certains champs obligatoire sont gérés avec les attributs HTML5 (./ticket.php)<br />
+- Ticket : Dans la section résolution les drapeaux concernant les envois de mails, intègrent l'information des adresses mails des destinataires en infobulle (./preview_mail.php)<br />
+- Ticket : Augmentation de la limite à 100 000 tickets (SQL)<br />
+- Système : Support Nginx (./system.php)<br />
+- Authentification : Nouveau paramètre permettant de désactiver un utilisateur après X tentatives d'authentification infructueuses (./login.php)<br />
+- Authentification : Augmentation du niveau de sécurité du hash des mots de passes (./login.php)<br />
+- Fiche utilisateur : Une confirmation de mot de passe est nécessaire pour la création d'un utilisateur ou la modification d'un mot de passe. (./login.php)<br />
+- Composant : FullCalendar v4.0.1 (./components/Fullcalendar/*)<br />
+- Composant : Highcharts v7.1.0 (./components/Highcharts/*)<br />
+<br />
+<u>Bugfix:</u><br />
+- Ticket : Le warning de dépassement de date de résolution estimée ne s'affichait plus (./ticket.php)<br /> 
+- Ticket : L'application d'un modèle de ticket ne fonctionnait pas dans certains cas. (./ticket.php)<br /> 
+- Ticket : Erreur de récupération du service pour le cloisonnement dans certains cas. (./ticket.php)<br /> 
+- Ticket : Le libellé "Résolution" n'était pas aligné. (./ticket.php)<br /> 
+- Liste des tickets : blocage de l'accès à la liste des tickets "Ma société" pour les techniciens lorsque le droit "side_all" était désactivé (./index.php)<br /> 
+- Liste des tickets : Erreur d'impression les liens étaient imprimés (./components/bootstrap)<br /> 
+- Mail : Erreur de détection des mails automatique de transfert techniciens dans certains cas (./core/auto_mail.php)<br /> 
+- Système : Erreur chargement de logos dans certains cas (./system.php)<br /> 
+- Système : Icône MySQL manquant (./system.php)<br /> 
+- API : Erreur requête SQL (./gestsup_api.php)<br /> 
+- Connecteur LDAP : défaut d'authentification avec les serveurs OpenLDAP (./login.php)<br /> 
+- Connecteur IMAP : Dans certains cas les images étaient importées en tant que pièces jointes, même si elles étaient dans le corp du mail (./mail2ticket.php)<br /> 
+- Administration : Affichage des styles dans la liste des états des équipements (./admin/list.php)<br /> 
+- Équipement : Erreur lors de l'ajout d'une adresse IP avec le module de recherche d'adresse IP disponible dans le réseau (./core/asset.php)<br /> 
+<br />
+#################################<br />
+# @Name : GestSup Release Notes  <br />
+# @Date : 04/03/2019             <br />
+# @Version : 3.1.39     	 	 <br />
+#################################<br />
+<br />
+<u>Notice:</u><br />
+- API : Mise à jour de l'API (./gestsup_api.php)<br />
+- Système : Mise à jour des prérequis serveur PHP 7.X  (./system.php)<br />
+<br />
+<u>Update:</u><br />
+- Thème : Nouveau thème sombre (bêta) (./template/asset/css/ace-skins-min.css)<br />
+- Composant : Highcharts 7.0.3 (./composants/Highcharts)<br />
+- Composant : Bootstrap 3.4.1 (./composants/Bootstrap)<br />
+- Paramètre : Ajout de timezones: Guyana,Martinique,Miquelon,St_Barthelemy,Mayotte,Tahiti (./admin/parameters.php)<br />
+- Erreur Apache : intégration des pages d'erreurs Apache par défaut dans le .htaccess (.htaccess)<br />
+<br />
+<u>Bugfix:</u><br />
+- Projet : Mise à jour du favicon (./index.php)<br /> 
+- Connecteur IMAP : Erreur de détection de certaines pièces jointes avec les mails émit depuis les appareils Apple (./mail2ticket.php)<br /> 
+- Connecteur IMAP : Prise en compte de l'horloge du serveur GestSup lors de la création des tickets si un fuseau horaire est paramétré (./mail2ticket.php)<br /> 
+- Ticket : Sur le champ technicien, trie d'abord sur l'utilisateur "Aucun" puis Alphabétique (./ticket.php)<br /> 
+- Ticket : Lors de l'utilisation de l'ajout d'utilisateur ou de catégorie depuis le ticket dans certains cas la validation ne fonctionnait pas (./attachment.php)<br /> 
+- Ticket : Le cloisonnement par service pour les groupes de techniciens ne fonctionnait pas (./ticket.php)<br /> 
+- Liste des tickets : Sur la vue activité la sélection de date inférieur à 3 jours ne fonctionnait pas (./dashboard.php)<br /> 
+- Liste des tickets : La couleur du numéro de ticket est verte lorsque le ticket est résolu par un groupe de technicien (./dashboard.php)<br /> 
+- Liste des tickets : La confirmation de suppression de tickets ne pouvait pas être annulé (./dashboard.php)<br /> 
+- Moniteur : Gestion de plusieurs criticité "critique" dans les compteurs (./monitor.php)<br /> 
+- Équipement : Perte du champ installateur lors de l'enregistrement dans certains cas (./asset.php)<br /> 
+- Administration : Erreur de droit d'accès avec les accès partiel à l'administration des listes et groupes pour les techniciens. (./admin/group.php)<br /> 
+<br />
+#################################<br />
+# @Name : GestSup Release Notes  <br />
+# @Date : 04/02/2019             <br />
+# @Version : 3.1.38     	 	 <br />
+#################################<br />
+<br />
+<u>Update:</u><br />
+- Ticket : Récupération des informations demandeur en Ajax, suppression du rechargement de la page lors de la sélection d'un demandeur (./ticket.php ./includes/*)<br />
+- Ticket : Ajout d'un contrôle sur la taille des pièces jointes (./attachement.php)<br />
+- Calendrier : Gestion des événements sur une ou plusieurs journées (./calendar.php)<br />
+- Fonction : Nouvelle fonction projet, permet d'avoir une vue de plusieurs tickets, cf documentation. (./project.php)<br />
+- Composant : PHPMailer 6.0.7(./composants/PHPMailer)<br />
+- Composant : FullCalendar 3.10.0 (./composants/FullCalendar)<br />
+- Composant : Highcharts 7.0.2 (./composants/Highcharts)<br />
+- Composant : DateTimePicker 4.17.47 (./composants/datetimepicker)<br />
+- Composant : Moment 2.24.0 (./composants/moment)<br />
+<br />
+<br />
+<u>Bugfix:</u><br />
+- Équipements : Les champs dates ne pouvaient pas être modifiés avec des valeurs passées dans certains cas (./asset.php)<br /> 
+- Équipements : Erreur sur l'import d'un fichier contenant des adresses MAC avec tiret ou deux points (./core/import_asset.php)<br /> 
+- Monitor : Le compteur de nouveaux tickets ne tenait pas compte de l'attribution à un technicien (./monitor.php)<br /> 
+- Monitor : Le compteur de nouveaux tickets restai gris alors qu'il doit être vert ou rouge (./monitor.php)<br /> 
+- Mail : Les mails automatiques aux groupes de technicien n'étaient pas pris en compte (./core/auto_mail.php)<br /> 
+- Mail : Lors de l'ouverture d'un ticket avec une erreur de champ obligatoire les mails automatiques sont désactivés (./core/auto_mail.php)<br /> 
+- Liste des tickets : Pas d'affichage du menu "Tous les tickets" avec le cloisonnement par service et le droit dashboard_service_only désactive (./index.php)<br /> 
+- Ticket : Sur les champs dates dans certains cas, l'heure ne pouvait être modifiée (./ticket.php)<br /> 
+- Ticket : Erreur lors de droit d'accès lors de l'impression deux fois de suite sur un ticket (./ticket.php)<br /> 
+- Ticket : Erreur d'initialisation de variable dans certains cas (./ticket_print.php)<br /> 
+<br />
 #################################<br />
 # @Name : GestSup Release Notes  <br />
 # @Date : 07/01/2019             <br />
@@ -8,7 +106,7 @@
 
 <u>Update:</u><br />
 - Paramètres : Ajout du fuseau horaire America/Guadeloupe (./admin/parameters.php)<br />
-- Composant : Mise à jour PHPMailer en version 6.0.6 (./components/PHPMailer/*)<br />
+- Composant : PHPMailer en version 6.0.6 (./components/PHPMailer/*)<br />
 - Composant : Highcharts 7.0.1 (./components/Highcharts/*)<br />
 - Composant : PHPmysqldump 2.6 (./components/PHPmysqldump/*)<br />
 - Composant : Bootstrap 3.3.7(./components/bootstrap/*)<br />
@@ -329,10 +427,10 @@
 <br />
 <u>Bugfix:</u><br />
 - Procédure: Les fichiers de plus de 10MO n'étaient pas transférés (./procedure.php) <br />
-- Mails: Erreur lors de l'envoi de mail automatique alors que l'utilisateur ne dispose pas de mail ou que le demandeur "Aucun" à été sélectionné (./core/auto_mail.php) <br />
+- Mails: Erreur lors de l'envoi de mail automatique alors que l'utilisateur ne dispose pas de mail ou que le demandeur "Aucun" a été sélectionné (./core/auto_mail.php) <br />
 - Ticket: Suppression de l'affichage du pourcentage d'avancement du ticket dans le titre si le temps passé et temps estimé ne sont pas affichés (./core/ticket.php) <br />
 - Ticket: L'ordre de trie des criticité tien uniquement compte de l'ordre définit dans la gestion des listes. (./ticket.php) <br />
-- Liste des tickets: L'icône horloge rouge indiquant un retard, ne s'affiche plus si le droit sur la date de résolution estimé du ticket est désactivé. (./dashboard.php) <br />
+- Liste des tickets: L'icône horloge rouge indiquant un retard, ne s'affiche plus si le droit sur la date de résolution estimée du ticket est désactivé. (./dashboard.php) <br />
 - Barre utilisateur: Suppression de l'affichage du bloc "Charge" si l'affichage du temps passé et estimé ne sont pas affichés (./index.php) <br />
 - Ticket non lu: erreur lors de l'utilisation du bouton cloture de ticket sur un profil technicien ou administrateur (./core/ticket.php)<br />
 - Système: Erreur de contrôle de la quantité de mémoire quand la valeur était en gigabytes. (./system.php)<br />
@@ -579,8 +677,8 @@
 <u>Notice:</u><br />Augmentation du prés-requis mémoire allouée à PHP, passage de 256MB à 512MB. <br />
 <br />
 <u>Update:</u><br />
-- Liste des tickets: Le bouton ce jour devient activité, montrant tous les tickets ouverts, fermés et sur lequel un élément de résolution à été ajouté aujourd'hui. (./dashboard.php) <br />
-- Liste des tickets: Modification de la couleur des numéro de tickets, vert pour les fermés du jour, orange pour les ouverts du jour, bleu pour les tickets sur lesquels un élément de résolution à été ajouté et rouge pour les tickets non lu par le technicien en charge (./dashboard.php) <br />
+- Liste des tickets: Le bouton ce jour devient activité, montrant tous les tickets ouverts, fermés et sur lequel un élément de résolution a été ajouté aujourd'hui. (./dashboard.php) <br />
+- Liste des tickets: Modification de la couleur des numéro de tickets, vert pour les fermés du jour, orange pour les ouverts du jour, bleu pour les tickets sur lesquels un élément de résolution a été ajouté et rouge pour les tickets non lu par le technicien en charge (./dashboard.php) <br />
 - Liste des tickets: Sur la vue activité une selection de période est possible (./dashboard.php) <br />
 - Liste des tickets: Lorsque le droit d'affichage de l'heure est donnée à la colonne date de création les secondes n'apparaissent plus. (./dashboard.php) <br />
 - Ticket: Lors de la création d'un ticket par un technicien, si ce dernier ajoute directement une résolution alors le ticket passe automatiquement à en cours. (./core/ticket.php) <br />

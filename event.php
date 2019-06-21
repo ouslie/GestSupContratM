@@ -6,8 +6,8 @@
 # @Parameters :  
 # @Author : Flox
 # @Create : 20/07/2011
-# @Update : 28/01/2019
-# @Version : 3.1.37 p1
+# @Update : 05/03/2019
+# @Version : 3.1.40
 ################################################################################
 
 //initialize variables 
@@ -37,7 +37,7 @@ if ($_GET['event']!='' && $_GET['disable']==1)
 //display event
 if($_GET['hide']!=1)
 {
-	$qry=$db->prepare("SELECT * FROM `tevents` WHERE technician=:technician and disable='0' and type='1'");
+	$qry=$db->prepare("SELECT id,date_start,incident FROM `tevents` WHERE technician=:technician and disable='0' and type='1'");
 	$qry->execute(array('technician' => $_SESSION['user_id'])); 
 	while($event=$qry->fetch()) 
 	{

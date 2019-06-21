@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 06/12/2016
-# @Update : 12/10/2018
-# @Version : 3.1.36
+# @Update : 22/03/2019
+# @Version : 3.1.40
 ################################################################################
 
 //tickets states
@@ -235,6 +235,7 @@ echo T_("Modification de l'agence sur la fiche de l'utilisateur");
 echo T_("Bonjour, <br />Vous avez fait la demande suivante auprès du support:");
 echo T_("Affiche le bouton inserer image sur le champ description");
 echo T_("Affiche le bouton inserer image sur le champ résolution");
+echo T_("Affiche le menu projet");
 
 //Assets states
 echo T_("Stock");

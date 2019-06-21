@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 03/09/2013
-# @Update : 05/12/2018
-# @Version : 3.1.37
+# @Update : 21/03/2019
+# @Version : 3.1.40
 ################################################################################
 
 //initialize variables 
@@ -139,7 +139,7 @@ if ($_GET['action']=='add' && $rright['procedure_add']!=0)
 		echo '
 			<div class="alert alert-block alert-success">
 				<i class="icon-ok green"></i>
-				'.T_('La procédure à été sauvegardée').'.
+				'.T_('La procédure a été sauvegardée').'.
 			</div>
 		';
 		
@@ -349,7 +349,7 @@ elseif ($_GET['action']=='edit')
 				<strong class="green">
 					<small>'.$_GET['id'].'</small>
 				</strong>
-				'.T_('à été sauvegardée').'.
+				'.T_('a été sauvegardée').'.
 			</div>
 		';
 		

@@ -5,8 +5,8 @@
 # @call : ./asset.php
 # @Author : Flox
 # @Create : 28/10/2013
-# @Update : 03/01/2018
-# @Version : 3.1.37
+# @Update : 21/03/2018
+# @Version : 3.1.40
 ################################################################################
 
 //initialize variable
@@ -224,7 +224,7 @@ if($_POST['date_recycle'] && !strpos($_POST['date_recycle'], "-"))
 //update ip send from searchip popup and save on iface
 if($_GET['findip'] && $_GET['iface']) {
 	$qry=$db->prepare("UPDATE `tassets_iface` SET `ip`=:ip WHERE `id`=:id");
-	$qry->execute(array('ip' => $_GET['findip'],'id' => $_GET['id']));
+	$qry->execute(array('ip' => $_GET['findip'],'id' => $_GET['iface']));
 }
 
 //database inputs if submit

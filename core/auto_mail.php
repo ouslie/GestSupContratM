@@ -5,8 +5,8 @@
 # @Call : ./core/ticket.php
 # @Parameters : ticket id 
 # @Author : Flox
-# @Update : 21/12/2018
-# @Version : 3.1.37
+# @Update : 11/03/2019
+# @Version : 3.1.40 p5
 ################################################################################
 
 //initialize variables 
@@ -17,9 +17,9 @@ if(!isset($usermail['mail'])) $usermail['mail'] = '';
 $db_id=strip_tags($db->quote($_GET['id']));
 
 //check if mail is already sent
-$qry = $db->prepare("SELECT * FROM `tmails` WHERE incident=:id");
+$qry = $db->prepare("SELECT `open`,`close` FROM `tmails` WHERE incident=:id");
 $qry->execute(array('id' => $_GET['id']));
-$row=$qry->fetch();
+$mail_event=$qry->fetch();
 $qry->closeCursor();
 
 //check user group defined as sender on ticket 
@@ -56,21 +56,25 @@ if($mail_u_group['u_group']!=0)
 if($rparameters['debug']==1) {echo "<b>AUTO MAIL VAR:</b> SESSION[profile_id]=$_SESSION[profile_id] mail_auto_user_modify=$rparameters[mail_auto_user_modify] _POST[resolution]=$_POST[resolution] _POST[private]=$_POST[private] <br />";}
 
 //case send auto mail to tech when technician attribution
-if(($rparameters['mail_auto_tech_attribution']==1) && ($_POST['modify'] || $_POST['quit']) && ($globalrow['technician']!=$_POST['technician']) && ($_POST['technician']!=0 || $t_group) && ($_POST['technician']!=$_SESSION['user_id']))
+if(($rparameters['mail_auto_tech_attribution']==1) && (($_POST['modify'] || $_POST['quit']) && ($globalrow['technician']!=$_POST['technician']) || ($t_group) && ($_POST['technician']!=$_SESSION['user_id'])))
 {
 	//debug
 	if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b>  FROM system TO tech  (Reason: mail_auto_tech_attribution ticket technician attribution is detected)<br> ";}
 	
 		if($rparameters['mail_from_adr']){$from=$rparameters['mail_from_adr'];} else {$from=$ruser['mail'];}
 		
-		//technican group detection
+		//technician group detection
 		if($t_group) 
 		{
 			$to='';
-			$qry=$db->prepare("SELECT `tusers`.mail FROM `tusers`,`tgroups_assoc` WHERE `tusers`.id=`tgroups_assoc`.user and `tgroups_assoc`.group=:group");
-			$qry->execute(array('group' => $t_group));
-			while($row=$qry->fetch()) {$to.=$row['mail'].';';}
-			$qry->closeCursor();
+			//check group change or attribution
+			if($t_group!=$globalrow['t_group'])
+			{
+				$qry2=$db->prepare("SELECT `tusers`.mail FROM `tusers`,`tgroups_assoc` WHERE `tusers`.id=`tgroups_assoc`.user and `tgroups_assoc`.group=:group");
+				$qry2->execute(array('group' => $t_group));
+				while($row2=$qry2->fetch()) {$to.=$row2['mail'].';';}
+				$qry2->closeCursor();
+			} 
 		} else {
 			//get tech mail 
 			$qry = $db->prepare("SELECT * FROM tusers WHERE id=:id");
@@ -83,12 +87,12 @@ if(($rparameters['mail_auto_tech_attribution']==1) && ($_POST['modify'] || $_POS
 		//check if tech have mail
 		if($to) 
 		{
-			$object=T_('Le ticket').' n°'.$_GET['id'].': '.$_POST['title'].' '.T_('vous à été attribué');
+			$object=T_('Le ticket').' n°'.$_GET['id'].': '.$_POST['title'].' '.T_('vous a été attribué');
 			//remove single quote in post data
 			$description = str_replace("'", "", $_POST['description']);
 			$title = str_replace("'", "", $_POST['title']);
 			$message = '
-			'.T_('Le ticket').' n°'.$_GET['id'].' '.T_('vous à été attribué').' <br />
+			'.T_('Le ticket').' n°'.$_GET['id'].' '.T_('vous a été attribué').' <br />
 			<br />
 			<u>'.T_('Objet').':</u><br />
 			'.$title.'<br />		
@@ -99,12 +103,12 @@ if(($rparameters['mail_auto_tech_attribution']==1) && ($_POST['modify'] || $_POS
 			'.T_('Pour plus d\'informations vous pouvez consulter le ticket sur').' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'</a>.
 			';
 			require('./core/message.php');
-		} else {if($rparameters['debug']==1) {echo "technician mail is empty or no technician associated with this ticket";}}
+		} else {if($rparameters['debug']==1) {echo "technician mail is empty or no technician associated or tech group no change on this ticket";}}
 
 }
 
 //case send mail to user where ticket open by technician.
-if(($rparameters['mail_auto']==1) && ($row['open']=='') && ($_POST['modify'] || $_POST['quit']) && ($_SESSION['profile_id']!=2 && $_SESSION['profile_id']!=3 && $_SESSION['profile_id']!=1))
+if(($rparameters['mail_auto']==1) && ($mail_event['open']=='') && ($_POST['modify'] || $_POST['quit']) && ($_SESSION['profile_id']!=2 && $_SESSION['profile_id']!=3 && $_SESSION['profile_id']!=1))
 {
 	if($usermail['mail'] || $rparameters['mail_cc'])
 	{
@@ -128,10 +132,10 @@ if(($rparameters['mail_auto']==1) && ($row['open']=='') && ($_POST['modify'] || 
 		//debug
 		if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b> FROM tech TO user (Reason: mail_auto enable, and close detect by technician.)<br />";}
 		
-		if ($row['open']=='1')
+		if ($mail_event['open']=='1')
 		{
 			//check if is the first close mail
-			if ($row['close']=='0')
+			if ($mail_event['close']=='0')
 			{
 				$send=1;
 				//auto send close notification mail
@@ -190,9 +194,9 @@ if(($rparameters['mail_auto']==1) && ($row['open']=='') && ($_POST['modify'] || 
 		//debug
 		if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b>  FROM user TO tech OR parameter_cc (Reason: mail_newticket enable and user open ticket.<br> ";}
 		$to=$rparameters['mail_newticket_address'];
-		$object=T_('Un nouveau ticket à été déclaré par ').$userrow['lastname'].' '.$userrow['firstname'].': '.$_POST['title'];
+		$object=T_('Un nouveau ticket a été déclaré par ').$userrow['lastname'].' '.$userrow['firstname'].': '.$_POST['title'];
 		$message = '
-		'.T_('Le ticket').' n°'.$_GET['id'].' '.T_('à été déclaré par l\'utilisateur').' '.$userrow['lastname'].' '.$userrow['firstname'].'.<br />
+		'.T_('Le ticket').' n°'.$_GET['id'].' '.T_('a été déclaré par l\'utilisateur').' '.$userrow['lastname'].' '.$userrow['firstname'].'.<br />
 		<br />
 		<u>'.T_('Objet').':</u><br />
 		'.$_POST['title'].'<br />		
@@ -208,62 +212,56 @@ if(($rparameters['mail_auto']==1) && ($row['open']=='') && ($_POST['modify'] || 
 		if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b> FROM user TO tech OR parameter_cc (Reason: mail_newticket enable and user open ticket, message not sent no administrator mail specified<br> ";}
 	}
 	
-//send mail to technician where user add thread in ticket
-} elseif (($rparameters['mail_auto_tech_modify']==1) && ($_POST['modify'] || $_POST['quit']) && (($_POST['resolution']!='') && ($_POST['resolution']!='\'\'')) && ($_SESSION['profile_id']!=0 && $_SESSION['profile_id']!=4))
+//send mail to technician where an user add thread in ticket
+} elseif (($rparameters['mail_auto_tech_modify']==1) && ($_POST['modify'] || $_POST['quit']) && (($_POST['resolution']!='') && ($_POST['resolution']!='\'\'')))
 {
 	//debug
 	if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b>  FROM user TO tech  (Reason: mail_auto_tech_modify enable and user add thread in ticket.)<br> ";}
 
-	//check if current user add this thread
-	if ($globalrow['user']==$_SESSION['user_id'])
-	{
-		//find user name
-		$qry = $db->prepare("SELECT * FROM tusers WHERE id=:id");
-		$qry->execute(array('id' => $uid));
-		$userrow=$qry->fetch();
-		$qry->closeCursor();
-		
-		//get user mail
-		if($rparameters['mail_from_adr']=='')
-		{
-			if ($userrow['mail']!='') $from=$userrow['mail']; else $from=$rparameters['mail_cc'];
-		} else {
-			$from=$rparameters['mail_from_adr'];
-		}
-		//get tech mail 
-		$qry = $db->prepare("SELECT * FROM tusers WHERE id=:id");
-		$qry->execute(array('id' => $globalrow['technician']));
-		$techrow=$qry->fetch();
-		$qry->closeCursor();
-		
-		$to=$techrow['mail'];
-		//check if tech have mail
-		if($to) 
-		{
-			$object=T_('Votre ticket').' n°'.$_GET['id'].': '.$_POST['title'].' '.T_('à été modifié par').' '.$userrow['lastname'].' '.$userrow['firstname'];
-			//remove single quote in post data
-			$resolution = str_replace("'", "", $_POST['resolution']);
-			$title = str_replace("'", "", $_POST['title']);
-			$message = '
-			'.T_('Le ticket').' n°'.$_GET['id'].' '.T_('à été modifié par l\'utilisateur').' '.$userrow['lastname'].' '.$userrow['firstname'].'.<br />
-			<br />
-			<u>'.T_('Objet').':</u><br />
-			'.$title.'<br />		
-			<br />	
-			<u>'.T_('Ajout du commentaire').':</u><br />
-			'.$resolution.'<br />
-			<br />
-			'.T_('Pour plus d\'informations vous pouvez consulter le ticket sur').' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'</a>.
-			';
-			require('./core/message.php');
-		} else {if($rparameters['debug']==1) {echo "technician mail is empty or no technician associated with this ticket";}}
-	}
+	//find user name
+	$qry = $db->prepare("SELECT * FROM tusers WHERE id=:id");
+	$qry->execute(array('id' => $uid));
+	$userrow=$qry->fetch();
+	$qry->closeCursor();
 	
+	//get user mail
+	if($rparameters['mail_from_adr']=='')
+	{
+		if ($userrow['mail']!='') $from=$userrow['mail']; else $from=$rparameters['mail_cc'];
+	} else {
+		$from=$rparameters['mail_from_adr'];
+	}
+	//get tech mail 
+	$qry = $db->prepare("SELECT * FROM tusers WHERE id=:id");
+	$qry->execute(array('id' => $globalrow['technician']));
+	$techrow=$qry->fetch();
+	$qry->closeCursor();
+	
+	$to=$techrow['mail'];
+	//check if tech have mail
+	if($to && $techrow['id']!=$_SESSION['user_id']) 
+	{
+		$object=T_('Votre ticket').' n°'.$_GET['id'].': '.$_POST['title'].' '.T_('a été modifié');
+		//remove single quote in post data
+		$resolution = str_replace("'", "", $_POST['resolution']);
+		$title = str_replace("'", "", $_POST['title']);
+		$message = '
+		'.T_('Le ticket').' n°'.$_GET['id'].' '.T_('a été modifié ').' <br />
+		<br />
+		<u>'.T_('Objet').':</u><br />
+		'.$title.'<br />		
+		<br />	
+		<u>'.T_('Ajout du commentaire').':</u><br />
+		'.$resolution.'<br />
+		<br />
+		'.T_('Pour plus d\'informations vous pouvez consulter le ticket sur').' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'</a>.
+		';
+		require('./core/message.php');
+	} else {if($rparameters['debug']==1) {echo "technician mail is empty or no technician associated with this ticket";}}
 }
 
-
 //case send auto mail to user where user open ticket
-if(($rparameters['mail_auto_user_newticket']==1) && ($row['open']=='') && $_GET['action']=='new' && $_POST['send'] && ($_SESSION['profile_id']==2 || $_SESSION['profile_id']==3 || $_SESSION['profile_id']==1))
+if(($rparameters['mail_auto_user_newticket']==1) && ($mail_event['open']=='') && $_GET['action']=='new' && ($_POST['send'] || $_POST['modify'] || $_POST['quit']) && ($_SESSION['profile_id']==2 || $_SESSION['profile_id']==3 || $_SESSION['profile_id']==1))
 {
 	if($usermail['mail'] || $rparameters['mail_cc'])
 	{

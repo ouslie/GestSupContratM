@@ -6,8 +6,8 @@
 # @Parameters : filename $_FILE[asset_import][name] or server key for command line execution
 # @Author : Flox
 # @Create : 20/01/2017
-# @Update : 29/06/2018
-# @Version : 3.1.34
+# @Update : 01/02/2018
+# @Version : 3.1.38
 #############################################################################################
 
 //initialize variables 
@@ -176,6 +176,9 @@ if(($argv[1]==$rparameters['server_private_key']) || $file_rename)
 						//check if asset already exist in GS db, compare with MAC address, and update all fields
 						if($mac)
 						{
+							
+							$mac=str_replace('-','',$mac);
+							$mac=str_replace(':','',$mac);
 							//convert in lowercase to compare
 							$csv_mac=strtolower($mac);
 							

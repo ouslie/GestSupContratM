@@ -5,9 +5,9 @@
 # @Call : auto mail
 # @Parameters : token
 # @Author : Flox
-# @Version : 3.1.37
+# @Version : 3.1.38
 # @Create : 22/04/2017
-# @Update : 21/12/2018
+# @Update : 26/01/2019
 ################################################################################
 
 //initialize variables 

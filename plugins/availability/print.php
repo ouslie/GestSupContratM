@@ -6,8 +6,8 @@
 # @Parameters : category
 # @Author : Flox
 # @Create : 26/05/2015
-# @Update : 04/12/2017
-# @Version : 3.1.28
+# @Update : 26/01/2019
+# @Version : 3.1.38
 ################################################################################
 
 //define current language
@@ -52,11 +52,8 @@ T_textdomain($_GET['lang']);
 			//load parameters table
 			$qparameters = $db->query("SELECT * FROM `tparameters`"); 
 			$rparameters= $qparameters->fetch();
-			//get last token
-			$query = $db->query("SELECT token FROM `ttoken` WHERE action='availability_print' ORDER BY id DESC LIMIT 1");
-			$token=$query->fetch(); 
-			$query->closeCursor();
-			if ($_GET['token'] && $token['token']==$_GET['token'])
+			
+			if($_GET['token']==$_COOKIE['token'])
 			{
 				//modify database encoding			
 				include("index.php");

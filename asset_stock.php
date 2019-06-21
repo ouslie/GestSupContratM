@@ -134,8 +134,6 @@ if($_POST['save'])
 											}
 											else
 											{
-												$query= $db->query("SELECT * FROM `tassets_manufacturer` WHERE id LIKE '$globalrow[manufacturer]' ORDER BY name ASC");
-												
 												$qry=$db->prepare("SELECT id,name FROM `tassets_manufacturer` WHERE id LIKE :manufacturer ORDER BY name ASC");
 												$qry->execute(array('manufacturer' => $globalrow['manufacturer']));
 												while($row=$qry->fetch()) 

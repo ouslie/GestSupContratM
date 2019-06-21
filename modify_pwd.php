@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 05/02/2012
-# @Update : 26/11/2018
-# @Version : 3.1.37
+# @Update : 21/03/2019
+# @Version : 3.1.40
 ################################################################################
 
 //initialize variables 
@@ -28,10 +28,9 @@ if($_POST['modifypwd'] && $_SESSION['user_id'])
 	$row=$qry->fetch();
 	$qry->closeCursor();
 	
-	//find uncrypted or crypted old password
+	//check old password
 	$oldpassword=0;
-	if($_POST['oldpwd']==$row['password']) {$oldpassword=1;}
-	if(md5($row['salt'] . md5($_POST['oldpwd']))==$row['password']) {$oldpassword=1;}
+	if(password_verify($_POST['oldpwd'],$row['password'])) {$oldpassword=1;}
 		
 	//check empty password
 	if($_POST['oldpwd']=="" || $_POST['newpwd1']=="" || $_POST['newpwd2']=="")
@@ -50,20 +49,18 @@ if($_POST['modifypwd'] && $_SESSION['user_id'])
 	}
 	else
 	{
-		//crypt password md5 + salt
-		if($_POST['newpwd1']!='') {
-			$salt = substr(md5(uniqid(rand(), true)), 0, 5); //generate a random key
-			$_POST['newpwd1']=md5($salt . md5($_POST['newpwd1'])); //store in md5, md5 password + salt.
+		if($_POST['newpwd1']!='') { //update password
+			$hash = password_hash($_POST['newpwd1'], PASSWORD_DEFAULT);
+			$qry=$db->prepare("UPDATE `tusers` SET `chgpwd`=0, `password`=:password WHERE `id`=:id");
+			$qry->execute(array('password' => $hash,'id' => $_SESSION['user_id']));
+			$updated=1;
 		}
-		$qry=$db->prepare("UPDATE `tusers` SET `chgpwd`=0, `password`=:password, `salt`=:salt WHERE `id`=:id");
-		$qry->execute(array('password' => $_POST['newpwd1'],'salt' => $salt,'id' => $_SESSION['user_id']));
-		$updated=1;
 	} 
 }
 if ($updated==1)
 {
 	$boxtitle="<i class='icon-lock blue bigger-120'></i> ".T_('Modification du mot de passe');
-	$boxtext= '<div class="alert alert-block alert-success"><center><i class="icon-ok green"></i>	'.T_('Votre mot de passe à été changé avec succès').'.</center></div>';
+	$boxtext= '<div class="alert alert-block alert-success"><center><i class="icon-ok green"></i>	'.T_('Votre mot de passe a été changé avec succès').'.</center></div>';
 	$cancel=T_('Fermer');
 	$action2="$( this ).dialog( \"close\" ); ";
 }

@@ -6,12 +6,12 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 07/12/2018
-# @Version : 3.1.37
+# @Update : 06/03/2019
+# @Version : 3.1.40
 ################################################################################
 
 //functions
-require_once('./core/crypt.php');
+require_once('./core/functions.php');
 
 //initialize variables 
 if(!isset($extensionFichier)) $extensionFichier = '';
@@ -42,6 +42,8 @@ if(!isset($_POST['company_limit_ticket'])) $_POST['company_limit_ticket'] = '';
 if(!isset($_POST['user_company_view'])) $_POST['user_company_view'] = '';
 if(!isset($_POST['user_agency'])) $_POST['user_agency'] = '';
 if(!isset($_POST['user_limit_service'])) $_POST['user_limit_service'] = '';
+if(!isset($_POST['user_disable_attempt'])) $_POST['user_disable_attempt'] = '';
+if(!isset($_POST['user_disable_attempt_number'])) $_POST['user_disable_attempt_number'] = '';
 if(!isset($_POST['mail'])) $_POST['mail']= '';
 if(!isset($_POST['mail_auth'])) $_POST['mail_auth']= '';
 if(!isset($_POST['mail_auto'])) $_POST['mail_auto']= '';
@@ -99,6 +101,7 @@ if(!isset($_POST['survey'])) $_POST['survey']= '';
 if(!isset($_POST['survey_mail_text'])) $_POST['survey_mail_text']= '';
 if(!isset($_POST['survey_ticket_state'])) $_POST['survey_ticket_state']= '';
 if(!isset($_POST['survey_auto_close_ticket'])) $_POST['survey_auto_close_ticket']= '';
+if(!isset($_POST['project'])) $_POST['project']= '';
 if(!isset($_POST['ticket_places'])) $_POST['ticket_places']= '';
 if(!isset($_POST['ticket_default_state'])) $_POST['ticket_default_state']= '';
 if(!isset($_POST['availability'])) $_POST['availability']= '';
@@ -141,21 +144,6 @@ if($_GET['action']=="deletelogo" && $rright['admin']!=0)
 	document.location.replace("'.$www.'");
 	// -->
 	</script>'; 
-}
-//generate token for dump survey
-if($rparameters['survey']==1)
-{
-	$token=uniqid(); 
-	$qry=$db->prepare("DELETE FROM `ttoken` WHERE action=:action");
-	$qry->execute(array(
-		'action' => 'export_survey'
-		));
-
-	$qry=$db->prepare("INSERT INTO `ttoken` (`token`,`action`) VALUES (:token,:action)");
-	$qry->execute(array(
-		'token' => $token,
-		'action' => 'export_survey'
-		));
 }
 	
 if($_POST['submit_general'])
@@ -222,6 +210,7 @@ if($_POST['submit_general'])
 	$_POST['mail_link']=strip_tags($_POST['mail_link']);
 	$_POST['mail_order']=strip_tags($_POST['mail_order']);
 	$_POST['time_display_msg']=strip_tags($_POST['time_display_msg']);
+	$_POST['user_disable_attempt_number']=strip_tags($_POST['user_disable_attempt_number']);
 
 	//update general tab
 	$qry=$db->prepare("
@@ -250,6 +239,8 @@ if($_POST['submit_general'])
 		`user_register`=:user_register,
 		`user_agency`=:user_agency,
 		`user_limit_service`=:user_limit_service,
+		`user_disable_attempt`=:user_disable_attempt,
+		`user_disable_attempt_number`=:user_disable_attempt_number,
 		`company_limit_ticket`=:company_limit_ticket,
 		`user_limit_ticket`=:user_limit_ticket,
 		`user_company_view`=:user_company_view,
@@ -294,6 +285,8 @@ if($_POST['submit_general'])
 		'user_register' => $_POST['user_register'],
 		'user_agency' => $_POST['user_agency'],
 		'user_limit_service' => $_POST['user_limit_service'],
+		'user_disable_attempt' => $_POST['user_disable_attempt'],
+		'user_disable_attempt_number' => $_POST['user_disable_attempt_number'],
 		'company_limit_ticket' => $_POST['company_limit_ticket'],
 		'user_limit_ticket' => $_POST['user_limit_ticket'],
 		'user_company_view' => $_POST['user_company_view'],
@@ -617,6 +610,7 @@ if($_POST['submit_function'])
 				));
 		}
 	}
+	
 	//escape special char and secure string before database insert
 	$_POST['survey_mail_text']=str_replace('<script>','',$_POST['survey_mail_text']);
 	$_POST['survey_mail_text']=str_replace('</script>','',$_POST['survey_mail_text']);
@@ -629,6 +623,7 @@ if($_POST['submit_function'])
 	`survey_mail_text`=:survey_mail_text,
 	`survey_ticket_state`=:survey_ticket_state,
 	`survey_auto_close_ticket`=:survey_auto_close_ticket,
+	`project`=:project,
 	`asset`=:asset,
 	`asset_ip`=:asset_ip,
 	`asset_warranty`=:asset_warranty,
@@ -646,6 +641,7 @@ if($_POST['submit_function'])
 		'survey_mail_text' => $_POST['survey_mail_text'],
 		'survey_ticket_state' => $_POST['survey_ticket_state'],
 		'survey_auto_close_ticket' => $_POST['survey_auto_close_ticket'],
+		'project' => $_POST['project'],
 		'asset' => $_POST['asset'],
 		'asset_ip' => $_POST['asset_ip'],
 		'asset_warranty' => $_POST['asset_warranty'],
@@ -953,10 +949,10 @@ if ($test_install_file==1)
 									<label for="order"><?php echo T_('Ordre de trie'); ?> :</label>
 									<select class="textfield" id="order" name="order" >
 										<option <?php if ($rparameters['order']=='tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_create') echo "selected "; ?> value="tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_create"><?php echo T_('État > Priorité > Criticité > Date de création'); ?></option>
-										<option <?php if ($rparameters['order']=='tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_hope') echo "selected "; ?> value="tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_hope"><?php echo T_('État > Priorité > Criticité > Date de résolution estimé'); ?></option>
-										<option <?php if ($rparameters['order']=='tstates.number, tincidents.date_hope, tincidents.priority, tincidents.criticality') echo "selected "; ?> value="tstates.number, tincidents.date_hope, tincidents.priority, tincidents.criticality"><?php echo T_('État > Date de résolution estimé > Priorité > Criticité'); ?></option>
-										<option <?php if ($rparameters['order']=='tstates.number, tincidents.date_hope, tincidents.criticality, tincidents.priority') echo "selected "; ?> value="tstates.number, tincidents.date_hope, tincidents.criticality, tincidents.priority"><?php echo T_('État > Date de résolution estimé > Criticité > Priorité'); ?></option>
-										<option <?php if ($rparameters['order']=='tstates.number, tincidents.criticality, tincidents.date_hope, tincidents.priority') echo "selected "; ?> value="tstates.number, tincidents.criticality, tincidents.date_hope, tincidents.priority"><?php echo T_('État > Criticité > Date de résolution estimé > Priorité'); ?></option>
+										<option <?php if ($rparameters['order']=='tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_hope') echo "selected "; ?> value="tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_hope"><?php echo T_('État > Priorité > Criticité > Date de résolution estimée'); ?></option>
+										<option <?php if ($rparameters['order']=='tstates.number, tincidents.date_hope, tincidents.priority, tincidents.criticality') echo "selected "; ?> value="tstates.number, tincidents.date_hope, tincidents.priority, tincidents.criticality"><?php echo T_('État > Date de résolution estimée > Priorité > Criticité'); ?></option>
+										<option <?php if ($rparameters['order']=='tstates.number, tincidents.date_hope, tincidents.criticality, tincidents.priority') echo "selected "; ?> value="tstates.number, tincidents.date_hope, tincidents.criticality, tincidents.priority"><?php echo T_('État > Date de résolution estimée > Criticité > Priorité'); ?></option>
+										<option <?php if ($rparameters['order']=='tstates.number, tincidents.criticality, tincidents.date_hope, tincidents.priority') echo "selected "; ?> value="tstates.number, tincidents.criticality, tincidents.date_hope, tincidents.priority"><?php echo T_('État > Criticité > Date de résolution estimée > Priorité'); ?></option>
 										<option <?php if ($rparameters['order']=='id') echo "selected "; ?>  value="id"><?php echo T_('Numéro de ticket'); ?></option>
 									</select>
 									<i title="<?php echo T_('Détermine l\'ordre de classement des tickets dans la liste des tickets'); ?>." class="icon-question-sign blue bigger-110"></i><br />
@@ -1058,12 +1054,31 @@ if ($test_install_file==1)
 										<span class="lbl">&nbsp;<?php echo T_('Les utilisateurs appartiennent à des agences'); ?></span>
 										<i title="<?php echo T_('Ajoute une nouvelle liste dans Administration > Liste > Agence'); ?>.)" class="icon-question-sign blue bigger-110"></i>
 										<br />
-									</label><br />
+									</label>
+									<br />
 									<label> 
 										<input class="ace" type="checkbox" <?php if ($rparameters['user_limit_service']==1) echo "checked"; ?> name="user_limit_service" value="1">
 										<span class="lbl">&nbsp;<?php echo T_('Les utilisateurs ne voient que les tickets de leurs services'); ?></span>
 										<i title="<?php echo T_('Permet de cloisonner la liste de tickets ainsi que les catégories, un droit additionnel est nécessaire dashboard_service_only'); ?>.)" class="icon-question-sign blue bigger-110"></i>
 										<br />
+									</label>
+									<br />
+									<label> 
+										<input class="ace" type="checkbox" <?php if ($rparameters['user_disable_attempt']==1) echo "checked"; ?> name="user_disable_attempt" value="1">
+										<span class="lbl">&nbsp;<?php echo T_('Les utilisateurs sont désactivés après plusieurs tentatives de connexion infructueuses'); ?></span>
+										<i title="<?php echo T_("Permet de désactiver automatiquement les utilisateurs après X tentatives d'authentification échoués (Le nombre de tentatives est paramétrable)"); ?>" class="icon-question-sign blue bigger-110"></i>
+										<br />
+										<?php
+										if($rparameters['user_disable_attempt'])
+										{
+											echo '
+											&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-caret-right blue"></i>
+											Nombre de tentatives : 
+											<input name="user_disable_attempt_number" type="text" value="'.$rparameters['user_disable_attempt_number'].'" size="3">
+											';
+										}
+										?>
+										
 									</label>
 								</span>
 							</div>
@@ -1112,7 +1127,7 @@ if ($test_install_file==1)
 											{
 												echo '
 												<div class="space-4"></div>
-													&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Adresse Mail').': <input name="mail_newticket_address" type="" value="'.$rparameters['mail_newticket_address'].'" size="30" />
+													&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label>'.T_('Adresse Mail').' :</label> <input name="mail_newticket_address" type="text" value="'.$rparameters['mail_newticket_address'].'" size="30" />
 												<div class="space-4"></div>
 												';
 											}
@@ -1647,6 +1662,19 @@ if ($test_install_file==1)
 						</div>
 						<div class="profile-info-row">
 							<div class="profile-info-name"> 
+								<i class="icon-tasks"></i>
+								<?php echo T_('Projet'); ?> :
+							</div>
+							<div class="profile-info-value">
+								<label>
+									<input class="ace" type="checkbox" <?php if ($rparameters['project']==1) echo "checked"; ?> name="project" value="1" /> 
+									<span class="lbl">&nbsp;<?php echo T_('Activer la fonction').' '.('projet'); ?></span>
+									<i title="<?php echo T_('Active la gestion des projets, visualisation de jonction de tickets'); ?>" class="icon-question-sign blue"></i>
+								</label>
+							</div>
+						</div>
+						<div class="profile-info-row">
+							<div class="profile-info-name"> 
 								<i class="icon-check"></i>
 								<?php echo T_('Sondage'); ?> :
 							</div>
@@ -1741,7 +1769,7 @@ if ($test_install_file==1)
 									<br />
 									<br />
 									&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-									<button title="'.T_("Télécharger les résultats du sondage au format CSV").'" name="dump_survey" OnClick="window.open(\'./core/export_survey.php?token='.$token.'\')"  value="test_imap" type="submit" class="btn btn-xs btn-info">
+									<button title="'.T_("Télécharger les résultats du sondage au format CSV").'" name="dump_survey" OnClick="window.open(\'./core/export_survey.php?token='.$_COOKIE['token'].'\')"  value="dump_survey" type="submit" class="btn btn-xs btn-info">
 											<i class="icon-download-alt bigger-120"></i>
 											'.T_("Exporter les résultats").'
 										</button>

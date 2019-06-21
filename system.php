@@ -6,9 +6,10 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 10/11/2013
-# @Update : 21/11/2018
-# @Version : 3.1.37 p1
+# @Update : 13/03/2019
+# @Version : 3.1.40
 ################################################################################
+
 
 //initialize variables 
 if(!isset($_GET['page'])) $_GET['page'] = '';
@@ -101,7 +102,15 @@ while($row=$qry->fetch())
 {
 	if ($row[0]=="version") {
 		$rdb_version=$row[1];
-		if(strpos($rdb_version, 'MariaDB')) {$rdb_name='MariaDB';} else {$rdb_name='MySQL';}
+		if(strpos($rdb_version, 'MariaDB')) {
+			$rdb_name='MariaDB';
+			$rdb_icon=explode('-',$rdb_version);
+			$rdb_icon=explode('.',$rdb_icon[0]);
+			if($rdb_icon[0]>=10 && $rdb_icon[1]>=1) {$rdb_icon='ok';} else {$rdb_icon='ko';}
+		} else {
+			$rdb_name='MySQL';
+			$rdb_icon='ok';
+		}
 	}
 }
 $qry->closeCursor();
@@ -133,11 +142,39 @@ if(preg_match("/G/",$post_max_size)) {$post_max_size_mb=explode('G',$post_max_si
 if(preg_match("/g/",$post_max_size)) {$post_max_size_mb=explode('g',$post_max_size);$post_max_size_mb=$post_max_size_mb[0]*1024;}
 if(!$post_max_size_mb) {$post_max_size_mb=$phpinfo[$vphp]['upload_post_max_size'][0];}
 
-//get apache version
-$apache=$phpinfo['apache2handler']['Apache Version'];
-$apache=preg_split('[ ]', $apache); 
-$apache=preg_split('[/]', $apache[0]);
-if(isset($apache[1])) {$apache_version=$apache[1]; $apache_display_version=1;} else {$apache_version=T_('Version non disponible, serveur sécurisé'); $apache_display_version=0;}
+//get web server name
+$web_server=$_SERVER['SERVER_SOFTWARE'];
+$web_server=explode('/',$web_server);
+$web_server_name=strtolower($web_server[0]);
+if(isset($web_server[1])) {
+	$web_server_version=$web_server[1];
+	$web_server_version=explode(' ',$web_server_version);
+	$web_server_version=$web_server_version[0];
+} else {
+	$web_server_version=T_('Non disponible');
+}
+
+if($web_server_name!='nginx')
+{
+	//get apache version
+	$apache=$phpinfo['apache2handler']['Apache Version'];
+	$apache=preg_split('[ ]', $apache); 
+	$apache=preg_split('[/]', $apache[0]);
+	if(isset($apache[1])) {
+		$apache_version=$apache[1]; 
+		$apache_display_version=1;
+		$apache_icon=explode(".",$apache[1]);
+		if($apache_icon[0]>=2 && $apache_icon[1]>=4){$web_server_icon='apache_ok.png';} else {$web_server_icon='apache_ko.png';}
+	} else {
+		$apache_version=T_('Version non disponible, serveur sécurisé');
+		$apache_display_version=0;
+		$web_server_icon='apache_ok.png';
+	}
+} else {
+	$web_server_icon='nginx_ok.png';
+}
+
+
 
 //get components versions
 if ($_GET['page']!='admin')
@@ -170,15 +207,9 @@ if ($_GET['page']!='admin')
 }
 
 //check php version
-$phpversion=phpversion();
-$phpversion=explode(".",$phpversion);
-if(($phpversion[0]<5) || ($phpversion[0]==5 && $phpversion[1]<6))
-{
-	$php_error=T_("(Votre version de PHP est incompatible avec l'application mettre à jour en version 5.6 minimum)");
-}elseif($phpversion[0]==5 && $phpversion[1]>=6)
-{
-	$php_warning=T_("(Votre version de PHP est compatible, mais obsolète, merci d'installer une version 7.)");
-}
+$php_icon=phpversion();
+$php_icon=explode(".",$php_icon);
+if($php_icon[0]>=8){$php_icon='ok';}else{$php_icon='ok';}
 
 //get php session max lifetime parameter
 $maxlifetime = ini_get("session.gc_maxlifetime");
@@ -195,22 +226,25 @@ $qry->execute();
 while($row=$qry->fetch()){$db_size += $row["Data_length"] + $row["Index_length"];}
 $qry->closeCursor();
 $db_size=formatfilesize($db_size);
+
 ?>
 <div class="profile-user-info profile-user-info-striped">
 	<div class="profile-info-row">
 		<div class="profile-info-name">  <?php echo T_('Serveur'); ?> : </div>
 		<div class="profile-info-value">
 			<span id="username">
-				&nbsp;&nbsp;&nbsp;&nbsp;<img src="./images/<?php echo $os; ?>.png" style="border-style: none" alt="img" /> <?php echo "<b>OS :</b> {$phpinfo['phpinfo']['System']}<br />"; ?>
-				&nbsp;&nbsp;&nbsp;&nbsp;<img src="./images/apache.png" style="border-style: none" alt="img" /> <b>Apache :</b> <?php echo $apache_version ; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<img src="./images/<?php echo $rdb_name.'.png'; ?>" style="border-style: none" alt="img" /> <?php echo '<b>'.$rdb_name.' :</b> '.$rdb_version.' ('.T_('base').' : '.$db_name.' '.$db_size.')<br />'; ?>
+				&nbsp;&nbsp;&nbsp;&nbsp;<img src="./images/<?php echo strtolower($os); ?>_ok.png" style="border-style: none" alt="img" /> <?php echo "<b>OS :</b> {$phpinfo['phpinfo']['System']}<br />"; ?>
+				<?php 
+					echo '&nbsp;&nbsp;&nbsp;&nbsp;<img src="./images/'.$web_server_icon.'" style="border-style: none" alt="img" /> <b>'.ucfirst($web_server_name).' :</b> '.$web_server_version.'<br />';
+				?>
+				&nbsp;&nbsp;&nbsp;&nbsp;<img src="./images/<?php echo strtolower($rdb_name).'_'.$rdb_icon.'.png'; ?>" style="border-style: none" alt="img" /> <?php echo '<b>'.$rdb_name.' :</b> '.$rdb_version.' <i>('.T_('base').' : '.$db_name.' '.$db_size.')</i><br />'; ?>
 				&nbsp;&nbsp;&nbsp;&nbsp;
 				<?php 
-				if($php_error) {echo '<i class="icon-remove-sign icon-large red"></i> <b>PHP :</b> '.phpversion().' '.$php_error;}
-				elseif($php_warning)  {echo '<i class="icon-warning-sign icon-large orange"></i> <b>PHP :</b> '.phpversion().' '.$php_warning;}
-				else {echo '<img src="./images/php.png" style="border-style: none" alt="img" /> <b>PHP :</b> '.phpversion();} ?>  <br />
+				echo '<img src="./images/php_'.$php_icon.'.png" style="border-style: none" alt="img" /> <b>PHP :</b> '.phpversion();
+				?>  
+				<br />
 				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-ticket icon-large"></i> <b><?php echo T_('GestSup'); ?> :</b> <?php echo $rparameters['version']; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-time icon-large"></i> <b><?php echo T_('Horloge'); ?> :</b> <?php echo date('Y-m-d H:i:s'); ?><br />
+				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-time icon-large"></i> &nbsp;<b><?php echo T_('Horloge'); ?> :</b> <?php echo date('Y-m-d H:i:s'); ?><br />
 				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-key icon-large"></i> <b><?php echo T_('Clé privée'); ?> :</b> <?php echo $rparameters['server_private_key']; ?> <i><?php echo T_("(Clé à ne pas divulguer)"); ?></i>
 			</span>
 		</div>
@@ -307,11 +341,15 @@ $db_size=formatfilesize($db_size);
 				else 
 				{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>HTTPS : </b>'.T_("Désactivé, les connexions vers le serveur ne sont pas chiffrées").' <a target="_blank" href="https://certbot.eff.org"> ('.T_("Installer un certificat Let's Encrypt").')</a>.';}
 				echo "<br />";
-				if ($apache_display_version==0) 
-				{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>'.T_('Version Apache').' : </b>'.T_('Non affichée');}
-				else
-				{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>'.T_('Version Apache').' : </b>'.T_("Affichée, pour plus de sécurité masquer la version d'apache que vous utilisez. (Passer \"ServerTokens\" à \"Prod\" dans security.conf)").'.';}
-				echo "<br />";
+				if ($web_server_name=='apache') 
+				{
+					if ($apache_display_version==0)
+					{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>'.T_('Version Apache').' : </b>'.T_('Non affichée');}
+					else
+					{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>'.T_('Version Apache').' : </b>'.T_("Affichée, pour plus de sécurité masquer la version d'apache que vous utilisez. (Passer \"ServerTokens\" à \"Prod\" dans security.conf)").'.';}	
+					echo "<br />";
+				}
+				
 				if ($maxlifetime<=1440 && $rparameters['timeout']<=24) 
 				{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>'.T_('Durée de la session').' : </b> PHP='.$maxlifetime.'s GestSup='.$rparameters['timeout'].'m';}
 				else

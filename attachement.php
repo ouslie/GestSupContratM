@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 06/03/2013
-# @Update : 25/04/2018
-# @Version : 3.1.37 p2
+# @Update : 26/03/2019
+# @Version : 3.1.40 p1
 ################################################################################
 
 //initialize variables 
@@ -40,9 +40,10 @@ if ($db_delimg)
 			</script>';
 }
 
-$query=$db->query("SELECT img1,img2,img3,img4,img5 FROM tincidents WHERE id LIKE $db_id");
-$row=$query->fetch();
-$query->closeCursor();
+$qry=$db->prepare("SELECT `img1`,`img2`,`img3`,`img4`,`img5` FROM `tincidents` WHERE id=:id");
+$qry->execute(array('id' => $_GET['id']));
+$row=$qry->fetch();
+$qry->closeCursor();
 
 //find first free slot else not display attach input
 if ($row['img1']=="") {$freeslot="1";}
@@ -60,6 +61,26 @@ if ($freeslot!="0" && ($globalrow['state']!=3 || ($_SESSION['profile_id']==0 || 
 	";
 	if($_GET['action']=='new' && ($_SESSION['profile_id']==1 || $_SESSION['profile_id']==2)) {echo'';}else{echo '<button class="btn btn-minier btn-success" title="'.T_('Charger le fichier').'" name="upload" value="upload" type="submit" id="upload"><i class="icon-upload bigger-140"></i></button>';}
 	echo "<br />";
+	
+	//check size
+	$upload_max_size_error=T_('Le fichier est joint est trop volumineux, la taille maximum est ').ini_get('post_max_size');
+	$upload_max_size=(preg_replace('/[^0-9.]+/', '', ini_get('post_max_size')))*1024*1024;
+	
+	if($_GET['action']!='adduser' && $_GET['action']!='edituser'  && $_GET['action']!='addcat' && $_GET['action']!='editcat' && $_GET['action']!='template')
+	{
+		echo "
+		<script>
+			$('form').submit(function( e ) {    
+				if(!($('#file$freeslot')[0].files[0].size < $upload_max_size )) { 
+					//Prevent default and display error
+					 alert('$upload_max_size_error');
+					e.preventDefault();
+				}
+			});
+		</script>
+		";
+	}
+	
 }
 
 if ($row['img1']!='')
@@ -73,9 +94,9 @@ if ($row['img1']!='')
 			$file_size=round($file_size/1024,0);
 			echo " ($file_size Ko)<br />";
 		} else {
-			echo ' ('.T_('Le fichier à été supprimé du serveur').')<br />';
+			echo ' ('.T_('Le fichier a été supprimé du serveur').')<br />';
 		}
-	} else {echo ' ('.T_('Le repertoire de ce ticket à été supprimé du serveur').')<br />';}
+	} else {echo ' ('.T_('Le repertoire de ce ticket a été supprimé du serveur').')<br />';}
 }
 
 if ($row['img2']!='')
@@ -89,9 +110,9 @@ if ($row['img2']!='')
 			$file_size=round($file_size/1024,0);
 			echo " ($file_size Ko)<br />";
 		} else {
-			echo ' ('.T_('Le fichier à été supprimé du serveur').')<br />';
+			echo ' ('.T_('Le fichier a été supprimé du serveur').')<br />';
 		}
-	} else {echo ' ('.T_('Le repertoire de ce ticket à été supprimé du serveur').')<br />';}
+	} else {echo ' ('.T_('Le repertoire de ce ticket a été supprimé du serveur').')<br />';}
 }
 
 if ($row['img3']!='')
@@ -105,9 +126,9 @@ if ($row['img3']!='')
 			$file_size=round($file_size/1024,0);
 			echo " ($file_size Ko)<br />";
 		} else {
-			echo ' ('.T_('Le fichier à été supprimé du serveur').')<br />';
+			echo ' ('.T_('Le fichier a été supprimé du serveur').')<br />';
 		}
-	} else {echo ' ('.T_('Le repertoire de ce ticket à été supprimé du serveur').')<br />';}
+	} else {echo ' ('.T_('Le repertoire de ce ticket a été supprimé du serveur').')<br />';}
 }
 
 if ($row['img4']!='')
@@ -121,9 +142,9 @@ if ($row['img4']!='')
 			$file_size=round($file_size/1024,0);
 			echo " ($file_size Ko)<br />";
 		} else {
-			echo ' ('.T_('Le fichier à été supprimé du serveur').')<br />';
+			echo ' ('.T_('Le fichier a été supprimé du serveur').')<br />';
 		}
-	} else {echo ' ('.T_('Le repertoire de ce ticket à été supprimé du serveur').')<br />';}
+	} else {echo ' ('.T_('Le repertoire de ce ticket a été supprimé du serveur').')<br />';}
 }
 if ($row['img5']!='')
 {
@@ -136,8 +157,8 @@ if ($row['img5']!='')
 			$file_size=round($file_size/1024,0);
 			echo " ($file_size Ko)<br />";
 		} else {
-			echo ' ('.T_('Le fichier à été supprimé du serveur').')<br />';
+			echo ' ('.T_('Le fichier a été supprimé du serveur').')<br />';
 		}
-	} else {echo ' ('.T_('Le repertoire de ce ticket à été supprimé du serveur').')<br />';}
+	} else {echo ' ('.T_('Le repertoire de ce ticket a été supprimé du serveur').')<br />';}
 }
 ?>

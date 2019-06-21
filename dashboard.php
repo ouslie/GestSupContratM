@@ -6,9 +6,12 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 17/07/2009
-# @Update : 28/12/2018
-# @Version : 3.1.37 p1
+# @Update : 01/04/2019
+# @Version : 3.1.40 p2
 ################################################################################
+
+//call functions
+require_once('./core/functions.php');
 
 //initialize variables 
 if(!isset($asc)) $asc = ''; 
@@ -28,6 +31,7 @@ if(!isset($techread)) $techread= '';
 if(!isset($techread)) $techread= '';  
 if(!isset($start_page)) $start_page= '';  
 if(!isset($cursor)) $cursor= '';  
+if(!isset($selectcursor)) $selectcursor= '';  
 if(!isset($date_start)) $date_start= '';  
 if(!isset($date_end)) $date_end= '';  
 
@@ -693,9 +697,11 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 		else 
 		{
 		    //find state name for display in title
-           	$query=$db->query("SELECT description FROM tstates WHERE id=$db_state");
-			$rstate=$query->fetch();
-			$query->closeCursor();
+			$qry=$db->prepare("SELECT `description` FROM `tstates` WHERE id=:id");
+			$qry->execute(array('id' => $_GET['state']));
+			$rstate=$qry->fetch();
+			$qry->closeCursor();
+
             if (!$rstate && !$_GET['viewid'] && !$_GET['techgroup']) $rstate['description']=T_('tickets non lus'); //case not read
             if ($_GET['state']=='meta') $rstate['description']=T_('tickets à traiter'); //case not read
 			//special case for service only add name of services at the end of the title
@@ -704,16 +710,20 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 				$service_title='';
 				$cnt=0;
 				//get services of current user
-				$query=$db->query("SELECT service_id FROM tusers_services WHERE user_id='$_SESSION[user_id]'");
-				while ($row=$query->fetch())
+				$qry=$db->prepare("SELECT `service_id` FROM `tusers_services` WHERE user_id=:user_id");
+				$qry->execute(array('user_id' => $_SESSION['user_id']));
+				while($row=$qry->fetch()) 
 				{
 					$cnt++;
 					//get service name to display in title
-					$query2=$db->query("SELECT name FROM tservices WHERE id='$row[service_id]'");
-					$row2=$query2->fetch();
-					$query2->closeCursor();
+					$qry2=$db->prepare("SELECT `name` FROM `tservices` WHERE id=:id");
+					$qry2->execute(array('id' => $row['service_id']));
+					$row2=$qry2->fetch();
+					$qry2->closeCursor();
+					
 					if ($cnt==1){$service_title.=' '.$row2['name'];} else {$service_title.=' '.T_("et").' '.$row2['name'];}
 				}
+				$qry->closeCursor();
 				$service_title=' '.T_("du service").' '.$service_title;
 			} else {$service_title='';}
 			//special case for agency only add name of agencies at the end of the title
@@ -722,23 +732,29 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 				$agency_title='';
 				$cnt=0;
 				//get agencies of current user
-				$query=$db->query("SELECT agency_id FROM tusers_agencies WHERE user_id='$_SESSION[user_id]'");
-				while ($row=$query->fetch())
+				$qry=$db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE user_id=:user_id");
+				$qry->execute(array('user_id' => $_SESSION['user_id']));
+				while($row=$qry->fetch()) 
 				{
 					$cnt++;
 					//get agency name to display in title
-					$query2=$db->query("SELECT name FROM tagencies WHERE id='$row[agency_id]'");
-					$row2=$query2->fetch();
-					$query2->closeCursor();
+					$qry2=$db->prepare("SELECT `name` FROM `tagencies` WHERE id=:id");
+					$qry2->execute(array('id' => $row['agency_id']));
+					$row2=$qry2->fetch();
+					$qry2->closeCursor();
 					if ($cnt==1){$agency_title.=' '.$row2['name'];} else {$agency_title.=' '.T_("et").' '.$row2['name'];}
 				}
+				$qry->closeCursor();
 				$agency_title=' '.T_("de l'agence").' '.$agency_title;
 			} else {$agency_title='';}
             //find view name to display in title
             if ($_GET['viewid']) 
             {
-                $qview = $db->query("SELECT name FROM tviews WHERE id=$db_viewid");
-                $rview=$qview->fetch();
+				$qry=$db->prepare("SELECT `name` FROM `tviews` WHERE id=:id");
+				$qry->execute(array('id' => $_GET['viewid']));
+				$rview=$qry->fetch();
+				$qry->closeCursor();
+				
                 $rstate['description']=T_('tickets de la vue').' '.$rview['name'].'';
 				echo '<i class="icon-ticket"></i> '.T_('Tickets de la vue').' '.$rview['name'].'';
             }
@@ -757,9 +773,11 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 			elseif ($_GET['techgroup'])
 			{
 				//get name of current group
-				$query = $db->query("SELECT name FROM tgroups WHERE id=$db_techgroup");
-                $group_name=$query->fetch();
-				$query->closeCursor();
+				$qry=$db->prepare("SELECT `name` FROM `tgroups` WHERE id=:id");
+				$qry->execute(array('id' => $_GET['techgroup']));
+				$group_name=$qry->fetch();
+				$qry->closeCursor();
+				
 				echo '<i class="icon-ticket"></i> '.T_('Vos tickets du groupe').' '.$group_name['name'];
 			}
 			if($_GET['state']=='%' && $_GET['userid']==0 && $_GET['userid']!='%') echo '<i class="icon-ticket"></i> '.T_('Tous les tickets non attribués').''; //case not read
@@ -1181,7 +1199,7 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 											//tech list
 											if ($join)
 											{
-												$query="SELECT DISTINCT tusers.id,tusers.lastname,tusers.firstname FROM tusers INNER JOIN tincidents ON tusers.id=tincidents.technician INNER JOIN tcompany ON tusers.company=tcompany.id INNER JOIN tthreads ON tincidents.id=tthreads.ticket $join WHERE $where AND (profile='0' or profile='4') ORDER BY tusers.lastname";
+												$query="SELECT DISTINCT tusers.id,tusers.lastname,tusers.firstname FROM tusers INNER JOIN tincidents ON tusers.id=tincidents.technician INNER JOIN tcompany ON tusers.company=tcompany.id INNER JOIN tthreads ON tincidents.id=tthreads.ticket $join WHERE $where AND (profile='0' or profile='4' or profile='3') ORDER BY tusers.lastname";
 												if(preg_match('#FROM tusers#',$query)) {$query=str_replace("LEFT JOIN tusers ON tincidents.user=tusers.id","",$query);} //avoid company columun pb
 												if(preg_match('#INNER JOIN tcompany#',$query)) {$query=str_replace("LEFT JOIN tcompany ON tusers.company=tcompany.id","",$query);} //avoid company columun pb
 												if($rparameters['debug']==1) {echo $query;}
@@ -1195,7 +1213,7 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 												if ($_POST['technician']==$row['id']) echo "<option selected value=\"$row[id]\">$cutfname. $row[lastname]</option>"; else echo "<option value=\"$row[id]\">$cutfname. $row[lastname]</option>";
 											} 
 											//tech group list
-											$query = $db->query("SELECT * FROM tgroups WHERE disable='0' AND type='1' ORDER BY name");
+											$query = $db->query("SELECT `id`,`name` FROM tgroups WHERE disable='0' AND type='1' ORDER BY name");
 											while ($row = $query->fetch())
 											{
 												if ($t_group==$row['id'] || $_GET['t_group']==$row['id']) echo "<option selected value=\"G_$row[id]\">[G] $row[name]</option>"; else echo "<option value=\"G_$row[id]\">[G] $row[name]</option>";
@@ -1256,7 +1274,7 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 												{echo '<option value="'.$row['id'].'">'.$row['lastname'].' '.$cutfname.'. </option>';}
 											} 
 											//user group list
-											$query = $db->query("SELECT * FROM tgroups WHERE disable='0' AND type='0' ORDER BY name");
+											$query = $db->query("SELECT `id`,`name` FROM tgroups WHERE disable='0' AND type='0' ORDER BY name");
 											while ($row=$query->fetch()) 
 											{
 												if ($u_group==$row['id'] || $_GET['u_group']==$row['id']) echo "<option selected value=\"G_$row[id]\">[G] $row[name]</option>"; else echo "<option value=\"G_$row[id]\">[G] $row[name]</option>";
@@ -1302,15 +1320,17 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 										<td align="center" >
 											<select style="width:92px" name="type" onchange="submit()">
 												<option value="%"></option>';
-												//display users list
-												$query = $db->query("SELECT id,name FROM ttypes ORDER BY name");
-												while ($row=$query->fetch()) 
+												//display type list
+												$qry=$db->prepare("SELECT `id`,`name` FROM `ttypes` ORDER BY name");
+												$qry->execute();
+												while($row=$qry->fetch()) 
 												{
-													if ($_POST['type']==$row['id']) 
+													if($_POST['type']==$row['id']) 
 													{echo '<option selected value="'.$row['id'].'">'.T_($row['name']).'</option>';}
 													else
 													{echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';}
-												} 
+												}
+												$qry->closeCursor();
 												echo '
 											</select>
 										</td>
@@ -1608,7 +1628,7 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 											if($join)
 											{$query = $db->query("SELECT DISTINCT tcriticality.id,tcriticality.number,tcriticality.name FROM tcriticality INNER JOIN tincidents ON tincidents.criticality=tcriticality.id $join WHERE $where ORDER BY tcriticality.number");}
 											else
-											{$query = $db->query("SELECT * FROM tcriticality ORDER BY number");}
+											{$query = $db->query("SELECT `id`,`name` FROM tcriticality ORDER BY number");}
 											while ($row=$query->fetch())
 											{
 												if ($_POST['criticality']==$row['id']) echo '<option selected value="'.$row['id'].'">'.T_($row['name']).'</option>'; else echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';
@@ -1631,85 +1651,108 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 						while ($row=$masterquery->fetch())
 						{ 
 							//select name of states
-							$query=$db->query("SELECT display, description, name FROM tstates WHERE id LIKE $row[state]");
-							$resultstate=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `display`,`description`,`name` FROM `tstates` WHERE id=:id");
+							$qry->execute(array('id' => $row['state']));
+							$resultstate=$qry->fetch();
+							$qry->closeCursor();
+							
 							//select name of priority
-							$query=$db->query("SELECT name,color FROM tpriority WHERE id LIKE $row[priority]");
-							$resultpriority=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `name`,`color` FROM `tpriority` WHERE id=:id");
+							$qry->execute(array('id' => $row['priority']));
+							$resultpriority=$qry->fetch();
+							$qry->closeCursor();
+							
 							//select name of user
-							$query=$db->query("SELECT id,phone,lastname,firstname FROM tusers WHERE id LIKE '$row[user]'");
-							$resultuser=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `id`,`phone`,`lastname`,`firstname` FROM `tusers` WHERE id=:id");
+							$qry->execute(array('id' => $row['user']));
+							$resultuser=$qry->fetch();
+							$qry->closeCursor();
+							
 							//select name of user group
-							$query=$db->query("SELECT id,name FROM tgroups WHERE id LIKE '$row[u_group]'");
-							$resultusergroup=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `id`,`name` FROM `tgroups` WHERE id=:id");
+							$qry->execute(array('id' => $row['u_group']));
+							$resultusergroup=$qry->fetch();
+							$qry->closeCursor();
+							
 							//select name of technician
-							$query=$db->query("SELECT id,lastname,firstname FROM tusers WHERE id LIKE '$row[technician]'");
-							$resulttech=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `id`,`lastname`,`firstname` FROM `tusers` WHERE id=:id");
+							$qry->execute(array('id' => $row['technician']));
+							$resulttech=$qry->fetch();
+							$qry->closeCursor();
+							
 							//select name of technician group
-							$query=$db->query("SELECT id,name FROM tgroups WHERE id LIKE '$row[t_group]'");
-							$resulttechgroup=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `id`,`name` FROM `tgroups` WHERE id=:id");
+							$qry->execute(array('id' => $row['t_group']));
+							$resulttechgroup=$qry->fetch();
+							$qry->closeCursor();
+							
 							//select name of category
-							$query=$db->query("SELECT name FROM tcategory WHERE id LIKE '$row[category]'");
-							$resultcat=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `name` FROM `tcategory` WHERE id=:id");
+							$qry->execute(array('id' => $row['category']));
+							$resultcat=$qry->fetch();
+							$qry->closeCursor();
 							if($row['category']==0) {$resultcat['name']=T_($resultcat['name']);}
+							
 							//select name of subcategory
-							$query=$db->query("SELECT name FROM tsubcat WHERE id LIKE '$row[subcat]'");
-							$resultscat=$query->fetch();
-							$query->closeCursor();
-							//select name of asset
-							$query=$db->query("SELECT netbios FROM tassets WHERE id LIKE '$row[asset_id]'");
-							$resultasset=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `name` FROM `tsubcat` WHERE id=:id");
+							$qry->execute(array('id' => $row['subcat']));
+							$resultscat=$qry->fetch();
+							$qry->closeCursor();
 							if($row['subcat']==0) {$resultscat['name']=T_($resultscat['name']);}
 							
-							if ($rright['dashboard_col_criticality']!=0)
+							//select name of asset
+							$qry=$db->prepare("SELECT `netbios` FROM `tassets` WHERE id=:id");
+							$qry->execute(array('id' => $row['asset_id']));
+							$resultasset=$qry->fetch();
+							$qry->closeCursor();
+							
+							if($rright['dashboard_col_criticality']!=0)
 							{
 								//select name of criticality
-								$query=$db->query("SELECT name, color FROM tcriticality WHERE id LIKE $row[criticality]");
-								$resultcriticality=$query->fetch();
-								$query->closeCursor();
+								$qry=$db->prepare("SELECT `name`,`color` FROM `tcriticality` WHERE id=:id");
+								$qry->execute(array('id' => $row['criticality']));
+								$resultcriticality=$qry->fetch();
+								$qry->closeCursor();
 							}
 							if ($rright['dashboard_col_type']!=0) 
 							{
 								//select name of type
-								$query=$db->query("SELECT name FROM ttypes WHERE id LIKE '$row[type]'");
-								$resulttype=$query->fetch();
-								$query->closeCursor();
+								$qry=$db->prepare("SELECT `name` FROM `ttypes` WHERE id=:id");
+								$qry->execute(array('id' => $row['type']));
+								$resulttype=$qry->fetch();
+								$qry->closeCursor();
 							}
 							if($rparameters['ticket_places']!=0) {
 								//select name of place
-								$query=$db->query("SELECT name FROM tplaces WHERE id LIKE '$row[place]'");
-								$resultplace=$query->fetch();
-								$query->closeCursor();
-								$nameplace = $resultplace["name"];
+								$qry=$db->prepare("SELECT `name` FROM `tplaces` WHERE id=:id");
+								$qry->execute(array('id' => $row['place']));
+								$resultplace=$qry->fetch();
+								$qry->closeCursor();
+								$nameplace = $resultplace['name'];
 							}
 							if($rright['dashboard_col_service']!=0) {
 								//select name of service
-								$query=$db->query("SELECT name FROM tservices WHERE id LIKE '$row[u_service]'");
-								$resultservice=$query->fetch();
-								$query->closeCursor();
-								$nameservice = $resultservice["name"];
+								$qry=$db->prepare("SELECT `name` FROM `tservices` WHERE id=:id");
+								$qry->execute(array('id' => $row['u_service']));
+								$resultservice=$qry->fetch();
+								$qry->closeCursor();
+								$nameservice = $resultservice['name'];
 							}
 							if($rright['dashboard_col_user_service']!=0) {
 								//get user service data
-								$query=$db->query("SELECT tservices.name FROM tservices WHERE id LIKE '$row[sender_service]'");
-								$resultsenderservice=$query->fetch();
-								$query->closeCursor();
-								$name_sender_service=$resultsenderservice["name"];
+								$qry=$db->prepare("SELECT `name` FROM `tservices` WHERE id=:id");
+								$qry->execute(array('id' => $row['sender_service']));
+								$resultsenderservice=$qry->fetch();
+								$qry->closeCursor();
+								$name_sender_service=$resultsenderservice['name'];
 							}
 							if($rright['dashboard_col_agency']!=0) {
 								//select name of agency
-								$query=$db->query("SELECT name FROM tagencies WHERE id LIKE '$row[u_agency]'");
-								$resultagency=$query->fetch();
-								$query->closeCursor();
-								$nameagency = $resultagency["name"];
+								$qry=$db->prepare("SELECT `name` FROM `tagencies` WHERE id=:id");
+								$qry->execute(array('id' => $row['u_agency']));
+								$resultagency=$qry->fetch();
+								$qry->closeCursor();
+								$nameagency = $resultagency['name'];
 							}
 
                             //cut first letter of firstname
@@ -1730,10 +1773,11 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 							//display user company name
 							if ($rright['dashboard_col_company'])
 							{
-								$query=$db->query("SELECT name FROM tcompany WHERE id=(SELECT company FROM tusers WHERE id='$row[user]')");
-								$resultusercompany=$query->fetch();
-								$query->closeCursor();
-								$displaycompanyname = $resultusercompany["name"];
+								$qry=$db->prepare("SELECT `name` FROM `tcompany` WHERE id=(SELECT company FROM tusers WHERE id=:user_id)");
+								$qry->execute(array('user_id' => $row['user']));
+								$resultusercompany=$qry->fetch();
+								$qry->closeCursor();
+								$displaycompanyname = $resultusercompany['name'];
 							}
 							//convert SQL date to human readable date
 							$rowdate_hope= date_cnv($row['date_hope']);
@@ -1748,9 +1792,12 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 							if($rright['ticket_date_hope_disp']!=0)
 							{
 								if(!isset($row['date_hope'])) $row['date_hope']= ''; 
-								$date_hope=$row['date_hope'];
-								$querydiff=$db->query("SELECT DATEDIFF(NOW(), '$date_hope') "); 
-								$resultdiff=$querydiff->fetch();
+									
+								$qry=$db->prepare("SELECT DATEDIFF(NOW(), :date_hope) ");
+								$qry->execute(array('date_hope' => $row['date_hope']));
+								$resultdiff=$qry->fetch();
+								$qry->closeCursor();
+								
 								if (($resultdiff[0]>0) && ($row['state']!='3')) $img = '<i title="'.$resultdiff[0].' '.T_('jours de retard').'" class="icon-time icon-animated-vertical red bigger-110"></i>';
 							}
 							
@@ -1772,10 +1819,18 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 								}
 								//colorize ticket id in purple read by technician but no text résolution in selected period
 								if ($row['techread_date']!='0000-00-00 00:00:00' || $row['techread']==1) {
-									$query ='SELECT id FROM tthreads WHERE ticket=\''.$row['id'].'\' AND date BETWEEN \''.$date_start_db.' 00:00:00\' AND \''.$date_end_db.' 23:59:59\' AND type=\'0\' AND author=\''.$row['technician'].'\' ';
-									$query=$db->query($query);
-									$tech_add_res=$query->rowCount();
-									$query->closeCursor();
+									$date_start=$date_start_db.' 00:00:00';
+									$date_end=$date_end_db.' 23:59:59';
+									$qry=$db->prepare("SELECT id FROM tthreads WHERE ticket=:ticket AND date BETWEEN :date_start AND :date_end AND type='0' AND author=:author");
+									$qry->execute(array(
+										'ticket' => $row['id'],
+										'date_start' => $date_start,
+										'date_end' => $date_end,
+										'author' => $row['technician']
+									));
+									$tech_add_res=$qry->rowCount();
+									$qry->closeCursor();
+									
 									if($tech_add_res==0)
 									{
 										if($row['state']==3)
@@ -1790,20 +1845,30 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 								}
 							} else {
 								//ticket open today
-								if (date('Y-m-d')==date('Y-m-d',strtotime($row['date_create']))) {$new_ticket='<i title="'.T_("Ticket ouvert aujourd'hui le").' '.$rowdate_create.'" class="icon-certificate red bigger-110"></i>';} 
+								if(date('Y-m-d')==date('Y-m-d',strtotime($row['date_create']))) {$new_ticket='<i title="'.T_("Ticket ouvert aujourd'hui le").' '.$rowdate_create.'" class="icon-certificate red bigger-110"></i>';} 
 								//colorize ticket id
-								if ($row['techread']==0) {$bgcolor="label-danger"; $comment=T_("Ticket non lu par le technicien en charge");}
-								elseif (date('Y-m-d')==date('Y-m-d',strtotime($row['date_res']))) {$bgcolor="label-success"; $comment=T_("Ticket fermé aujourd'hui");}
-								else {
-									$query=$db->query('SELECT id FROM tthreads WHERE ticket=\''.$row['id'].'\' AND date LIKE \''.date('Y-m-d').'%\' AND type=\'0\' AND author=\''.$row['technician'].'\' ');
-									$today_res=$query->fetch();
-									$query->closeCursor();
-									if ($today_res!=0) {$bgcolor="label-info"; $comment=T_("Couleur par défaut des tickets");}
-									else {
-										$query=$db->query('SELECT id FROM tthreads WHERE ticket=\''.$row['id'].'\' AND type=\'0\' AND author=\''.$row['technician'].'\' ');
-										$tech_add_res=$query->rowCount();
-										$query->closeCursor();
-										if ($tech_add_res==0) {$bgcolor="label-purple"; $comment=T_("Ticket lu par le technicien en charge mais aucun élément de réponse n'a été ajouté");}
+								if ($row['techread']==0 && $row['t_group']==0) 
+								{
+									$bgcolor="label-danger"; $comment=T_("Ticket non lu par le technicien en charge");
+								} elseif(date('Y-m-d')==date('Y-m-d',strtotime($row['date_res']))) 
+								{
+									$bgcolor="label-success"; $comment=T_("Ticket fermé aujourd'hui");
+								} else {
+									$date=date('Y-m-d').'%';
+									$qry=$db->prepare("SELECT id FROM tthreads WHERE ticket=:ticket AND date LIKE :date AND type='0' AND author=:author");
+									$qry->execute(array('ticket' => $row['id'],'date' => $date,'author' => $row['technician']));
+									$today_res=$qry->fetch();
+									$qry->closeCursor();
+									
+									if ($today_res!=0) 
+									{
+										$bgcolor="label-info"; $comment=T_("Couleur par défaut des tickets");
+									} else {
+										$qry=$db->prepare("SELECT `id` FROM `tthreads` WHERE ticket=:ticket AND type='0' AND author=:author");
+										$qry->execute(array('ticket' => $row['id'],'author' => $row['technician']));
+										$tech_add_res=$qry->rowCount();
+										$qry->closeCursor();
+										if($tech_add_res==0) {$bgcolor="label-purple"; $comment=T_("Ticket lu par le technicien en charge mais aucun élément de réponse n'a été ajouté");}
 									}
 								}
 							}
@@ -1984,15 +2049,8 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 	if ($rright['task_checkbox']!=0 && $resultcount[0]>0)
 	{
 		echo '
-			<script>
-				function choice1(select) {
-					if(select.options[select.selectedIndex].value=="delete") {
-						alert(\''.T_('Êtes-vous sur de vouloir supprimer ces tickets ?').'\');
-					}
-				}
-			</script>
 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp	<i class="icon-level-down icon-rotate-180 icon-2x"></i>&nbsp&nbsp&nbsp
-			<select title="'.T_('Effectue des actions pour les tickets sélectionnés dans la liste des tickets').'." name="selectrow" onchange="submit(); choice1(this)">
+			<select title="'.T_('Effectue des actions pour les tickets sélectionnés dans la liste des tickets').'." name="selectrow" onchange="if(confirm(\''.T_('Êtes-vous réaliser cette opération sur les tickets sélectionnés').'?\')) this.form.submit();">
 				<option value="selectall"> > '.T_('Sélectionner tout').'</option>
 				<option selected> > '.T_('Pour la selection').':</option>
 				';
@@ -2000,12 +2058,13 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 					echo '<option value="delete">'.T_('Supprimer').'</option>';
 				}
 				//display list of ticket states
-				$query = $db->query("SELECT id,name FROM tstates ORDER BY name");
-				while ($row=$query->fetch())
+				$qry=$db->prepare("SELECT `id`,`name` FROM `tstates` ORDER BY name");
+				$qry->execute();
+				while($row=$qry->fetch()) 
 				{
 					echo '<option value="'.$row['id'].'">'.T_('Marquer comme').' "'.T_($row['name']).'"</option>';
-				} 
-				$query->closeCursor(); 
+				}
+				$qry->closeCursor();
 				echo '
 			</select>
 		';
@@ -2071,10 +2130,6 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 	if($rparameters['debug']==1){echo "<br /><b><u>DEBUG MODE</u></b><br />&nbsp;&nbsp;&nbsp;&nbsp;[Multi-page links] _GET[cursor]=$_GET[cursor] | current_page=$current_page | total_page=$total_page | min_page=$min_page | max_page=$max_page";}
 	}
 echo '</div>';
-//////////////////////////////////////functions
-//date conversion
-function date_cnv ($date) 
-{return substr($date,8,2) . "/" . substr($date,5,2) . "/" . substr($date,0,4);}
 
 //play notify sound for tech and admin in new ticket case
 if ($rparameters['notify']==1 && ($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0) && $_GET['keywords']=='')
@@ -2112,4 +2167,4 @@ if($_GET['view']=='activity')
 	</script>
 	";
 }
-?>	
+?>

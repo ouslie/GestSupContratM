@@ -6,12 +6,12 @@
 # @parameters : $from, $to, $message, $object
 # @Author : Flox
 # @Create : 21/11/2012
-# @Update : 11/12/2018
-# @Version : 3.1.37
+# @Update : 06/02/2019
+# @Version : 3.1.39
 ################################################################################
 
 //functions
-require_once('./core/crypt.php');
+if(file_exists('./core/functions.php')) {require_once('./core/functions.php');}
 
 require_once("components/PHPMailer/src/PHPMailer.php");
 require_once("components/PHPMailer/src/SMTP.php");

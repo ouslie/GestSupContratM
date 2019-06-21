@@ -5,9 +5,12 @@
 # @Call : /menu.php
 # @Author : Flox
 # @Create : 20/11/2014
-# @Update : 28/12/2018
-# @Version : 3.1.37 p1
+# @Update : 27/02/2019
+# @Version : 3.1.39
 ################################################################################
+
+//call functions
+require_once('./core/functions.php');
 
 //initialize variables 
 if(!isset($asc)) $asc = ''; 
@@ -757,11 +760,13 @@ if($resultcount[0]==1 && $assetkeywords!='')
 								<select style="width:50px" id="state" name="state" onchange="submit()" >	
 									<option value="%"></option>
 									<?php
-										$query = $db->query("SELECT * FROM tassets_state ORDER BY `order`");
-										while ($row=$query->fetch())  
+										$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_state` ORDER BY `order`");
+										$qry->execute();
+										while($row=$qry->fetch()) 
 										{
-											if ($_POST['state']==$row['id']) {echo '<option selected value="'.$row['id'].'">'.T_($row['name']).'</option>';} else {echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';}
-										} 
+											if($_POST['state']==$row['id']) {echo '<option selected value="'.$row['id'].'">'.T_($row['name']).'</option>';} else {echo '<option value="'.$row['id'].'">'.T_($row['name']).'</option>';}
+										}
+										$qry->closeCursor();
 									?>
 								</select>
 							</td>
@@ -774,36 +779,42 @@ if($resultcount[0]==1 && $assetkeywords!='')
 						while ($row=$masterquery->fetch())
 						{ 
 							//get user name
-							$query=$db->query("SELECT * FROM tusers WHERE id=$row[user]"); 
-							$ruser=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `id`,`firstname`,`lastname` FROM `tusers` WHERE id=:id");
+							$qry->execute(array('id' => $row['user']));
+							$ruser=$qry->fetch();
+							$qry->closeCursor();
 							
 							//get type name
-							$query=$db->query("SELECT * FROM tassets_type WHERE id=$row[type]"); 
-							$rtype=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_type` WHERE id=:id");
+							$qry->execute(array('id' => $row['type']));
+							$rtype=$qry->fetch();
+							$qry->closeCursor();
 							
 							//get model name
-							$query=$db->query("SELECT * FROM tassets_model WHERE id=$row[model]"); 
-							$rmodel=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `name` FROM `tassets_model` WHERE id=:id");
+							$qry->execute(array('id' => $row['model']));
+							$rmodel=$qry->fetch();
+							$qry->closeCursor();
 							
 							//get state name
-							$query=$db->query("SELECT * FROM tassets_state WHERE id LIKE $row[state]"); 
-							$rstate=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `name`,`display` FROM `tassets_state` WHERE id=:id");
+							$qry->execute(array('id' => $row['state']));
+							$rstate=$qry->fetch();
+							$qry->closeCursor();
 							
 							//get department name
-							$query=$db->query("SELECT * FROM tservices WHERE id LIKE $row[department]"); 
-							$rdepartment=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `name` FROM `tservices` WHERE id=:id");
+							$qry->execute(array('id' => $row['department']));
+							$rdepartment=$qry->fetch();
+							$qry->closeCursor();
 							
 							if($rright['asset_list_col_location']!=0 && $_POST['virtual']!=1)
 							{
 								//get location name
-								$query=$db->query("SELECT name FROM tassets_location WHERE id LIKE $row[location]"); 
-								$rlocation=$query->fetch();
-								$query->closeCursor();
+								$qry=$db->prepare("SELECT `name` FROM `tassets_location` WHERE id=:id");
+								$qry->execute(array('id' => $row['location']));
+								$rlocation=$qry->fetch();
+								$qry->closeCursor();
 							}
 
 							$rowdate= date_cnv($row['date_stock']);
@@ -826,11 +837,11 @@ if($resultcount[0]==1 && $assetkeywords!='')
 							}	
 							
 							//check if asset have been discover by import csv file
-							$query=$db->query("SELECT id FROM tassets WHERE discover_import_csv='1'"); 
-							$discover_import_csv=$query->fetch();
-							$query->closeCursor();
+							$qry=$db->prepare("SELECT `id` FROM `tassets` WHERE discover_import_csv='1'");
+							$qry->execute();
+							$discover_import_csv=$qry->fetch();
+							$qry->closeCursor();
 							if($discover_import_csv) {
-								
 								//generate network discover flag
 								if($row['discover_net_scan']==1 && $row['discover_import_csv']==0)
 								{
@@ -859,11 +870,13 @@ if($resultcount[0]==1 && $assetkeywords!='')
 											<a class=\"td\" href=\"$asset_link\">
 											";
 											//find all ip address from iface table
-											$query2 = $db->query("SELECT ip FROM `tassets_iface` WHERE asset_id=$row[id] AND ip!='' AND disable=0 ORDER BY ip ASC");
-											while ($row2 = $query2->fetch()) {
+											$qry2=$db->prepare("SELECT `ip` FROM `tassets_iface` WHERE asset_id=:asset_id AND ip!='' AND disable=0 ORDER BY ip ASC");
+											$qry2->execute(array('asset_id' => $row['id']));
+											while($row2=$qry2->fetch()) 
+											{
 												echo $row2['ip'].'<br />';
-											} 
-											$query2->closeCursor(); 
+											}
+											$qry2->closeCursor();
 											echo "
 											</a>
 										</td>
@@ -1010,9 +1023,4 @@ if  ($resultcount[0]>$rparameters['maxline'])
 ';
 if($rparameters['debug']==1){echo "<br /><b><u>DEBUG MODE</u></b> [Multi-page links] _GET[cursor]=$_GET[cursor] | current_page=$current_page | total_page=$total_page | min_page=$min_page | max_page=$max_page";}
 }
-
-//////////////////////////////////////functions
-//date conversion
-function date_cnv ($date) 
-{return substr($date,8,2) . "/" . substr($date,5,2) . "/" . substr($date,0,4);}
 ?>

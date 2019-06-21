@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 12/04/2017
-# @Update : 21/09/2018
-# @Version : 3.1.35
+# @Update : 06/02/2019
+# @Version : 3.1.39 p1
 ####################################################################################
 
 if(!isset($ldap_query)) $ldap_query = '';
@@ -33,7 +33,7 @@ if(!isset($rparameters['ldap_user']))
 {
 	//database connection
 	require_once(__DIR__."/../connect.php");
-	require_once(__DIR__."/../core/crypt.php");
+	require_once(__DIR__."/../core/functions.php");
 	
 	//switch SQL MODE to allow empty values with lastest version of MySQL
 	$db->exec('SET sql_mode = ""');
@@ -75,7 +75,7 @@ if(!isset($rparameters['ldap_user']))
 	}
 } else {
 	//no external execution
-	require_once('./core/crypt.php');
+	require_once('./core/functions.php');
 	$logfileurl='./log/ldap_services_'.$rparameters['server_private_key'].'.log';
 }
 
@@ -87,8 +87,14 @@ if (!file_exists($logfileurl)) {file_put_contents($logfileurl, "");};
 $user=$rparameters['ldap_user']; 
 if(preg_match('/gs_en/',$rparameters['ldap_password'])) {$rparameters['ldap_password']=gs_crypt($rparameters['ldap_password'], 'd' , $rparameters['server_private_key']);}
 $password=$rparameters['ldap_password']; 
-$hostname=$rparameters['ldap_server'];
 $domain=$rparameters['ldap_domain'];
+if($rparameters['ldap_port']==636) {
+	putenv('LDAPTLS_REQCERT=never') or die('Failed to setup the env'); //enable AD self sign cert
+	$hostname='ldaps://'.$rparameters['ldap_server'];
+} else {
+	$hostname=$rparameters['ldap_server'];
+}
+
 
 //Generate DC Chain from domain parameter
 $dcpart=explode(".",$domain);

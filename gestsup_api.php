@@ -1,11 +1,11 @@
 <?php
 ################################################################################
 # @Name : gestsup_api.php 
-# @Desc : Display short ticket declaration interface to integer in other website (ex: intranet)
+# @Description : Display short ticket declaration interface to integer in other website (ex: intranet)
 # @Author : Flox
 # @Create : 29/10/2013
-# @Update : 11/11/2015
-# @Version : 3.1.0
+# @Update : 05/03/2019
+# @Version : 3.1.39 p1
 ################################################################################
 
 
@@ -29,22 +29,39 @@ if ($_POST['send']) //database input
 {
 	$date=date('Y-m-d H:m:s');
 	
-	//escape special char in sql query 
-	$_POST['description'] = $db->quote($_POST['description']);
-	$_POST['title'] = $db->quote($_POST['title']);
+	//escape special char
+	$_POST['description'] = strip_tags($_POST['description']);
+	$_POST['title'] = strip_tags($_POST['title']);
 	
-	$db->exec("INSERT INTO tincidents (user,title,description,state,date_create,creator,criticality,techread) VALUES ('$_POST[user]',$_POST[title],$_POST[description],'5','$date','$_POST[user]','4','0')");
+	$qry=$db->prepare("
+	INSERT INTO `tincidents` 
+	(`user`,`title`,`description`,`state`,`date_create`,`creator`,`criticality`,`techread`) 
+	VALUES 
+	(:user,:title,:description,:state,:date_create,:creator,:criticality,:techread)");
+	$qry->execute(array(
+		'user' => $_POST['user'],
+		'title' => $_POST['title'],
+		'description' => $_POST['description'],
+		'state' => 5,
+		'date_create' => $date,
+		'creator' => $_POST['user'],
+		'criticality' => 4,
+		'techread' => 0
+		));
 	
 	//load parameters table
-	$qparameters = $db->query("SELECT * FROM `tparameters`"); 
-	$rparameters= $qparameters->fetch();
-	$qparameters->closecursor();
+	$qry=$db->prepare("SELECT * FROM `tparameters`");
+	$qry->execute();
+	$rparameters=$qry->fetch();
+	$qry->closeCursor();
 	
 	//find incident number  
-	$query = $db->query("SELECT MAX(id) FROM tincidents");
-	$row=$query->fetch();
-	$db->closecursor();
+	$qry=$db->prepare("SELECT MAX(id) FROM tincidents");
+	$qry->execute();
+	$row=$qry->fetch();
+	$qry->closeCursor();
 	$number =$row[0];
+	
 	echo '
 	<font color="green">
 		La demande <b>#'.$number.'</b> à bien été prise en compte.<br />
@@ -62,12 +79,13 @@ else //display form
 				<td>
 					<select name="user" />
 						';
-						$q = $db->query("SELECT * FROM `tusers` WHERE disable='0' ORDER BY lastname"); 
-						while ($row=$q->fetch())
+						$qry=$db->prepare("SELECT `id`,`lastname`,`firstname` FROM `tusers` WHERE disable='0' ORDER BY lastname");
+						$qry->execute();
+						while($row=$qry->fetch()) 
 						{
 							echo '<option value="'.$row['id'].'">'.$row['lastname'].' '.$row['firstname'].'</option>';
 						}
-						$q->closecursor();
+						$qry->closeCursor();
 						echo '
 					</select>
 				</td>

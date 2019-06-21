@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 15/03/2011
-# @Update : 24/12/2018
-# @Version : 3.1.37
+# @Update : 26/03/2019
+# @Version : 3.1.40
 ################################################################################
 
 //initialize variables 
@@ -320,7 +320,7 @@ if ($_GET['action']=="add")
 			<li '; if($_GET['table']=='tsubcat') {echo 'class="active"';} echo' >
 				<a href="./index.php?page=admin&amp;subpage=list&amp;table=tsubcat">
 					<i class="blue icon-table bigger-110"></i>
-					'.T_('Sous-catégorie').'
+					'.T_('Sous-catégories').'
 				</a>
 			</li>
 			';
@@ -470,7 +470,7 @@ if ($_GET['action']=="add")
 					<li '; if($_GET['table']=='tassets_location') {echo 'class="active"';} echo'>
             			<a href="./index.php?page=admin&amp;subpage=list&amp;table=tassets_location">
             				<i class="blue icon-table bigger-110"></i>
-            				'.T_('Localisation des équipements').'
+            				'.T_('Localisations des équipements').'
             			</a>
             		</li>
 					';
@@ -480,7 +480,7 @@ if ($_GET['action']=="add")
 						<li '; if($_GET['table']=='tassets_iface_role') {echo 'class="active"';} echo'>
 							<a href="./index.php?page=admin&amp;subpage=list&amp;table=tassets_iface_role">
 								<i class="blue icon-table bigger-110"></i>
-								'.T_('Rôle des interfaces IP des équipements').'
+								'.T_('Rôles des interfaces IP des équipements').'
 							</a>
 						</li>
 						<li '; if($_GET['table']=='tassets_network') {echo 'class="active"';} echo'>
@@ -504,7 +504,7 @@ if ($_GET['action']=="add")
 			//check right before display list
 			if (
 				$rright['admin']!='0' ||
-				($_GET['table']=='tcategory' && $rright['admin_lists_category']!='0' && $cnt_service!=0) ||
+				($_GET['table']=='tcategory' && $rright['admin_lists_category']!='0') ||
 				($_GET['table']=='tsubcat' && $rright['admin_lists_subcat']!='0') ||
 				($_GET['table']=='tcriticality' && $rright['admin_lists_criticality']!='0') ||
 				($_GET['table']=='tpriority' && $rright['admin_lists_priority']!='0') ||
@@ -1104,7 +1104,6 @@ if ($_GET['action']=="add")
 													{
 														echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';
 													}
-													$query->closeCursor();
 													echo '
 												</select>
 												<div class="space-4"></div>
@@ -1406,7 +1405,8 @@ if ($_GET['action']=="add")
 					($_GET['table']=='tcriticality' && $rright['admin_lists_criticality']!='0') ||
 					($_GET['table']=='tpriority' && $rright['admin_lists_priority']!='0') ||
 					($_GET['table']=='ttypes' && $rright['admin_lists_type']!='0')
-				)
+				) ||
+				($rright['admin_groups']!=0 && $rright['dashboard_service_only']==0)
 			)
 			{
 				echo '
@@ -1593,7 +1593,7 @@ if ($_GET['action']=="add")
 			echo '<b><div style="color:#d15b47">#d15b47</div></b>';
 			echo '<br /><i class="icon-question-sign blue bigger-110"></i> '.T_("Le numéro permet de sélectionner l'ordre de trie");
 		}
-		if($_GET['table']=='tstates' && ($_GET['action']=='disp_edit' || $_GET['action']=='disp_add'))
+		if(($_GET['table']=='tstates' || $_GET['table']=='tassets_state')&& ($_GET['action']=='disp_edit' || $_GET['action']=='disp_add'))
 		{
 			echo '<u>'.T_('Liste des styles par défaut').':</u><br />';
 			echo '<span class="label label-sm label-success arrowed arrowed-right arrowed-left">label label-sm label-success arrowed arrowed-right arrowed-left</span><br />';

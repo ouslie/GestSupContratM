@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 25/01/2016
-# @Update : 05/12/2018
-# @Version : 3.1.37
+# @Update : 05/03/2019
+# @Version : 3.1.40
 ################################################################################
 
 if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> where_service='.$where_service.' where_agency='.$where_agency.' POST_service='.$_POST['service'].' POST_agency='.$_POST['agency'].'';}
@@ -69,15 +69,24 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 			//case limit user service
 			if ($rparameters['user_limit_service']==1 && $rright['admin']==0)
 			{
-				$query = $db->query("SELECT id,name FROM tservices WHERE id IN (SELECT service_id FROM tusers_services WHERE user_id='$_SESSION[user_id]') AND disable=0 ORDER BY name");
+				$qry=$db->prepare("SELECT id,name FROM tservices WHERE id IN (SELECT service_id FROM tusers_services WHERE user_id=:user_id) AND disable=0 ORDER BY name");
+				$qry->execute(array('user_id' => $_SESSION['user_id']));
+				while($row=$qry->fetch()) 
+				{
+					if ($row['id']==$_POST['service']) {$selected2='selected';} else {$selected2='';} 
+					echo '<option value="'.$row['id'].'" '.$selected2.'>'.$row['name'].'</option>';
+				}
+				$qry->closeCursor();
 			} else {
-				$query = $db->query("SELECT id,name FROM tservices WHERE disable=0 ORDER BY name");
+				$qry=$db->prepare("SELECT id,name FROM tservices WHERE disable=0 ORDER BY name");
+				$qry->execute();
+				while($row=$qry->fetch()) 
+				{
+					if ($row['id']==$_POST['service']) {$selected2='selected';} else {$selected2='';} 
+					echo '<option value="'.$row['id'].'" '.$selected2.'>'.$row['name'].'</option>';
+				}
+				$qry->closeCursor();
 			}
-			while ($row=$query->fetch()) {
-				if ($row['id']==$_POST['service']) {$selected2='selected';} else {$selected2='';} 
-				echo '<option value="'.$row['id'].'" '.$selected2.'>'.$row['name'].'</option>';
-			} 
-			$query->closeCursor();
 			?>
 		</select>
 		<?php
@@ -86,12 +95,14 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 			echo ' 
 			<select style="width:160px"name="agency" onchange="submit()">';
 				if ($_POST['agency']=='%') {echo '<option value="%" selected>'.T_('Toutes les agences').'</option>';} else {echo '<option value="%" >'.T_('Toutes les agences').'</option>';}											
-				$query = $db->query("SELECT id,name FROM tagencies WHERE disable=0 AND id!=0 ORDER BY name");				
-				while ($row=$query->fetch()) {
+				$qry=$db->prepare("SELECT `id`,`name` FROM `tagencies` WHERE disable=0 AND id!=0 ORDER BY name");
+				$qry->execute();
+				while($row=$qry->fetch()) 
+				{
 					if ($row['id']==$_POST['agency']) {$selected2='selected';} else {$selected2='';}
 					echo '<option value="'.$row['id'].'" '.$selected2.'>'.$row['name'].'</option>'; 
-				} 
-				$query->closeCursor();
+				}
+				$qry->closeCursor();
 				echo'	
 			</select>';
 		}
@@ -100,12 +111,14 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 			echo ' 
 			<select style="width:160px"name="type" onchange="submit()">';
 				if ($_POST['type']=='%') {echo '<option value="%" selected>'.T_('Tous les types').'</option>';} else {echo '<option value="%" >'.T_('Tous les type').'</option>';}											
-				$query = $db->query("SELECT id,name FROM ttypes ORDER BY name");				
-				while ($row=$query->fetch()) {
+				$qry=$db->prepare("SELECT `id`,`name` FROM `ttypes` ORDER BY name");
+				$qry->execute();
+				while($row=$qry->fetch()) 
+				{
 					if ($row['id']==$_POST['type']) {$selected2='selected';} else {$selected2='';}
 					echo '<option value="'.$row['id'].'" '.$selected2.'>'.$row['name'].'</option>'; 
-				} 
-				$query->closeCursor();
+				}
+				$qry->closeCursor();
 				echo'	
 			</select>';
 		}
@@ -113,19 +126,26 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 		<select style="width:160px"name="criticality" onchange="submit()">
 			<?php
 			if ($_POST['criticality']=='%') {echo '<option value="%" selected>'.T_('Toutes les criticités').'</option>';} else {echo '<option value="%" >'.T_('Toutes les criticités').'</option>';}																					
-			//case limit user service
-			if ($rparameters['user_limit_service']==1 && $rright['admin']==0)
+			if ($rparameters['user_limit_service']==1 && $rright['admin']==0) //case limit user service
 			{
-				$query="SELECT id,name FROM tcriticality WHERE service IN (SELECT service_id FROM tusers_services WHERE user_id='$_SESSION[user_id]') ORDER BY number";
-				$query = $db->query($query);
-			} else {
-				$query = $db->query("SELECT id,name FROM tcriticality ORDER BY number");
+				$qry=$db->prepare("SELECT id,name FROM tcriticality WHERE service IN (SELECT service_id FROM tusers_services WHERE user_id=:user_id) ORDER BY number");
+				$qry->execute(array('user_id' => $_SESSION['user_id']));
+				while($row=$qry->fetch()) 
+				{
+					if ($row['id'] == $_POST['criticality']) {$selected2='selected';} else {$selected2='';}
+					echo '<option value="'.$row['id'].'" '.$selected2.'>'.$row['name'].'</option>'; 
+				}
+				$qry->closeCursor();
+			} else { //case no limit user service
+				$qry=$db->prepare("SELECT id,name FROM tcriticality ORDER BY number");
+				$qry->execute(array('user_id' => $_SESSION['user_id']));
+				while($row=$qry->fetch()) 
+				{
+					if ($row['id'] == $_POST['criticality']) {$selected2='selected';} else {$selected2='';}
+					echo '<option value="'.$row['id'].'" '.$selected2.'>'.$row['name'].'</option>'; 
+				}
+				$qry->closeCursor();
 			}			
-			while ($row=$query->fetch()) {
-				if ($row['id'] == $_POST['criticality']) {$selected2='selected';} else {$selected2='';}
-				echo '<option value="'.$row['id'].'" '.$selected2.'>'.$row['name'].'</option>'; 
-			} 
-			$query->closeCursor();
 			?>
 		</select> 
 		<select style="width:160px"name="category" onchange="submit()">
@@ -134,16 +154,24 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 			//case limit user service
 			if ($rparameters['user_limit_service']==1 && $rright['admin']==0)
 			{
-				echo "SELECT tcategory.id,tcategory.name FROM tcategory,tincidents WHERE tcategory.id=tincidents.category $where_service ORDER BY tcategory.name";
-				$query = $db->query("SELECT id,name FROM tcategory WHERE service IN (SELECT service_id FROM tusers_services WHERE user_id='$_SESSION[user_id]') ORDER BY tcategory.name");
+				$qry=$db->prepare("SELECT id,name FROM tcategory WHERE service IN (SELECT service_id FROM tusers_services WHERE user_id=:user_id) ORDER BY tcategory.name");
+				$qry->execute(array('user_id' => $_SESSION['user_id']));
+				while($row=$qry->fetch()) 
+				{
+					if ($row['id'] == $_POST['category']) {$selected2='selected';} else {$selected2='';}
+					echo '<option value="'.$row['id'].'" '.$selected2.'>'.$row['name'].'</option>'; 
+				}
+				$qry->closeCursor();
 			} else {
-				$query = $db->query("SELECT id,name FROM tcategory ORDER BY name");
+				$qry=$db->prepare("SELECT id,name FROM tcategory ORDER BY tcategory.name");
+				$qry->execute(array('user_id' => $_SESSION['user_id']));
+				while($row=$qry->fetch()) 
+				{
+					if ($row['id'] == $_POST['category']) {$selected2='selected';} else {$selected2='';}
+					echo '<option value="'.$row['id'].'" '.$selected2.'>'.$row['name'].'</option>'; 
+				}
+				$qry->closeCursor();
 			}				
-			while ($row=$query->fetch()) {
-				if ($row['id'] == $_POST['category']) {$selected2='selected';} else {$selected2='';}
-				echo '<option value="'.$row['id'].'" '.$selected2.'>'.$row['name'].'</option>'; 
-			} 
-			$query->closeCursor();																			
 			?>
 		</select> 
 		<select style="width:160px"name="month" onchange="submit()">
@@ -164,14 +192,16 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 		<select style="width:160px"name="year" onchange="submit()">
 			<?php
 			echo '<option value="%"'; if ($_POST['year'] == '%') {echo 'selected';} echo ' >'.T_('Toutes les années').'</option>';
-			$q1= $db->query("SELECT distinct year(date_create) as year FROM `tincidents` WHERE date_create not like '0000-00-00 00:00:00' ORDER BY year(date_create)");
-			while ($row=$q1->fetch()) 
-			{ 
-				$selected=0;
-				if ($_POST['year']==$row['year']) $selected="selected";  
-				echo "<option value=$row[year] $selected>$row[year]</option>";
+			
+			$qry=$db->prepare("SELECT DISTINCT YEAR(date_create) AS year FROM `tincidents` WHERE date_create not like '0000-00-00 00:00:00' ORDER BY YEAR(date_create)");
+			$qry->execute();
+			while($row=$qry->fetch()) 
+			{
+				$selected='';
+				if ($_POST['year']==$row['year']) {$selected="selected";}
+				echo '<option value="'.$row['year'].'" '.$selected.' >'.$row['year'].'</option>';
 			}
-			$q1->closeCursor();
+			$qry->closeCursor();
 			?>
 		</select>
 	</center>
@@ -196,17 +226,19 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 	require('./stats/pie_cat.php');
 	echo "<br />";
 	//display pie service if exist services
-	$qservice = $db->query("SELECT count(*) FROM tservices WHERE id!=0");
-	$rservice=$qservice->fetch();
-	$query->closeCursor(); 
-	if ($rservice[0]>0)
+	$qry=$db->prepare("SELECT COUNT(id) FROM `tservices` WHERE id!=0");
+	$qry->execute();
+	$row=$qry->fetch();
+	$qry->closeCursor();
+	
+	if($row[0]>0)
 	{
 		echo "<a name=\"chart7\"></a>";
 		echo "<hr />";
 		require('./stats/pie_services.php');
 		echo "<br />";
 	}
-	if ($company_filter==1 && $rparameters['user_advanced']==1)
+	if($company_filter==1 && $rparameters['user_advanced']==1)
 	{
 		echo "<a name=\"chart8\"></a>";
 		echo "<hr />";

@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 06/09/2013
-# @Update : 23/08/2018
-# @Version : 3.1.37 p2
+# @Update : 01/03/2019
+# @Version : 3.1.39
 ################################################################################
 
 //initialize variables 
@@ -26,7 +26,7 @@ if(!isset($state)) $state = '';
 	</script>
 	<div class="sidebar-shortcuts" id="sidebar-shortcuts">
 		<?php
-		if (($rright['side_open_ticket']!=0) && (($_GET['page']!='asset_list') || ($rright['side_asset_create']==0)) && ($_GET['page']!='asset')  && ($_GET['page']!='procedure'))
+		if (($rright['side_open_ticket']!=0) && (($_GET['page']!='asset_list') || ($rright['side_asset_create']==0)) && ($_GET['page']!='asset')  && ($_GET['page']!='procedure') && ($_GET['page']!='project'))
 		{
 			if ($ruser['default_ticket_state']!='')
 			{
@@ -101,6 +101,22 @@ if(!isset($state)) $state = '';
 			</div>
 			';
 		}
+		if (($rright['project']!=0) && ($_GET['page']=='project'))
+		{
+			echo'
+			<div class="sidebar-shortcuts-large" id="sidebar-shortcuts-large">
+					<a href="index.php?page=project&amp;action=add">
+						<button style="width:170px" accesskey="n" title="'.T_('Ajoute un nouveau projet').' (SHIFT+ALT+n)" class="btn btn-sm btn-success">
+							&nbsp;
+							<i class="icon-plus bigger-120"></i> '.T_('Nouveau projet').'
+						</button>
+					</a>
+			</div>
+			<div class="sidebar-shortcuts-mini" id="sidebar-shortcuts-mini">
+				<a href="index.php?page=project&amp;action=add"><span class="btn btn-success"></span></a>
+			</div>
+			';
+		}
 		?>
 	</div>
 	<!--#sidebar-shortcuts-->
@@ -165,8 +181,9 @@ if(!isset($state)) $state = '';
 						
 					}
 					//for each state display in sub-menu
-					$query = $db->query("SELECT * FROM `tstates` WHERE id NOT LIKE 5 ORDER BY number");
-					while ($row = $query->fetch())
+					$qry=$db->prepare("SELECT `id`,`description`,`name` FROM `tstates` WHERE id!=5 ORDER BY number");
+					$qry->execute();
+					while($row=$qry->fetch()) 
 					{
 						$query2=$db->query("SELECT count(id) FROM `tincidents` WHERE $where_profil $where_service_your $where_agency_your AND state='$row[id]' AND disable='0'");
 						$cnt=$query2->fetch();
@@ -181,22 +198,26 @@ if(!isset($state)) $state = '';
 							</a>
 						</li>';
 					}
-					$query->closeCursor();
+					$qry->closeCursor();
+					
 					//display technician group ticket
 					if ($rright['side_your_tech_group']!=0 && ($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profile_id']==3) )
 					{
 						//check if technician have group
-						$query=$db->query("SELECT `group` FROM `tgroups_assoc` WHERE user='$uid'");
-						while ($row = $query->fetch())
+						$qry=$db->prepare("SELECT `group` FROM `tgroups_assoc` WHERE user=:user");
+						$qry->execute(array('user' => $_SESSION['user_id']));
+						while($row=$qry->fetch()) 
 						{
 							//count number of tickets present in this group
-							$query2=$db->query("SELECT count(id) FROM `tincidents` WHERE t_group=$row[group] AND disable='0' ");
-							$cntgrp=$query2->fetch();
-							$query2->closeCursor();  
+							$qry2=$db->prepare("SELECT COUNT(id) FROM `tincidents` WHERE t_group=:t_group AND disable='0'");
+							$qry2->execute(array('t_group' => $row['group']));
+							$cntgrp=$qry2->fetch();
+							$qry2->closeCursor();
 							//get group name
-							$query2=$db->query("SELECT `name` FROM `tgroups` WHERE id='$row[group]'");
-							$group_name=$query2->fetch();
-							$query2->closeCursor(); 
+							$qry2=$db->prepare("SELECT `name` FROM `tgroups` WHERE id=:id");
+							$qry2->execute(array('id' => $row['group']));
+							$group_name=$qry2->fetch();
+							$qry2->closeCursor();
 							if ($row['group']==$_GET['techgroup']) echo '<li class="active">'; else echo '<li>'; echo '
 								<a href="./index.php?page=dashboard&amp;userid='.$_SESSION['user_id'].'&amp;techgroup='.$row['group'].'">
 									<i class="icon-double-angle-right"></i>
@@ -204,7 +225,7 @@ if(!isset($state)) $state = '';
 								</a>
 							</li>';
 						}
-						$query->closeCursor(); 
+						$qry->closeCursor();
 					}
 					echo "
 				</ul>
@@ -216,13 +237,17 @@ if(!isset($state)) $state = '';
 		if ($rparameters['user_company_view']==1 && $rright['side_company']!=0 && $ruser['company']!=0)
 		{
 			//count all company tickets
-			$query=$db->query("SELECT count(*) FROM `tincidents`,`tusers` WHERE tincidents.user=tusers.id AND tincidents.disable='0' AND tusers.company='$ruser[company]' AND tincidents.disable='0'");
-			$cntall=$query->fetch();
-			$query->closeCursor(); 
+			$qry=$db->prepare("SELECT COUNT(tincidents.id) FROM `tincidents`,`tusers` WHERE tincidents.user=tusers.id AND tincidents.disable='0' AND tusers.company=:company AND tincidents.disable='0'");
+			$qry->execute(array('company' => $ruser['company']));
+			$cntall=$qry->fetch();
+			$qry->closeCursor();
+			
 			//count all ticket not attribute of current user company
-			$query=$db->query("SELECT count(*) FROM tincidents, tusers WHERE tincidents.user=tusers.id AND tusers.company=$ruser[company] AND technician='0' AND t_group='0' AND tincidents.disable='0'");
-			$cnt6=$query->fetch();
-			$query->closeCursor(); 
+			$qry=$db->prepare("SELECT COUNT(tincidents.id) FROM tincidents, tusers WHERE tincidents.user=tusers.id AND tusers.company=:company AND technician='0' AND t_group='0' AND tincidents.disable='0'");
+			$qry->execute(array('company' => $ruser['company']));
+			$cnt6=$qry->fetch();
+			$qry->closeCursor();
+			
 			if ($_GET['page']=='dashboard' && ($_GET['userid']=='%' || $_GET['userid']=='0') && $_GET['viewid']=='' && $_GET['companyview']!='') echo '<li  class="active">'; else echo '<li>'; echo '
 				<a href="./index.php?page=dashboard&amp;userid=%25&amp;state=%25" class="dropdown-toggle">
 					<i class="icon-ticket"></i>
@@ -241,9 +266,11 @@ if(!isset($state)) $state = '';
 					 //display meta  states link
 					if ($rparameters['meta_state']==1  && $rright['side_all_meta']!=0)
 					{
-						$query=$db->query("SELECT count(*) FROM `tincidents`,`tusers` WHERE tincidents.user=tusers.id AND tincidents.disable='0' AND (tincidents.state=1 OR tincidents.state=2 OR tincidents.state=6)AND tusers.company='$ruser[company]'");
-						$cntmetaall=$query->fetch();
-						$query->closeCursor(); 
+						$qry=$db->prepare("SELECT COUNT(tincidents.id) FROM `tincidents`,`tusers` WHERE tincidents.user=tusers.id AND tincidents.disable='0' AND (tincidents.state=1 OR tincidents.state=2 OR tincidents.state=6) AND tusers.company=:company");
+						$qry->execute(array('company' => $ruser['company']));
+						$cntmetaall=$qry->fetch();
+						$qry->closeCursor();
+						
     					if ($_GET['page']=='dashboard' && $_GET['userid']=='%' && $_GET['state']=='meta') {echo '<li class="active">';} else {echo "<li>";} echo "
     						<a title=\"Meta-état regroupant les états: Attente de PEC, En cours, et Attente de retour.\" href=\"./index.php?page=dashboard&amp;userid=%25&amp;state=meta&amp;ticket=%25&amp;technician=%25&amp;user=%25&amp;category=%25&amp;subcat=%25&amp;title=%25&amp;date_create=%25&amp;priority=%25&amp;criticality=%25&amp;companyview=1\">
     							<i class=\"icon-double-angle-right\"></i>
@@ -252,12 +279,14 @@ if(!isset($state)) $state = '';
     					</li>";
 					}	
 					//for each state display in sub-menu
-					$query = $db->query("SELECT * FROM `tstates` WHERE id not like 5 ORDER BY number");
-					while ($row = $query->fetch())
+					$qry=$db->prepare("SELECT `id`,`name`,`description` FROM `tstates` WHERE id!=5 ORDER BY number");
+					$qry->execute();
+					while($row=$qry->fetch()) 
 					{
-						$query2=$db->query("SELECT count(*) FROM `tincidents`,`tusers`  WHERE tincidents.user=tusers.id AND state LIKE '$row[id]' AND tusers.company='$ruser[company]' AND tincidents.disable='0'");
-						$cnt=$query2->fetch();
-						$query2->closeCursor(); 
+						$qry2=$db->prepare("SELECT COUNT(tincidents.id) FROM `tincidents`,`tusers` WHERE tincidents.user=tusers.id AND state LIKE :state AND tusers.company=:company AND tincidents.disable='0'");
+						$qry2->execute(array('state' => $row['id'],'company' => $ruser['company']));
+						$cnt=$qry2->fetch();
+						$qry2->closeCursor();
 						echo '
 						<li';  
 						if ($_GET['page']=='dashboard' && $_GET['userid']=='%' && $_GET['state']==$row['id']) echo ' class="active"';
@@ -268,14 +297,13 @@ if(!isset($state)) $state = '';
 							</a>
 						</li>';
 					}
-					$query->closeCursor(); 
+					$qry->closeCursor();
 					echo'
 				</ul>
 			</li>';
 		}
 		//display side menu for all tickets of current connected user
-		//if (($rright['side_all']!=0 && $rparameters['user_limit_service']==0) || ($rright['side_all']!=0 && $rparameters['user_limit_service']==1 && ($cnt_service!=0 || $cnt_agency!=0)) || ($rright['side_all']!=0 && $rparameters['user_limit_service']==1 && $rright['admin'])) //not display all tickets for supervisor without service or agency, whithout user_limit_service tech must view all tickets
-		if (
+		if(
 			($rright['side_all']!=0 && $rparameters['user_limit_service']==0) || 
 			($rright['side_all']!=0 && $rparameters['user_limit_service']==1 && ($cnt_service!=0 || $cnt_agency!=0)) || 
 			($rright['side_all']!=0 && $rparameters['user_limit_service']==1 && $rright['admin']) || 
@@ -328,8 +356,9 @@ if(!isset($state)) $state = '';
     					</li>';
 					}
 					//for each state display in sub-menu
-					$query = $db->query("SELECT * FROM `tstates` WHERE id not like 5 ORDER BY number");
-					while ($row = $query->fetch())
+					$qry=$db->prepare("SELECT `id`,`name`,`description` FROM `tstates` WHERE id!=5 ORDER BY number");
+					$qry->execute();
+					while($row=$qry->fetch()) 
 					{
 						$query2=$db->query("SELECT count(id) FROM `tincidents` WHERE state='$row[id]' $where_agency $where_service $parenthese2 AND disable='0'");
 						$cnt=$query2->fetch();
@@ -344,7 +373,7 @@ if(!isset($state)) $state = '';
 							</a>
 						</li>';
 					}
-					$query->closeCursor(); 
+					$qry->closeCursor();
 					echo	'
 				</ul>
 			</li>';
@@ -352,10 +381,11 @@ if(!isset($state)) $state = '';
 		if ($rright['side_view']!=0)
 		{
 			//if exist view for connected user then display link view
-			$query=$db->query("SELECT * FROM `tviews` WHERE uid='$_SESSION[user_id]' ORDER BY 'name' ");
-			$row=$query->fetch();
-			$query->closeCursor();		
-			if ($row[0]!='')
+			$qry=$db->prepare("SELECT `id` FROM `tviews` WHERE uid=:uid ORDER BY name");
+			$qry->execute(array('uid' => $_SESSION['user_id']));
+			$row=$qry->fetch();
+			$qry->closeCursor();
+			if($row[0])
 			{
 				if($_GET['viewid']!='' || $_GET['page']=='view') echo '<li class="active">'; else echo '<li>'; echo '
 					<a href="./index.php?page=dashboard&viewid=1" class="dropdown-toggle">
@@ -365,11 +395,12 @@ if(!isset($state)) $state = '';
 					</a>
 					<ul class="submenu">';
 					//get view of connected user
-					$query = $db->query("SELECT * FROM `tviews` WHERE uid='$_SESSION[user_id]' ORDER BY 'name' ");
-					while ($row = $query->fetch())
+					$qry=$db->prepare("SELECT `id`,`name`,`category`,`subcat` FROM `tviews` WHERE uid=:uid ORDER BY name");
+					$qry->execute(array('uid' => $_SESSION['user_id']));
+					while($row=$qry->fetch()) 
 					{
 						//case for no sub categories
-						if ($row['subcat']==0) $subcat='%'; else $subcat=$row['subcat']; 
+						if($row['subcat']==0) {$subcat='%';} else {$subcat=$row['subcat'];}
 						//count entries
 						$query2="SELECT COUNT(*) FROM `tincidents` WHERE category='$row[category]' AND subcat LIKE '$subcat' AND (state='1' OR state='2' OR state='6') $where_agency $where_service $parenthese2 AND disable='0'";
 						$query2=$db->query($query2);
@@ -384,7 +415,7 @@ if(!isset($state)) $state = '';
 							</a>
 						</li>';
 					}
-					$query->closeCursor();
+					$qry->closeCursor();
 					echo '
 					</ul>
 				</li>';
@@ -405,14 +436,18 @@ if(!isset($state)) $state = '';
 							//query count all assets or assets of company
 							if($rright['asset_list_company_only']!=0)
 							{
-								$query2="SELECT count(tassets.id) FROM `tassets`,`tusers` WHERE tassets.user=tusers.id AND tassets.disable='0' AND tusers.company='$ruser[company]'";
+								$qry=$db->prepare("SELECT COUNT(tassets.id) FROM `tassets`,`tusers` WHERE tassets.user=tusers.id AND tassets.disable='0' AND tusers.company=:company");
+								$qry->execute(array('company' => $ruser['company']));
+								$cnt=$qry->fetch();
+								$qry->closeCursor();
+								
 							} else {
-								$query2="SELECT count(id) FROM `tassets` WHERE disable='0'";
+								$qry=$db->prepare("SELECT COUNT(id) FROM `tassets` WHERE disable='0'");
+								$qry->execute();
+								$cnt=$qry->fetch();
+								$qry->closeCursor();
 							}
-							$query2=$db->query($query2);
-							$cnt=$query2->fetch();
-							$query2->closeCursor();
-							if (($_GET['page']=='asset_list' || $_GET['page']=='asset') && $_GET['state']=='%') echo ' class="active"';
+							if(($_GET['page']=='asset_list' || $_GET['page']=='asset') && $_GET['state']=='%') {echo ' class="active" ';}
 							echo '>
 								<a title="'.T_('Tous les équipements').'" href="./index.php?page=asset_list&amp;state=%25">
 									<i class="icon-double-angle-right"></i>
@@ -421,19 +456,23 @@ if(!isset($state)) $state = '';
 						</li>
 						';
 						//for each state display in sub-menu
-						$query = $db->query("SELECT * FROM `tassets_state` WHERE disable='0' ORDER BY `order`");
-						while ($row = $query->fetch())
+						$qry=$db->prepare("SELECT `id`,`name`,`description` FROM `tassets_state` WHERE disable='0' ORDER BY `order`");
+						$qry->execute();
+						while($row=$qry->fetch()) 
 						{
 							//query count all assets or assets of company
 							if($rright['asset_list_company_only']!=0)
 							{
-								$query2="SELECT count(tassets.id) FROM `tassets`,`tusers` WHERE tassets.user=tusers.id AND tassets.state LIKE '$row[id]' AND tassets.disable='0' AND tusers.company='$ruser[company]'";
+								$qry2=$db->prepare("SELECT COUNT(tassets.id) FROM `tassets`,`tusers` WHERE tassets.user=tusers.id AND tassets.state LIKE :state AND tassets.disable='0' AND tusers.company=:company");
+								$qry2->execute(array('state' => $row['id'],'company' => $ruser['company']));
+								$cnt=$qry2->fetch();
+								$qry2->closeCursor();
 							} else {
-								$query2="SELECT count(id) FROM `tassets` WHERE state LIKE '$row[id]' AND disable='0'";
+								$qry2=$db->prepare("SELECT COUNT(id) FROM `tassets` WHERE state LIKE :state AND disable='0'");
+								$qry2->execute(array('state' => $row['id']));
+								$cnt=$qry2->fetch();
+								$qry2->closeCursor();
 							}
-							$query2=$db->query($query2);
-							$cnt=$query2->fetch();
-							$query2->closeCursor(); 
 							echo '
 							<li';  
 							if (($_GET['page']=='asset_list' || $_GET['page']=='asset') && $_GET['state']==$row['id'] && $_GET['warranty']!=1) echo ' class="active"';
@@ -444,7 +483,8 @@ if(!isset($state)) $state = '';
 								</a>
 							</li>';
 						}
-						$query->closeCursor(); 
+						$qry->closeCursor();
+						
 						//display warranty link if parameter is enable
 						if($rparameters['asset_warranty']==1)
 						{
@@ -452,13 +492,16 @@ if(!isset($state)) $state = '';
 							//query count all assets or assets of company
 							if($rright['asset_list_company_only']!=0)
 							{
-								$query2="SELECT count(tassets.id) FROM `tassets`,`tusers` WHERE tassets.user=tusers.id AND tassets.state LIKE '2' AND tassets.date_end_warranty > '$today' AND tassets.disable='0' AND tusers.company='$ruser[company]'";
+								$qry2=$db->prepare("SELECT COUNT(tassets.id) FROM `tassets`,`tusers` WHERE tassets.user=tusers.id AND tassets.state LIKE '2' AND tassets.date_end_warranty > :date_end_warranty AND tassets.disable='0' AND tusers.company=:company");
+								$qry2->execute(array('date_end_warranty' => $today,'company' => $ruser['company']));
+								$cnt=$qry2->fetch();
+								$qry2->closeCursor();
 							} else {
-								$query2="SELECT count(id) FROM `tassets` WHERE state LIKE '2' AND date_end_warranty > '$today' AND disable='0'";
+								$qry2=$db->prepare("SELECT count(id) FROM `tassets` WHERE state LIKE '2' AND date_end_warranty > :date_end_warranty AND disable='0'");
+								$qry2->execute(array('date_end_warranty' => $today));
+								$cnt=$qry2->fetch();
+								$qry2->closeCursor();
 							}
-							$query2=$db->query($query2);
-							$cnt=$query2->fetch();
-							$query2->closeCursor(); 
 							echo '
 							<li';  
 							if ($_GET['page']=='asset_list' && $_GET['warranty']==1) echo ' class="active"';
@@ -503,6 +546,15 @@ if(!isset($state)) $state = '';
 				</a>
 			</li>';
 		}
+		if($rright['project']!=0 && $rparameters['project']==1)
+		{
+			if($_GET['page']=='project') echo '<li class="active">'; else echo '<li>'; echo '
+				<a href="./index.php?page=project" class="dropdown-toggle">
+					<i class="icon-tasks"></i>
+					<span class="menu-text">'.T_('Projets').'</span>
+				</a>
+			</li>';
+		}
 		if ($rright['stat']!=0)
 		{
 			if($_GET['page']=='stat') echo '<li class="active">'; else echo '<li>'; echo '
@@ -512,7 +564,7 @@ if(!isset($state)) $state = '';
 				</a>
 			</li>';
 		}
-		
+				
 		if ($rright['admin_contrat']!=0)
 	{
 		if($_GET['page']=='contrats') echo '<li class="active">'; else echo '<li>'; echo '
@@ -533,8 +585,6 @@ if(!isset($state)) $state = '';
 		</li>';
 	}
 
-
-	
 		if ($rright['admin']!=0 || $rright['admin_groups']!=0 || $rright['admin_lists']!=0 )
 		{
 			//select destination page by rights

@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 27/11/2015
-# @Update : 08/01/2019
-# @Version : 3.1.37 p2
+# @Update : 05/03/2019
+# @Version : 3.1.40
 ################################################################################
 
 //initialize variables 
@@ -198,7 +198,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								}
 								echo '<a href="./index.php?page=asset&id='.$_GET['id'].'&action=addiface&'.$url_get_parameters.'"><img title="'.T_('Ajouter une interface IP').'" src="./images/plug.png" /></a>&nbsp;&nbsp;';
 								//select IP display ping button
-								$qry=$db->prepare("SELECT * FROM tassets_iface WHERE asset_id=:id AND disable=:disable");
+								$qry=$db->prepare("SELECT `role_id`,`ip`,`mac` FROM tassets_iface WHERE asset_id=:id AND disable=:disable");
 								$qry->execute(array('id' => $globalrow['id'], 'disable' => 0));
 								while($row=$qry->fetch()) 
 								{
@@ -273,7 +273,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 												}
 												else
 												{
-													$qry=$db->prepare("SELECT * FROM `tassets_manufacturer` ORDER BY name ASC");
+													$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_manufacturer` ORDER BY name ASC");
 													$qry->execute();
 												}
 												while($row=$qry->fetch()) 
@@ -295,17 +295,17 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 										<?php
 											if($_POST['manufacturer'])
 											{
-												$qry=$db->prepare("SELECT * FROM `tassets_model` WHERE manufacturer LIKE :manufacturer AND type=:type ORDER BY name ASC");
+												$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_model` WHERE manufacturer LIKE :manufacturer AND type=:type ORDER BY name ASC");
 												$qry->execute(array('manufacturer' => $_POST['manufacturer'], 'type' => $_POST['type']));
 											}
 											elseif($globalrow['manufacturer']!='')
 											{
-												$qry=$db->prepare("SELECT * FROM `tassets_model` WHERE manufacturer LIKE :manufacturer AND type=:type ORDER BY name ASC");
+												$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_model` WHERE manufacturer LIKE :manufacturer AND type=:type ORDER BY name ASC");
 												$qry->execute(array('manufacturer' => $globalrow['manufacturer'], 'type' => $globalrow['type']));
 											}
 											else
 											{
-												$qry=$db->prepare("SELECT * FROM `tassets_model` ORDER BY name ASC");
+												$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_model` ORDER BY name ASC");
 												$qry->execute();
 											}
 											while($row=$qry->fetch()) 
@@ -439,7 +439,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 									{
 										if ($rparameters['debug']==1) {$debug_error=$iface_counter[0].' IFACE DETECTED: Display each iface';}
 										//display each iface
-										$qry=$db->prepare("SELECT * FROM `tassets_iface` WHERE asset_id=:asset_id AND disable='0' ORDER BY role_id ASC");
+										$qry=$db->prepare("SELECT id,role_id,date_ping_ok,date_ping_ko,netbios,mac,ip FROM `tassets_iface` WHERE asset_id=:asset_id AND disable='0' ORDER BY role_id ASC");
 										$qry->execute(array('asset_id' => $globalrow['id']));
 										while($row=$qry->fetch()) 
 										{
@@ -890,38 +890,36 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 		</div> <!-- div end sm -->
 	</div> <!-- div end x12 -->
 </div> <!-- div end row -->
+
 <?php if ($rparameters['debug']==1 && $debug_error) {echo "<u><b>DEBUG MODE:</b></u><br /> $debug_error";} ?>
 
 <?php include ('./wysiwyg.php'); ?>
 
-<!-- date time picker scripts -->
-<script src="./components/timepicker/js/bootstrap-timepicker.min.js" charset="UTF-8"></script>
-<script src="./components/datepicker/js/bootstrap-datepicker.min.js" charset="UTF-8"></script>
+<!-- datetime picker scripts  -->
+<script src="./components/moment/min/moment.min.js" charset="UTF-8"></script>
 <?php 
-if($ruser['language']=='fr_FR') {echo '<script src="./components/datepicker/locales/bootstrap-datepicker.fr.min.js" charset="UTF-8"></script>'; $lang='fr';} 
-if($ruser['language']=='de_DE') {echo '<script src="./components/datepicker/locales/bootstrap-datepicker.de.min.js" charset="UTF-8"></script>'; $lang='de';} 
-if($ruser['language']=='es_ES') {echo '<script src="./components/datepicker/locales/bootstrap-datepicker.es.min.js" charset="UTF-8"></script>'; $lang='es';} 
-if($ruser['language']=='en_US') {$lang='en';}
+	if($ruser['language']=='fr_FR') {echo '<script src="./components/moment/locale/fr.js" charset="UTF-8"></script>';} 
+	if($ruser['language']=='de_DE') {echo '<script src="./components/moment/locale/de.js" charset="UTF-8"></script>';} 
+	if($ruser['language']=='es_ES') {echo '<script src="./components/moment/locale/es.js" charset="UTF-8"></script>';} 
 ?>
+<script src="./components/datetimepicker/build/js/bootstrap-datetimepicker.min.js" charset="UTF-8"></script>
+
 <script type="text/javascript">
-	$('#date_install').datepicker({
-		format: 'dd/mm/yyyy',
-		language: '$lang'
+jQuery(function($) {
+	$('#date_install').datetimepicker({
+		format: 'DD/MM/YYYY',
 	});
-	$('#date_end_warranty').datepicker({
-		format: 'dd/mm/yyyy',
-		language: '$lang'
+	$('#date_end_warranty').datetimepicker({
+		format: 'DD/MM/YYYY',
 	});
-	$('#date_stock').datepicker({
-		format: 'dd/mm/yyyy',
-		language: '$lang'
+	$('#date_stock').datetimepicker({
+		format: 'DD/MM/YYYY',
 	});
-	$('#date_recycle').datepicker({
-		format: 'dd/mm/yyyy',
-		language: '$lang'
+	$('#date_recycle').datetimepicker({
+		format: 'DD/MM/YYYY',
 	});
-	$('#date_standbye').datepicker({
-		format: 'dd/mm/yyyy',
-		language: '$lang'
-	});		
+	$('#date_standbye').datetimepicker({
+		format: 'DD/MM/YYYY',
+	});
+});
 </script>		

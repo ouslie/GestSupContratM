@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 11/02/2016
-# @Update : 30/05/2017
-# @Version : 3.1.33
+# @Update : 26/01/2019
+# @Version : 3.1.39
 ################################################################################
 
 //locales
@@ -27,7 +27,7 @@ T_bind_textdomain_codeset($_GET['lang'], $encoding);
 T_textdomain($_GET['lang']);
 
 //initialize variables 
-if(!isset($_GET['token'])) $_GET['token'] = 'XXX'; 
+if(!isset($_GET['token'])) $_GET['token'] = ''; 
 
 //database connection
 require "../connect.php"; 
@@ -37,18 +37,9 @@ $db_service=strip_tags($_GET['service']);
 $db_month=strip_tags($_GET['month']);
 $db_company=strip_tags($_GET['company']);
 
-//get last token
-$qry = $db->prepare("SELECT `token` FROM `ttoken` WHERE action=:action ORDER BY id");
-$qry->execute(array('action' => 'export_asset'));
-$token=$qry->fetch();
-$qry->closeCursor();
-
-//delete token
-$qry=$db->prepare("DELETE FROM `ttoken` WHERE action=:action");
-$qry->execute(array('action' => 'export_asset'));
 
 //secure connect from authenticated user
-if ($_GET['token'] && $token['token']==$_GET['token']) 
+if($_GET['token']==$_COOKIE['token']) 
 {
 	//get current date
 	$daydate=date('Y-m-d');

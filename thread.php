@@ -5,8 +5,8 @@
 # @Description : display tickets thread
 # @Author : Flox
 # @Create : 27/01/2013
-# @Update : 21/12/2018
-# @Version : 3.1.37
+# @Update : 22/03/2019
+# @Version : 3.1.40 p1
 ################################################################################
 
 //initialize variables 
@@ -238,7 +238,7 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 												if ($row['type']==3)
 												{
 													echo '
-													<div class="timeline-label">
+													<div title="'.T_('Adresse mail de destination').' : '.$row['dest_mail'].'" class="timeline-label">
 														<span class="label label-grey arrowed-in-right label-lg">
 														';
 															//compress text for mobile display
@@ -326,13 +326,11 @@ if($_GET['action']!='new') //case for edit ticket not new ticket
 							<td>	
 								';
 								//add button for private message, case to send auto mail when technician add resolution
-								if (($rright['ticket_thread_private_button']!=0) && ($rparameters['mail_auto_user_modify']!=0))
+								if ($rright['ticket_thread_private_button']!=0)
 								{
-									echo '
-									<label><input type="checkbox" id="private" name="private" value="1" class="ace"><span class="lbl">&nbsp;Privé</span></label>
-									<i class="icon-question-sign blue bigger-110" title="Le demandeur ne recevra pas de mail concernant ce message."></i>
-									<br><br>
-									';
+									echo '<label><input type="checkbox" id="private" name="private" value="1" class="ace"><span class="lbl">&nbsp;Privé</span></label>';
+									if($rparameters['mail_auto_user_modify']!=0) {echo '<i class="icon-question-sign blue bigger-110" title="Le demandeur ne recevra pas de mail concernant ce message."></i>';}
+									echo '<br><br>';
 								}
 								echo '&nbsp;<button class="btn btn-sm btn-success" title="'.$button.'" name="modify" value="modify" type="submit" id="modify">'.$button.'<i class="icon-arrow-right icon-on-right"></i></button>';
 								echo '

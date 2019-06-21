@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 21/12/2018
-# @Version : 3.1.37
+# @Update : 26/01/2019
+# @Version : 3.1.38
 ################################################################################
 
 //initialize variables 
@@ -79,19 +79,10 @@ if (($rparameters['user_limit_service']==1 && $cnt_service!=0) || $rright['stat'
 			<i class="icon-bar-chart"></i>  '.T_('Statistiques').'
 			<div class="pull-right">
 				';
-				$token=uniqid(); 
 				if ($_GET['tab']=='asset')
 				{
-					//clean token
-					$qry=$db->prepare("DELETE FROM `ttoken` WHERE action='export_asset'");
-					$qry->execute();
-					
-					//generate token
-					$qry=$db->prepare("INSERT INTO `ttoken` (`token`,`action`) VALUES (:token,'export_asset')");
-					$qry->execute(array('token' => $token));
-					
 					echo'
-						<a title="'.T_("Télécharge un fichier au format CSV avec l'ensemble des équipements").'" target="_blank" href="./core/export_assets.php?token='.$token.'&technician='.$_POST['tech'].'&service='.$_POST['service'].'&type='.$_POST['type'].'&criticality='.$_POST['criticality'].'&category='.$_POST['category'].'&month='.$_POST['month'].'&year='.$_POST['year'].'&company='.$_POST['company'].'">
+						<a title="'.T_("Télécharge un fichier au format CSV avec l'ensemble des équipements").'" target="_blank" href="./core/export_assets.php?token='.$_COOKIE['token'].'&technician='.$_POST['tech'].'&service='.$_POST['service'].'&type='.$_POST['type'].'&criticality='.$_POST['criticality'].'&category='.$_POST['category'].'&month='.$_POST['month'].'&year='.$_POST['year'].'&company='.$_POST['company'].'">
 							<button  class="btn btn-xs btn-purple">
 								<i align="right" class="icon-download"></i>
 								'.T_('Export CSV').'
@@ -99,16 +90,8 @@ if (($rparameters['user_limit_service']==1 && $cnt_service!=0) || $rright['stat'
 						</a>
 					';
 				} else {
-					//clean token
-					$qry=$db->prepare("DELETE FROM `ttoken` WHERE action='export_ticket'");
-					$qry->execute();
-					
-					//generate token
-					$qry=$db->prepare("INSERT INTO `ttoken` (`token`,`action`) VALUES (:token,'export_ticket')");
-					$qry->execute(array('token' => $token));
-					
 					echo'
-						<a title="'.T_("Télécharge un fichier au format CSV avec l'ensemble des tickets").'" target="_blank" href="./core/export_tickets.php?token='.$token.'&technician='.$_POST['tech'].'&service='.$_POST['service'].'&agency='.$_POST['agency'].'&type='.$_POST['type'].'&criticality='.$_POST['criticality'].'&category='.$_POST['category'].'&month='.$_POST['month'].'&year='.$_POST['year'].'&userid='.$_SESSION['user_id'].'">
+						<a title="'.T_("Télécharge un fichier au format CSV avec l'ensemble des tickets").'" target="_blank" href="./core/export_tickets.php?token='.$_COOKIE['token'].'&technician='.$_POST['tech'].'&service='.$_POST['service'].'&agency='.$_POST['agency'].'&type='.$_POST['type'].'&criticality='.$_POST['criticality'].'&category='.$_POST['category'].'&month='.$_POST['month'].'&year='.$_POST['year'].'&userid='.$_SESSION['user_id'].'">
 							<button  class="btn btn-xs btn-purple">
 								<i align="right" class="icon-download"></i>
 								'.T_('Export CSV').'

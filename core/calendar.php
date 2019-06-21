@@ -7,7 +7,7 @@
 # @Author : Flox
 # @Create : 19/02/2018
 # @Update : 18/12/2018
-# @Version : 3.1.37
+# @Version : 3.1.40 p2
 ################################################################################
 
 //init var
@@ -31,10 +31,11 @@ if($_POST['action']=='update_title')
 	$title=$_POST['title'];
 	$start=$_POST['start'];
 	$end=$_POST['end'];
+	$allday=$_POST['allday'];
 	//db update
-	$query = "UPDATE tevents SET title=?, date_start=?, date_end=? WHERE id=?";
+	$query = "UPDATE tevents SET title=?, date_start=?, date_end=?, allday=? WHERE id=?";
 	$query = $db->prepare($query);
-	$query->execute(array($title,$start,$end,$id));
+	$query->execute(array($title,$start,$end,$allday,$id));
 } elseif($_POST['action']=='delete_event')
 {
 	//db delete
@@ -45,15 +46,16 @@ if($_POST['action']=='update_title')
 	
 } elseif($_POST['action']=='add_event')
 {
-	//data
+		//data
 	$title=$_POST['title'];
 	$start=$_POST['start'];
 	$end=$_POST['end'];
 	$allday=$_POST['allday'];
 	$technician=$_POST['technician'];
 	//db insert
-	$query = "INSERT INTO tevents (technician,title, date_start, date_end,allday) VALUES (:technician, :title, :start, :end, :allday)";
+	$query = "INSERT INTO tevents (technician,title, date_start, date_end, allday) VALUES (:technician, :title, :start, :end, :allday)";
 	$query = $db->prepare($query);
 	$query->execute(array(':technician'=>$technician,':title'=>$title, ':start'=>$start, ':end'=>$end, ':allday'=>$allday));
+	echo json_encode(array("event_id" => $db->lastInsertId()));
 }
 ?>

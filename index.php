@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 07/03/2010
-# @Update : 10/12/2018
-# @Version : 3.1.37 p4
+# @Update : 02/04/2019
+# @Version : 3.1.40 p9
 ################################################################################
 
 //cookies initialization
@@ -19,6 +19,7 @@ if(!isset($_GET['page'])) $_GET['page'] = '';
 if(!isset($_GET['company'])) $_GET['company'] = '';
 if(!isset($currentpage)) $currentpage = '';
 if(!isset($_SERVER['HTTP_USER_AGENT'])) $_SERVER['HTTP_USER_AGENT'] = '';
+if(!isset($_COOKIE['token'])) $_COOKIE['token'] = '';
 
 if ($_GET['page']!='ticket' && $_GET['page']!='admin' && $_GET['page'] && $_GET['page']!='procedure') //avoid upload problems
 {
@@ -47,7 +48,6 @@ if(preg_match('/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|c
 //initialize variables
 if(!isset($_SESSION['user_id'])) $_SESSION['user_id'] = '';
 if(!isset($_SESSION['profile_id'])) $_SESSION['profile_id'] = '';
-
 
 if(!isset($_POST['keywords'])) $_POST['keywords'] = '';
 if(!isset($_POST['userkeywords'])) $_POST['userkeywords'] = '';
@@ -97,8 +97,6 @@ if ($_GET['action'] == 'logout')
 if(!isset($_SESSION['user_id'])) $_SESSION['user_id'] = '';
 if(!isset($_SESSION['LAST_ACTIVITY'])) $_SESSION['LAST_ACTIVITY'] = 0;
 
-
-
 //detect https connection
 if ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443) {$http='https';} else {$http='http';}
 
@@ -115,23 +113,26 @@ $db_userid=strip_tags($db->quote($_GET['userid']));
 $db_id=strip_tags($db->quote($_GET['id']));
 
 //load parameters table
-$query=$db->query("SELECT * FROM tparameters");
-$rparameters=$query->fetch();
-$query->closeCursor(); 
+$qry=$db->prepare("SELECT * FROM `tparameters`");
+$qry->execute();
+$rparameters=$qry->fetch();
+$qry->closeCursor();
 
 //logoff on timeout
 if($rparameters['timeout'])
 {
+	if($rparameters['debug']) {$session_time='time='.(time() - $_SESSION['LAST_ACTIVITY']).'max='.(60*$rparameters['timeout']);}
 	if($_SESSION['LAST_ACTIVITY'] && (time() - $_SESSION['LAST_ACTIVITY'] > 60*$rparameters['timeout'])) {
 		session_unset();    
 		session_destroy();
 		if(!isset($_SESSION['user_id'])) $_SESSION['user_id'] = '';
 		if(!isset($_SESSION['LAST_ACTIVITY'])) $_SESSION['LAST_ACTIVITY'] = '';
 	}
-	if($_GET['page']!='dashboard' && $rparameters['auto_refresh']!=0 ) {$_SESSION['LAST_ACTIVITY'] = time();}
+	if($_GET['page']=='dashboard' && $rparameters['auto_refresh']!=0 ) {} else {$_SESSION['LAST_ACTIVITY'] = time();}
 	if(!$_SESSION['LAST_ACTIVITY']) {$_SESSION['LAST_ACTIVITY'] = time();}
 } elseif($rparameters['auto_refresh']!=0) {
 	$maxlifetime = ini_get("session.gc_maxlifetime");
+	if($rparameters['debug']) {$session_time='time='.(time() - $_SESSION['LAST_ACTIVITY']).'max='.$maxlifetime;}
 	if($_SESSION['LAST_ACTIVITY'] && (time() - $_SESSION['LAST_ACTIVITY'] > $maxlifetime)) {
 		session_unset();    
 		session_destroy();
@@ -165,20 +166,27 @@ if ($_SESSION['user_id'])
 	$uid=$_SESSION['user_id'];
 	
 	//load user table
-	$quser=$db->query("SELECT * FROM tusers WHERE id=$_SESSION[user_id]");
-	$ruser=$quser->fetch();
-	$quser->closeCursor(); 
+	$qry=$db->prepare("SELECT * FROM `tusers` WHERE id=:id");
+	$qry->execute(array('id' => $_SESSION['user_id']));
+	$ruser=$qry->fetch();
+	$qry->closeCursor();
 	
 	//find profile id of connected user 
-	$qprofile=$db->query("SELECT profile FROM tusers WHERE id LIKE $uid");
-	$_SESSION['profile_id']=$qprofile->fetch();
-	$qprofile->closeCursor(); 
-	$_SESSION['profile_id']=$_SESSION['profile_id'][0];
+	$_SESSION['profile_id']=$ruser['profile'];
 
 	//load rights table
-	$query=$db->query("SELECT * FROM trights WHERE profile=$_SESSION[profile_id]");
-	$rright=$query->fetch();
-	$query->closeCursor();
+	$qry=$db->prepare("SELECT * FROM `trights` WHERE profile=:profile");
+	$qry->execute(array('profile' => $_SESSION['profile_id']));
+	$rright=$qry->fetch();
+	$qry->closeCursor();
+	
+	//set token cookie
+	if(!$_COOKIE['token'])
+	{
+		$token = uniqid(32);
+		setcookie('token', $token, time()+1800);
+		$_COOKIE['token']=$token;
+	}
 }
 
 //define current language
@@ -214,6 +222,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 		elseif($_GET['page']=='plugins/availability/index') {echo 'favicon_availability.png';} 
 		elseif($_GET['page']=='stat') {echo 'favicon_stat.png';} 
 		elseif($_GET['page']=='admin') {echo 'favicon_admin.png';} 
+		elseif($_GET['page']=='project') {echo 'favicon_project.png';} 
 		else {echo 'favicon_ticket.png';} 
 		?>" 
 		/>
@@ -235,7 +244,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 			echo '
 			<!-- chosen styles -->
 			<link rel="stylesheet" href="./template/assets/css/chosen.min.css" />
-			
+		
 			<!-- datetimepicker styles -->
 			<link rel="stylesheet" href="./components/datetimepicker/build/css/bootstrap-datetimepicker.min.css" />
 			';
@@ -244,8 +253,9 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 		{
 			echo '
 			<!-- fullcalendar styles -->
-			<link rel="stylesheet" href="./components/fullcalendar/fullcalendar.css" />
-			<link rel="stylesheet" href="./components/fullcalendar/fullcalendar.print.css" type="text/css" media="print">
+			<link rel="stylesheet" href="./components/fullcalendar/packages/core/main.min.css" />
+			<link rel="stylesheet" href="./components/fullcalendar/packages/daygrid/main.min.css" />
+			<link rel="stylesheet" href="./components/fullcalendar/packages/timegrid/main.min.css" />
 			';
 		}
 		?>
@@ -253,7 +263,9 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 		<!-- ace styles -->
 		<link rel="stylesheet" href="./template/assets/css/ace.min.css" />
 		<link rel="stylesheet" href="./template/assets/css/ace-rtl.min.css" />
-		<link rel="stylesheet" href="./template/assets/css/ace-skins.min.css" />
+		<link rel="stylesheet" href="./template/assets/css/ace-skins.min.css" /> 
+		<link rel="stylesheet" href="./template/assets/css/gestsup.css" /> 
+		<!--<link rel="stylesheet" href="./template/assets/css/uncompressed/ace-skins.css" /> -->
 		
 		<!-- ui scripts -->
 		<script src="./template/assets/js/ace-extra.min.js"></script>
@@ -263,7 +275,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 	</head>
 	<?php
 		//display navigation bar if user is connected
-		if ($_SESSION['user_id'])
+		if($_SESSION['user_id'])
 		{
 			//temporary variables to migrate to trights table
 			if ($_SESSION['profile_id']==0)	{$profile="technician";}
@@ -273,24 +285,26 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 			else {$profile="user";}
 			
 			//get agencies associated with this user
-			$query = $db->query("SELECT agency_id FROM `tusers_agencies` WHERE user_id='$_SESSION[user_id]'");  
-			$cnt_agency=$query->rowCount();
-			$query->closecursor();
+			$qry=$db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE user_id=:user_id");
+			$qry->execute(array('user_id' => $_SESSION['user_id']));
+			$cnt_agency=$qry->rowCount();
+			$qry->closeCursor();
 			
 			//get services associated with this user
-			$query = $db->query("SELECT service_id FROM `tusers_services` WHERE user_id='$_SESSION[user_id]'"); 
-			$cnt_service=$query->rowCount();
-			$row=$query->fetch();
-			$query->closecursor();
+			$qry=$db->prepare("SELECT `service_id` FROM `tusers_services` WHERE user_id=:user_id");
+			$qry->execute(array('user_id' => $_SESSION['user_id']));
+			$cnt_service=$qry->rowCount();
+			$row=$qry->fetch();
+			$qry->closeCursor();
 			
 			//special case to technician with multi service and multi agencies
-			if($rright['dashboard_service_only']!=0 && $rparameters['user_agency']==1 && $rparameters['user_limit_service']==1 && $cnt_service!=0 && $cnt_agency!=0) 
+			if($rright['dashboard_service_only']!=0 && $rparameters['user_agency']==1 && $rparameters['user_limit_service']==1 && $cnt_service>1 && $cnt_agency>1) 
 			{$operator='OR'; $parenthese1='('; $parenthese2=')';}
 			else 
 			{$operator='AND'; $parenthese1=''; $parenthese2='';}
 			
 			//special case to limit ticket to services
-			if($rright['dashboard_service_only']!=0 && $rparameters['user_limit_service']==1)
+			if($rright['dashboard_service_only']!=0 && $rparameters['user_limit_service']==1) 
 			{
 				$where_service='';
 				$where_service_your='';
@@ -298,7 +312,6 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 				$user_services=array();
 				if($cnt_service==0) {$where_service.='';}
 				elseif($cnt_service==1) {
-					//$where_service_your.="AND (tincidents.u_service='$row[service_id]' OR tincidents.$profile LIKE '$_GET[userid]')  ";
 					if ($_SESSION['profile_id']==0) //special case to allow technician to view ticket open for another service
 					{
 						$where_service_your.="AND (tincidents.u_service='$row[service_id]' OR tincidents.technician LIKE $db_userid OR tincidents.user LIKE $db_userid) ";
@@ -313,27 +326,28 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 					array_push($user_services, $row['service_id']);
 				} else {
 					$cnt2=0;
-					$query = $db->query("SELECT service_id FROM `tusers_services` WHERE user_id='$_SESSION[user_id]'");
 					$where_service.="$operator (";
-					while ($row=$query->fetch())	
+					$qry=$db->prepare("SELECT `service_id` FROM `tusers_services` WHERE user_id=:user_id");
+					$qry->execute(array('user_id' => $_SESSION['user_id']));
+					while($row=$qry->fetch()) 
 					{
 						$cnt2++;
 						$where_service.="tincidents.u_service='$row[service_id]'";
 						array_push($user_services, $row['service_id']);
 						if ($cnt_service!=$cnt2) $where_service.=' OR '; 
 					}
+					$qry->closeCursor();
 					$where_service.=') ';
-					$query->closecursor();
-					
 				}
 			} else {$where_service=''; $where_service_your=''; $user_services=''; $cnt_service='';}
 			//special case to limit ticket to agency
 			if($rright['dashboard_agency_only']!=0)
 			{
 				//get agencies associated with this user
-				$query = $db->query("SELECT agency_id FROM `tusers_agencies` WHERE user_id='$_SESSION[user_id]'");  
-				$row=$query->fetch();
-				$query->closecursor();
+				$qry=$db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE user_id=:user_id");
+				$qry->execute(array('user_id' => $_SESSION['user_id']));
+				$row=$qry->fetch();
+				$qry->closeCursor();
 				$where_agency='';
 				$where_agency_your='';
 				if(!isset($_GET['userid'])) $_GET['userid'] = '';
@@ -351,17 +365,18 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 					array_push($user_agencies, $row['agency_id']);
 				} else {
 					$cnt2=0;
-					$query = $db->query("SELECT agency_id FROM `tusers_agencies` WHERE user_id='$_SESSION[user_id]'");
 					$where_agency.="AND $parenthese1 (";
-					while ($row=$query->fetch())	
+					$qry=$db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE user_id=:user_id");
+					$qry->execute(array('user_id' => $_SESSION['user_id']));
+					while($row=$qry->fetch()) 
 					{
 						$cnt2++;
 						$where_agency.="tincidents.u_agency='$row[agency_id]'";
 						array_push($user_agencies, $row['agency_id']);
 						if ($cnt_agency!=$cnt2) $where_agency.=' OR '; 
 					}
+					$qry->closeCursor();
 					$where_agency.=') ';
-					$query->closecursor();
 				}
 			} else {$where_agency=''; $where_agency_your=''; $user_agencies=''; $cnt_agency='';}
 
@@ -390,9 +405,10 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 			$nbres=$query->fetch();
 			$query->closeCursor(); 
 			
-			$query=$db->query("SELECT * FROM tusers WHERE id LIKE '$uid'");
-			$reqfname=$query->fetch();
-			$query->closeCursor(); 
+			$qry=$db->prepare("SELECT `firstname`,`lastname` FROM `tusers` WHERE id=:id");
+			$qry->execute(array('id' => $uid));
+			$reqfname=$qry->fetch();
+			$qry->closeCursor();
 			
 			$query=$db->query("SELECT SUM(time_hope-time) FROM tincidents WHERE time_hope-time>0 AND technician LIKE '$uid' AND disable='0' AND (state='1' OR state='2' OR state='6') $where_agency $where_service $parenthese2");
 			$nbtps=$query->fetch();
@@ -529,9 +545,14 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 									$date_end=date_format($date_start_conv, 'Y-m-d');
 								
 									//count number of ticket remaining in period
-									$query=$db->query("SELECT count(*) FROM tincidents WHERE user='$_SESSION[user_id]'  AND date_create BETWEEN '$date_start' AND '$date_end' AND disable='0'");
-									$nbticketused=$query->fetch();
-									$query->closeCursor();
+									$qry=$db->prepare("SELECT COUNT(id) FROM `tincidents` WHERE user=:user AND date_create BETWEEN :date_start AND :date_end AND disable='0'");
+									$qry->execute(array(
+										'user' => $_SESSION['user_id'],
+										'date_start' => $date_start,
+										'date_end' => $date_end
+										));
+									$nbticketused=$qry->fetch();
+									$qry->closeCursor();
 									
 									//check number of tickets in current range date
 									if (date('Y-m-d')>$date_end || date('Y-m-d')<$date_start)
@@ -554,9 +575,11 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 								if ($rparameters['company_limit_ticket']==1 &&($_SESSION['profile_id']==1 || $_SESSION['profile_id']==2))
 								{
 									//get company limit ticket parameters
-									$query=$db->query("SELECT * FROM tcompany WHERE id=$ruser[company]");
-									$rcompany=$query->fetch();
-									$query->closeCursor();
+									$qry=$db->prepare("SELECT `id`,`limit_ticket_number`,`limit_ticket_days`,`limit_ticket_date_start` FROM `tcompany` WHERE id=:id");
+									$qry->execute(array('id' => $ruser['company']));
+									$rcompany=$qry->fetch();
+									$qry->closeCursor();
+									
 									if ($rcompany['limit_ticket_number']!=0 && $rcompany['limit_ticket_days']!=0 && $rcompany['limit_ticket_date_start']!='0000-00-00' )
 									{
 										//generate date start and date end
@@ -568,9 +591,10 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 										$date_end=date_format($date_start_conv, 'Y-m-d');
 									
 										//count number of ticket remaining in period
-										$query=$db->query("SELECT count(*) FROM tincidents,tusers WHERE tusers.id=tincidents.user AND tusers.company='$rcompany[id]' AND date_create BETWEEN '$date_start' AND '$date_end' AND tincidents.disable='0'");
-										$nbticketused=$query->fetch();
-										$query->closeCursor();
+										$qry=$db->prepare("SELECT COUNT(tincidents.id) FROM `tincidents`,`tusers` WHERE tusers.id=tincidents.user AND tusers.company=:company AND date_create BETWEEN :date_start AND :date_end AND tincidents.disable='0'");
+										$qry->execute(array('company' => $rcompany['id'],'date_start' => $date_start,'date_end' => $date_end));
+										$nbticketused=$qry->fetch();
+										$qry->closeCursor();
 										
 										//check number of tickets in current range date
 										if (date('Y-m-d')>$date_end || date('Y-m-d')<$date_start)
@@ -604,9 +628,10 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 								<li class="light-blue">
 									<a data-toggle="dropdown" href="" class="dropdown-toggle">
 										<img class="nav-user-photo" src="./images/avatar/';
-											$query=$db->query("SELECT img FROM tprofiles WHERE level=$_SESSION[profile_id]");
-											$rprofile_img=$query->fetch();
-											$query->closeCursor();
+											$qry=$db->prepare("SELECT `img` FROM `tprofiles` WHERE level=:level");
+											$qry->execute(array('level' => $_SESSION['profile_id']));
+											$rprofile_img=$qry->fetch();
+											$qry->closeCursor();
 											echo $rprofile_img[0];
 										echo '
 										" alt="img" />
@@ -694,6 +719,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 										echo '<a href="./index.php?page=dashboard&userid='.$_SESSION['user_id'].'&state=%"><i class="icon-home home-icon"></i></a>';
 										if(($_GET['page']=='dashboard' || $_GET['page']=='ticket' || $_GET['page']=='preview_mail' ) && $_GET['viewid']=='') echo ' <span class="divider"><i class="icon-angle-right arrow-icon"></i></span><a href="./index.php?page=dashboard&amp;userid='.$_SESSION['user_id'].'&state=%25"> Tickets</a>&nbsp;';
 										if($_GET['page']=='procedure') echo ' <span class="divider"><i class="icon-angle-right arrow-icon"></i></span><a href="./index.php?page=procedure"> '.T_('Procédure').'</a>';
+										if($_GET['page']=='project') echo ' <span class="divider"><i class="icon-angle-right arrow-icon"></i></span><a href="./index.php?page=project"> '.T_('Projets').'</a>';
 										if($_GET['page']=='calendar') echo ' <span class="divider"><i class="icon-angle-right arrow-icon"></i></span><a href="./index.php?page=calendar"> '.T_('Calendrier').'</a>';
 										if($_GET['page']=='stat') echo ' <span class="divider"><i class="icon-angle-right arrow-icon"></i></span><a href="./index.php?page=stat&tab=ticket"> '.T_('Statistiques').'</a>';
 										if($_GET['page']=='admin/user' && $_GET['action']=='edit') echo ' <span class="divider"><i class="icon-angle-right arrow-icon"></i></span><a href="index.php?page=admin/user&action=edit&userid='.$_GET['userid'].'"> '.T_('Fiche utilisateur').'</a>';
@@ -781,16 +807,17 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 									)
 								)
 								{
-									
 									//check if ticket is deleted
 									if ($_GET['page']=='ticket' && $_GET['id'])
 									{
-										$query=$db->query("SELECT disable FROM tincidents WHERE id=$db_id"); 
-										$check_ticket_disable=$query->fetch();
-										$query->closeCursor(); 
+										$qry=$db->prepare("SELECT `disable` FROM `tincidents` WHERE id=:id");
+										$qry->execute(array('id' => $_GET['id']));
+										$check_ticket_disable=$qry->fetch();
+										$qry->closeCursor();
 										$check_ticket_disable=$check_ticket_disable['disable'];
+										
 									} else {$check_ticket_disable=0;}
-									if($check_ticket_disable==1) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Ce ticket à été supprimé, pour le restaurer contacter votre administrateur").'.<br></div>';}
+									if($check_ticket_disable==1) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Ce ticket a été supprimé, pour le restaurer contacter votre administrateur").'.<br></div>';}
 									//allow display pages from availability function
 									elseif ($_GET['page']=='plugins/availability/index' && $rright['availability']!=0 && $rparameters['availability']==1){include("$_GET[page].php");} 
 									//allow display pages from asset function
@@ -804,23 +831,26 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 									//allow modify ticket for user with same service service, if rights are enable (cnt_agency for case user have service and agency to allow edit)
 									elseif ($_GET['page']=='ticket' && $rright['side_all_service_edit']!=0 && $cnt_service!=0) {
 										//check if open ticket is associated to the same service as the current user services
-										$query=$db->query("SELECT u_service FROM tincidents WHERE id=$db_id"); //get ticket service
-										$check_ticket_service=$query->fetch();
-										$query->closeCursor(); 
+										$qry=$db->prepare("SELECT `u_service` FROM `tincidents` WHERE id=:id");
+										$qry->execute(array('id' => $_GET['id']));
+										$check_ticket_service=$qry->fetch();
+										$qry->closeCursor();
 										$service_check=0;
 										foreach($user_services as $value) {if($check_ticket_service[0]==$value){$service_check=1;}}
 										if($service_check) {include("$_GET[page].php");}
 										else {
 											//check if current user is sender
-											$query=$db->query("SELECT user FROM tincidents WHERE id=$db_id");
-											$check_ticket_user_sender=$query->fetch();
-											$query->closeCursor(); 
+											$qry=$db->prepare("SELECT `user` FROM `tincidents` WHERE id=:id");
+											$qry->execute(array('id' => $_GET['id']));
+											$check_ticket_user_sender=$qry->fetch();
+											$qry->closeCursor();
 											if($check_ticket_user_sender[0]!=$_SESSION['user_id'])
 											{
 												//check if open ticket is associated to the same agency as the current user agencies
-												$query=$db->query("SELECT u_agency FROM tincidents WHERE id=$db_id"); //get ticket agency
-												$check_ticket_agency=$query->fetch();
-												$query->closeCursor(); 
+												$qry=$db->prepare("SELECT `u_agency` FROM `tincidents` WHERE id=:id");
+												$qry->execute(array('id' => $_GET['id']));
+												$check_ticket_agency=$qry->fetch();
+												$qry->closeCursor();
 												$agency_check=0;
 												foreach($user_agencies as $value) {
 													if($check_ticket_agency[0]==$value){$agency_check=1;}
@@ -837,9 +867,10 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 									//allow modify ticket for user with same agency, if rights are enable
 									elseif ($_GET['page']=='ticket' && $rright['side_all_agency_edit']!=0 && $cnt_agency!=0 ) {
 										//check if open ticket is associated to the same agency as the current user agencies
-										$query=$db->query("SELECT u_agency FROM tincidents WHERE id=$db_id"); //get ticket agency
-										$check_ticket_agency=$query->fetch();
-										$query->closeCursor(); 
+										$qry=$db->prepare("SELECT `u_agency` FROM `tincidents` WHERE id=:id");
+										$qry->execute(array('id' => $_GET['id']));
+										$check_ticket_agency=$qry->fetch();
+										$qry->closeCursor();
 										$agency_check=0;
 										foreach($user_agencies as $value) {
 											if($check_ticket_agency[0]==$value)
@@ -856,12 +887,14 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 										if($_GET['page']=='ticket' && $_GET['id'] && $_GET['action']!='template')
 										{
 											//check if ticket is the same company than connected user
-											$query=$db->query("SELECT * FROM tincidents WHERE id=$db_id");
-											$check_ticket_company=$query->fetch();
-											$query->closeCursor(); 
-											$query=$db->query("SELECT * FROM tusers WHERE id='$check_ticket_company[user]'");
-											$check_ticket_company=$query->fetch();
-											$query->closeCursor();
+											$qry=$db->prepare("SELECT `user` FROM `tincidents` WHERE id=:id");
+											$qry->execute(array('id' => $_GET['id']));
+											$check_ticket_company=$qry->fetch();
+											$qry->closeCursor();
+											$qry=$db->prepare("SELECT `company` FROM `tusers` WHERE id=:id");
+											$qry->execute(array('id' => $check_ticket_company['user']));
+											$check_ticket_company=$qry->fetch();
+											$qry->closeCursor();
 											if (($check_ticket_company['company']==$ruser['company']) && ($ruser['company']!=0))
 											{
 												include("$_GET[page].php");
@@ -872,16 +905,24 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 									}
 									else {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Vous n'avez pas les droits d'accès à cette page, contacter votre administrateur").'.<br></div>';}
 								} else	{
-									
 									//check rights page before display
 									if ($_GET['page']=='ticket' && $_GET['id']) //check if ticket is deleted
 									{
-										$query=$db->query("SELECT disable FROM tincidents WHERE id=$db_id"); 
-										$check_ticket_disable=$query->fetch();
-										$query->closeCursor(); 
-												
-									} else {$check_ticket_disable[0]=0;}
-									if($check_ticket_disable[0]==1 && $_SESSION['profile_id']!=4) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Ce ticket à été supprimé, pour le restaurer contacter votre administrateur").'.<br></div>';}
+										$qry=$db->prepare("SELECT `disable`,`technician` FROM `tincidents` WHERE id=:id");
+										$qry->execute(array('id' => $_GET['id']));
+										$check_ticket=$qry->fetch();
+										$qry->closeCursor();
+										//case tech group to display other ticket of his group
+										if($_SESSION['profile_id']==0)
+										{
+											$qry=$db->prepare("SELECT `tgroups_assoc`.`id` FROM `tgroups_assoc`,`tincidents` WHERE `tincidents`.`t_group`=`tgroups_assoc`.`group` AND `tgroups_assoc`.`user`=:technician AND `tincidents`.`id`=:id");
+											$qry->execute(array('technician' => $_SESSION['user_id'],'id' => $_GET['id']));
+											$check_t_group=$qry->fetch();
+											$qry->closeCursor();
+										} else {$check_t_group=0;}
+									} else {$check_ticket['disable']=0; $check_ticket['technician']=0; $check_t_group=0;}
+									if($check_ticket['disable']==1 && $_SESSION['profile_id']!=4) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Ce ticket a été supprimé, pour le restaurer contacter votre administrateur").'.<br></div>';}
+									elseif ($_GET['page']=='ticket' && $_GET['id'] && $check_t_group[0]==0 && $check_ticket['technician']!=$_SESSION['user_id'] && $rright['side_all']==0 && $_SESSION['profile_id']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Vous n'avez pas les droits d'accès au ticket d'un autre technicien, contacter votre administrateur").'.<br></div>';}
 									elseif ($_GET['page']=='procedure' && $rright['procedure']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès aux procédures, contacter votre administrateur').'.<br></div>';}
 									elseif ($_GET['page']=='ticket_template' && $rright['ticket_template']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès aux modèles de tickets, contacter votre administrateur').'.<br></div>';}
 									elseif ($_GET['page']=='preview_mail' && $rright['ticket_send_mail']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès à la prévisualisation des mails, contacter votre administrateur').'.<br></div>';}
@@ -894,19 +935,22 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 									elseif (preg_match( '/^admin.*/', $_GET['page']) && $_GET['page']!='admin/user' && $rright['admin']==0 && $rright['admin_lists']==0 && $rright['admin_groups']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Vous n'avez pas les droits d'accès à l'administration du logiciel, contacter votre administrateur").'<br></div>';}
 									elseif (preg_match( '/^stat.*/', $_GET['page']) && $rright['stat']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès aux statistiques du logiciel, contacter votre administrateur').'.<br></div>';}
 									elseif (preg_match( '/^core.*/', $_GET['page']) && $rright['admin']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès à cette page, contacter votre administrateur').'.<br></div>';}
-									elseif ($_GET['page']=='dashboard' && $_GET['userid']=='%' && $rright['side_all']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès à la liste de tous les tickets, contacter votre administrateur').'.<br></div>';}
+									elseif ($_GET['page']=='dashboard' && $_GET['userid']=='%' && $rright['side_all']==0 && $_GET['companyview']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès à la liste de tous les tickets, contacter votre administrateur').'.<br></div>';}
+									elseif ($_GET['page']=='dashboard' && $_GET['userid']!='%' && $rright['side_all']==0 && $_GET['companyview']==0 && $_GET['userid']!=$_SESSION['user_id']) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits de consulter les tickets d\'un autre utilisateurs, contacter votre administrateur').'.<br></div>';}
 									elseif ($_GET['page']=='plugins/availability/index' && $rright['availability']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès au module de disponibilité, contacter votre administrateur').'.<br></div>';}
 									elseif ($_GET['page']=='ticket' && $rright['dashboard_service_only']!=0 && $_GET['id'] && $rparameters['user_limit_service']==1 && $cnt_agency==0) //case to user profil super try to open another ticket of another service
 									{
 										//check if ticket service is the same as user
-										$query=$db->query("SELECT id FROM tusers_services WHERE user_id='$_SESSION[user_id]' AND service_id=(SELECT u_service FROM tincidents WHERE id=$db_id)");
-										$check_ticket_service=$query->fetch();
-										$query->closeCursor(); 
+										$qry=$db->prepare("SELECT id FROM tusers_services WHERE user_id=:user_id AND service_id=(SELECT u_service FROM tincidents WHERE id=:id)");
+										$qry->execute(array('user_id' => $_SESSION['user_id'],'id' => $_GET['id']));
+										$check_ticket_service=$qry->fetch();
+										$qry->closeCursor();
 										if (!$check_ticket_service) {
 											//allow technician to view ticket when there is sender
-											$query=$db->query("SELECT user,technician FROM tincidents WHERE id=$db_id");
-											$check_ticket_tech_sender=$query->fetch();
-											$query->closeCursor(); 
+											$qry=$db->prepare("SELECT `user`,`technician` FROM `tincidents` WHERE id=:id");
+											$qry->execute(array('id' => $_GET['id']));
+											$check_ticket_tech_sender=$qry->fetch();
+											$qry->closeCursor();
 											if($check_ticket_tech_sender[0]!=$_SESSION['user_id'] && $check_ticket_tech_sender[1]!=$_SESSION['user_id']) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Vous n'avez pas les droits de consulter le ticket de ce service, contacter votre administrateur").'.<br></div>';} else {include("$_GET[page].php");}
 										} else {
 											include("$_GET[page].php");
@@ -915,9 +959,11 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 									elseif ($_GET['page']=='asset' && $rright['asset_list_company_only']!=0 && $_GET['action']!='new') // restrict user access to asset of our company only
 									{
 										//check is current user have right to display current asset
-										$query=$db->query("SELECT company FROM tusers WHERE id=(SELECT user FROM tassets WHERE id=$db_id)");
-										$check_asset_company=$query->fetch();
-										$query->closeCursor(); 
+										$qry=$db->prepare("SELECT `company` FROM `tusers` WHERE id=(SELECT user FROM tassets WHERE id=:id)");
+										$qry->execute(array('id' => $_GET['id']));
+										$check_asset_company=$qry->fetch();
+										$qry->closeCursor();
+										
 										if($check_asset_company['company']!=$ruser['company'])
 										{echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès à la fiche de cet équipement, contacter votre administrateur').'.<br></div>';}
 										else {include("$_GET[page].php");} 
@@ -938,10 +984,11 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 				include "./event.php"; 
 				
 				//display change user password modalbox
-				$query=$db->query("SELECT * FROM tusers WHERE id='$_SESSION[user_id]'");
-				$r=$query->fetch();
-				$query->closeCursor(); 
-				if ($r['chgpwd']=='1'){include "./modify_pwd.php";}
+				$qry=$db->prepare("SELECT `chgpwd` FROM `tusers` WHERE id=:id");
+				$qry->execute(array('id' => $_SESSION['user_id']));
+				$row=$qry->fetch();
+				$qry->closeCursor();
+				if ($row['chgpwd']=='1'){include "./modify_pwd.php";}
 		}
 		else 
 		{
@@ -976,7 +1023,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 						{
 							$www="./index.php?page=dashboard&userid=%25&state=meta";
 						} else {
-							$www="./index.php?page=dashboard&userid=$user_id&state=$redirectstate";
+							$www='./index.php?page=dashboard&userid='.$_SESSION['user_id'].'&state='.$redirectstate;
 						}
 					}
 					echo "<SCRIPT LANGUAGE='JavaScript'>
@@ -1018,8 +1065,11 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 			';
 		}
 		
-		//bugfix calendar page menu 
-		if($_GET['page']!='calendar'){ echo'<script src="./template/assets/js/ace.min.js"></script><script src="./template/assets/js/ace-elements.min.js"></script>';}
+		//ace js scripts
+		echo'
+			<script src="./template/assets/js/ace.min.js"></script>
+			<script src="./template/assets/js/ace-elements.min.js"></script>
+		';
 		
 		//date conversion
 		function date_convert ($date) 
