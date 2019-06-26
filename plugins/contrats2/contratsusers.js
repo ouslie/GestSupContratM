@@ -76,11 +76,14 @@ DatabaseGrid.prototype.initializeGrid = function (grid) {
     grid.setCellRenderer("tempsrestant", new CellRenderer({
         render: function (cell, id) {
            
+        if (id < 0){
+            cell.innerHTML += "Dépassé";
+            }
+        else {
             cell.innerHTML += display(id);
-          
+            }  
         }
     }));
-
 
     grid.setCellRenderer("tarif", new CellRenderer({
         render: function (cell, id) {

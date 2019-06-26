@@ -88,8 +88,12 @@ DatabaseGrid.prototype.initializeGrid = function (grid) {
     grid.setCellRenderer("tempsrestant", new CellRenderer({
         render: function (cell, id) {
 
-            cell.innerHTML += display(id);
-
+            if (id < 0){
+                cell.innerHTML += "Dépassé";
+                }
+            else {
+                cell.innerHTML += display(id);
+                }  
         }
     }));
 
