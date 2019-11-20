@@ -6,8 +6,9 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 07/01/2007
-# @Update : 29/03/2019
-# @Version : 3.1.40 p4
+# @Update : 20/08/2019
+# @Update : 27/08/2019
+# @Version : 3.1.44
 ################################################################################
 
 //initialize variables 
@@ -38,6 +39,7 @@ if(!isset($u_service)) $u_service = '';
 if(!isset($date_hope_error)) $date_hope_error = '';
 if(!isset($selected_time)) $selected_time = '';
 if(!isset($contrats)) $contrats = '';
+
 
 if(!isset($_POST['mail'])) $_POST['mail'] = '';
 if(!isset($_POST['upload'])) $_POST['upload'] = '';
@@ -71,7 +73,10 @@ if(!isset($_POST['asset_id'])) $_POST['asset_id'] = '';
 if(!isset($_POST['asset'])) $_POST['asset'] = '';
 if(!isset($_POST['u_agency]'])) $_POST['u_agency]'] = '';
 if(!isset($_POST['sender_service'])) $_POST['sender_service'] = '';
+if(!isset($_POST['addcalendar'])) $_POST['addcalendar'] = '';
+if(!isset($_POST['addevent'])) $_POST['addevent'] = '';
 if(!isset($_POST['contrats'])) $_POST['contrats'] = '';
+
 
 if(!isset($_GET['id'])) $_GET['id'] = '';
 if(!isset($_GET['action'])) $_GET['action'] = '';
@@ -82,6 +87,8 @@ $db_id=strip_tags($db->quote($_GET['id']));
 $db_lock_thread=strip_tags($db->quote($_GET['lock_thread']));
 $db_unlock_thread=strip_tags($db->quote($_GET['unlock_thread']));
 $db_threadedit=strip_tags($db->quote($_GET['threadedit']));
+
+$hide_button=0;
 
 if(!isset($globalrow['technician'])) $globalrow['technician'] = '';
 if(!isset($globalrow['time'])) $globalrow['time'] = '';
@@ -105,12 +112,7 @@ if(!isset($globalrow['time_hope'])) $globalrow['time_hope'] = '5';
 if(!isset($globalrow['time'])) $globalrow['time'] = '';
 if(!isset($globalrow['priority'])) $globalrow['priority'] = ''; 
 if(!isset($globalrow['state'])) $globalrow['state'] = '1';
-if($rparameters['user_limit_service']==1 && $rright['dashboard_service_only']!=0)
-{
-	if(!isset($globalrow['type'])) $globalrow['type'] = '0';
-} else {
-	if(!isset($globalrow['type'])) $globalrow['type'] = '1';
-}
+if(!isset($globalrow['type'])) $globalrow['type'] = '0';
 if(!isset($globalrow['start_availability'])) $globalrow['start_availability'] = date("Y-m-d").' '.date("H:i:s");
 if(!isset($globalrow['end_availability'])) $globalrow['end_availability'] = date("Y-m-d").' '.date("H:i:s");
 if(!isset($globalrow['availability_planned'])) $globalrow['availability_planned'] = 0;
@@ -142,16 +144,16 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 						<?php
     						//display widget title
     						if($_GET['action']=='new') {
-								if($mobile==1)
+								if($mobile)
 								{
-									echo 'n° '.$_GET['id'].' ';
+									echo 'n°'.$_GET['id'].' ';
 								} else {
 									echo T_('Ouverture du ticket').' n° '.$_GET['id'].'';
 								}
 							} else {
-								if($mobile==1)
+								if($mobile)
 								{
-									echo 'n° '.$_GET['id'].' ';
+									echo 'n°'.$_GET['id'].' ';
 								} else {
 									echo T_('Édition du ticket').' '.$_GET['id'].' '.$percentage.':  '.$title.'';
 								}
@@ -167,7 +169,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 							$qry->execute(array('incident' => $_GET['id']));
 							$plan=$qry->fetch();
 							$qry->closeCursor();
-    						if($plan) echo '&nbsp;<a target="_blank" href="./index.php?page=calendar"><i class="icon-calendar green" title="'.T_('Ticket planifié dans le calendrier le').' '.$plan['date_start'].'" /></i></a>';
+    						if($plan) echo '&nbsp;<a target="_blank" href="./index.php?page=calendar"><i class="icon-calendar blue" title="'.T_('Ticket planifié dans le calendrier le').' '.$plan['date_start'].'" /></i></a>';
 							//display member of project
 							if($rparameters['project']==1 && $rright['project'])
 							{
@@ -191,15 +193,18 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								$qry->closeCursor();
 								if($row) {echo '<a target="_blank" href="http://'.$row['ip'].':5800"><img title="'.T_('Ouvre un nouvel onglet sur le prise de contrôle distant web VNC').'" src="./images/remote.png" /></a>&nbsp;&nbsp;';}
 							}
-							if ($rright['ticket_next']!=0)
+							if ($rright['ticket_next']!=0 && !$mobile)
 							{
-								if($previous[0]!='') echo'<a href="./index.php?page=ticket&amp;id='.$previous[0].'&amp;state='.$globalrow['state'].'&amp;userid='.$_GET['userid'].'"><i title="'.T_('Ticket précédent de cet état').'" class="icon-circle-arrow-left bigger-130"></i>&nbsp;'; 
-								if($next[0]!='') echo'<a href="./index.php?page=ticket&amp;id='.$next[0].'&amp;state='.$globalrow['state'].'&amp;userid='.$_GET['userid'].' "><i title="'.T_('Ticket suivant de cet état').'" class="icon-circle-arrow-right bigger-130"></i></a>';
+								if($previous[0]!='') echo'<a style="vertical-align:middle;" href="./index.php?page=ticket&amp;id='.$previous[0].'&amp;state='.$globalrow['state'].'&amp;userid='.$_GET['userid'].'"><i title="'.T_('Ticket précédent de cet état').'" class="icon-circle-arrow-left bigger-130"></i>&nbsp;'; 
+								if($next[0]!='') echo'<a style="vertical-align:middle;" href="./index.php?page=ticket&amp;id='.$next[0].'&amp;state='.$globalrow['state'].'&amp;userid='.$_GET['userid'].' "><i title="'.T_('Ticket suivant de cet état').'" class="icon-circle-arrow-right bigger-130"></i></a>';
 							}
 							if ($rright['ticket_print']!=0 && $_GET['action']!='new')
 							{
-								echo "&nbsp;";
-								echo '<a target="_blank" href="./ticket_print.php?id='.$_GET['id'].'&user_id='.$_SESSION['user_id'].'&token='.$_COOKIE['token'].'"><i title="'.T_('Imprimer ce ticket').'" class="icon-print purple bigger-130"></i></a>';
+								echo '
+								<a style="margin: 0px 0px 0px 5px; height: 25px; width:30px;" class="btn btn-minier btn-default" target="_blank" onClick="parentNode.submit();" href="./ticket_print.php?id='.$_GET['id'].'&user_id='.$_SESSION['user_id'].'&token='.$_COOKIE['token'].'">
+									<center><i title="'.T_('Imprimer ce ticket').'" class="icon-print white bigger-130"></i></center>
+								</a>';
+								
 							}
 							if ($rright['ticket_template']!=0 && $_GET['action']=='new')
 							{
@@ -210,31 +215,28 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								$qry->closeCursor();
 								if($template[0])
 								{
-									echo "&nbsp;";
-									echo '<a href="./index.php?page=ticket&id='.$_GET['id'].'&userid='.$_GET['userid'].'&state='.$_GET['state'].'&action=template"><i title="'.T_('Modèle de tickets').'" class="icon-tags pink bigger-130"></i></a>';
+									echo '
+									<a style="margin: 0px 0px 0px 5px; height: 25px; width:30px;" class="btn btn-minier btn-pink" href="./index.php?page=ticket&id='.$_GET['id'].'&userid='.$_GET['userid'].'&state='.$_GET['state'].'&action=template" <i title="'.T_('Modèle de tickets').'" >
+										<center><i class="icon-tags white bigger-130"></i></center>
+									</a>';
 								}
 							}
 							if ($rright['ticket_event']!=0)
 							{
-								echo "&nbsp;&nbsp;";
-								echo'<i onclick="parent.location=\'./index.php?page=ticket&id='.$_GET['id'].'&userid='.$_GET['userid'].'&state='.$_GET['state'].'&action=addevent&technician='.$_SESSION['user_id'].'\'" title="'.T_('Créer un rappel pour ce ticket').'" class="icon-bell-alt bigger-130 orange"></i>';
+								echo '<button style="margin: 0px 0px 0px 5px; height: 25px; width:30px;" class="btn btn-minier btn-warning" title="'.T_('Créer un rappel pour ce ticket').'" name="addevent" type="submit" value="addevent" ><center><i class="icon-bell-alt bigger-130"></i></center></button>';
 							}
 							if (($rright['planning']!=0) && ($rparameters['planning']==1) && ($rright['ticket_calendar']!=0) && $_GET['action']!='new') 
 							{
-								echo "&nbsp;&nbsp;";
-								echo'<i onclick="parent.location=\'./index.php?page=ticket&id='.$_GET['id'].'&userid='.$_GET['userid'].'&state='.$_GET['state'].'&action=addcalendar&technician='.$_SESSION['user_id'].'\'" title="'.T_('Planifier une intervention dans le calendrier').'" class="icon-calendar bigger-130 green"></i>';
+								echo '<button style="margin: 0px 0px 0px 5px; height: 25px; width:30px;" class="btn btn-minier btn-info" title="'.T_('Planifier une intervention dans le calendrier').'" name="addcalendar" type="submit" value="addcalendar" ><center><i class="icon-calendar bigger-130"></i></center></button>';
 							}
 							if ($rright['ticket_delete']!=0 && $_GET['action']!='new')
 							{
-								echo "&nbsp;&nbsp;";
-								echo '<a onClick="javascript: return confirm(\''.T_('Êtes-vous sur de vouloir supprimer ce ticket ?').'\');" href="./index.php?page=ticket&id='.$_GET['id'].'&userid='.$_GET['userid'].'&state='.$_GET['state'].'&action=delete"><i title="'.T_('Supprimer ce ticket').'" class="icon-trash red bigger-130"></i></a>';
+								echo '<a style="margin: 0px 0px 0px 5px; height: 25px; width:30px;" class="btn btn-minier btn-danger" onClick="javascript: return confirm(\''.T_('Êtes-vous sur de vouloir supprimer ce ticket ?').'\');" href="./index.php?page=ticket&id='.$_GET['id'].'&userid='.$_GET['userid'].'&state='.$_GET['state'].'&action=delete"  title="'.T_('Supprimer ce ticket').'" ><center><i class="icon-trash white bigger-130"></i></center></a>';
 							}
-							if ($rright['ticket_save']!=0)
+							if ($rright['ticket_save']!=0 && !$hide_button)
 							{
-								echo "&nbsp;&nbsp;";
-								echo '<button class="btn btn-minier btn-success" title="'.T_('Sauvegarder').'" name="modify" value="submit" type="submit" id="modify"><i class="icon-save bigger-140"></i></button>';
-                                echo "&nbsp;&nbsp;";
-                                echo '<button class="btn btn-minier btn-purple" title="'.T_('Sauvegarder et quitter').'" name="quit" value="quit" type="submit" id="quit"><i class="icon-save bigger-140"></i></button>';
+								echo '<button style="margin: 0px 0px 0px 5px; height: 25px; width:30px;" class="btn btn-minier btn-success" title="'.T_('Enregistrer').'" name="modify" value="submit" type="submit" id="modify"><center><i class="icon-save bigger-150"></i></center></button>';
+                                echo '<button style="margin: 0px 0px 0px 5px; height: 25px; width:30px;" class="btn btn-minier btn-purple" title="'.T_('Enregistrer et quitter').'" name="quit" value="quit" type="submit" id="quit"><center><i class="icon-save bigger-150"></i></center></button>';
 							}
 							?>
 					</span>
@@ -254,7 +256,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 									//define order of user list in case with company prefix
 									if($rright['ticket_user_company']!=0)
 									{
-										$qry=$db->prepare("SELECT DISTINCT tusers.id,tusers.company,tusers.firstname,tusers.lastname,tusers.disable FROM `tusers` LEFT JOIN tcompany ON tusers.company=tcompany.id WHERE (tusers.lastname!='' OR tusers.firstname!='')  ORDER BY tcompany.name, tusers.lastname");
+										$qry=$db->prepare("SELECT tusers.id,tusers.company,tusers.firstname,tusers.lastname,tusers.disable,tcompany.name AS user_company FROM `tusers`, `tcompany` WHERE tusers.company=tcompany.id AND (tusers.lastname!='' OR tusers.firstname!='') ORDER BY tcompany.name, tusers.lastname");
 									} else {
 										$qry=$db->prepare("SELECT id,company,firstname,lastname,disable FROM `tusers` WHERE (lastname!='' OR firstname!='')  ORDER BY lastname ASC, firstname ASC");
 									}
@@ -262,15 +264,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 									$qry->execute();
 									while($row=$qry->fetch())
 									{
-										if($rright['ticket_user_company']!=0 && $row['company']!=0)
-										{
-											//get company name of this user to display if exist
-											$qry2=$db->prepare("SELECT `name` FROM `tcompany` WHERE id=:id");
-											$qry2->execute(array('id' => $row['company']));
-											$user_company=$qry2->fetch();
-											$qry2->closeCursor();
-											$user_company='['.$user_company[0].'] ';
-										} else {$user_company='';}
+										if ($rright['ticket_user_company']!=0 && $row['company']!=0){$user_company='['.$row['user_company'].'] ';} else {$user_company='';}
 										if ($_POST['user']==$row['id']) {$selected='selected';} elseif (($_POST['user']=='') && ($globalrow['user']==$row['id'])) {$selected='selected';} else {$selected='';} 
 										if ($row['id']==0) {echo '<option '.$selected.' value="'.$row['id'].'">'.T_(" $row[lastname]").' '.$row['firstname'].'</option>';} //case no user
 										if ($row['disable']==0) {echo '<option '.$selected.' value="'.$row['id'].'">'.$user_company.$row['lastname'].' '.$row['firstname'].'</option>';} //all enable users and technician
@@ -326,6 +320,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 										echo '<span id="user_company"></span>';
 										echo '<span id="user_other_ticket"></span>';
 										echo '<span id="user_asset"></span>';
+										echo '<span id="user_ticket_remaining"></span>';
 									}
 								?>
 								<!-- START user info part -->
@@ -357,6 +352,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
         									}
         									else
         									{
+												echo '<option value="" ></option>';
 												$qry2=$db->prepare("SELECT `id`,`name` FROM `tservices` WHERE id=:id ORDER BY id");
 												$qry2->execute(array('id' => $globalrow['u_service']));
 												$row2=$qry2->fetch();
@@ -498,13 +494,15 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 							<div class="col-sm-8 ">
 								<select id="technician" name="technician" onchange="loadVal(); submit();" <?php if($rright['ticket_tech']==0 || $lock_tech==1) {echo ' disabled="disabled" ';}?> >
 									<?php
-									//filter is service is send for technicians
+									//add service filter to technician list
 									if($rparameters['user_limit_service']==1 && $rright['dashboard_service_only']!=0) //case for user who open ticket to auto-select categories of the service
 									{
 										if($_POST['u_service']) {$where_service=$_POST['u_service'];} else {$where_service=$globalrow['u_service'];}
-										if ($rright['ticket_tech_super']!=0) //display supervisor in technician list
+										if ($rright['ticket_tech_super']!=0 && $rright['ticket_tech_admin']!=0) { //display supervisor and admin in technician list
+											$query="SELECT * FROM `tusers` WHERE (profile='0' || profile='4' || profile='3') AND ( id IN (SELECT user_id FROM tusers_services WHERE service_id=$where_service)) OR id='0' ORDER BY lastname ASC, firstname ASC";
+										} elseif ($rright['ticket_tech_super']!=0) //display supervisor in technician list
 										{
-											$query="SELECT id,lastname,firstname,disable FROM `tusers` WHERE (profile='0' || profile='4' || profile='3') AND ( id IN (SELECT user_id FROM tusers_services WHERE service_id=$where_service)) OR id='0' ORDER BY id!=0, lastname ASC, firstname ASC";
+											$query="SELECT id,lastname,firstname,disable FROM `tusers` WHERE (profile='0' || profile='3') AND ( id IN (SELECT user_id FROM tusers_services WHERE service_id=$where_service)) OR id='0' ORDER BY id!=0, lastname ASC, firstname ASC";
 										} elseif ($rright['ticket_tech_admin']!=0)  { //display technician and admin in technician list
 											$query="SELECT id,lastname,firstname,disable FROM `tusers` WHERE (profile='0' || profile='4') AND ( id IN (SELECT user_id FROM tusers_services WHERE service_id=$where_service)) OR id='0' ORDER BY id!=0, lastname ASC, firstname ASC";
 										} else { //display only technician in technician list
@@ -514,9 +512,11 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 										$query2="SELECT id,name,disable FROM `tgroups` WHERE type='1' AND service=$where_service ORDER BY name";
 									} else {
 										//display technician and admin in technician list
-										if ($rright['ticket_tech_super']!=0)
+										 if ($rright['ticket_tech_super']!=0 && $rright['ticket_tech_admin']!=0) { // supervisor, admin, technician
+											$query = "SELECT * FROM `tusers` WHERE (profile='0' || profile='4' || profile='3') OR id=0 ORDER BY lastname ASC, firstname ASC" ;
+										} elseif ($rright['ticket_tech_super']!=0)
 										{
-											$query = "SELECT id,lastname,firstname,disable FROM `tusers` WHERE (profile='0' || profile='4' || profile='3') OR id=0 ORDER BY id!=0, lastname ASC, firstname ASC" ;
+											$query = "SELECT id,lastname,firstname,disable FROM `tusers` WHERE (profile='0' || profile='3') OR id=0 ORDER BY id!=0, lastname ASC, firstname ASC" ;
 										} elseif ($rright['ticket_tech_admin']!=0)
 										{
 											$query = "SELECT id,lastname,firstname,disable FROM `tusers` WHERE (profile='0' || profile='4') OR id=0 ORDER BY id!=0, lastname ASC, firstname ASC" ;
@@ -528,6 +528,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 									}
 									
 									//display technician list
+									if($rparameters['debug']) {echo $query;}
 									$query = $db->query($query);
 									$tech_selected='0';
 									while ($row = $query->fetch()) 
@@ -597,7 +598,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 									<div class="form-group '; if (($rright['ticket_new_asset_disp']==0 && $_GET['action']=='new') || ($rright['ticket_asset_disp']==0 && $_GET['action']!='new')) {echo 'hide';} echo ' '.$asset_mandatory.'" >
 										<label class="col-sm-2 control-label no-padding-right" for="asset">
 											';
-												if (($_POST['asset_id']==0) && ($globalrow['asset_id']==0)) {if($rright['ticket_asset_mandatory']!=0) {echo '<i title="'.T_("La saisie de l'équipement est obligatoire").'"';} else {echo '<i title="'.T_('Sélectionner un équipement').'"';} echo 'class="icon-warning-sign red bigger-130"></i>&nbsp;';} 
+												if (($_POST['asset_id']==0) && ($globalrow['asset_id']==0) && $rright['ticket_asset_mandatory']!=0) {echo '<i title="'.T_("La saisie de l'équipement est obligatoire").'" class="icon-warning-sign red bigger-130"></i>&nbsp;';}
 											echo'
 											'.T_('Équipement').':
 										</label>
@@ -946,11 +947,11 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 							?> :
 							</label>
 							<div class="col-sm-8">
-								<table border="1" width="<?php if($mobile==0) {echo '764';} else {echo '285';}?>" style="border: 1px solid #D8D8D8;" <?php if ($rright['ticket_description']==0) echo 'cellpadding="10"'; ?> >
+								<table border="1" width="<?php if($mobile==0) {echo '764';} else {echo '285';}?>" style="border: 1px solid #D8D8D8;" >
 									<tr>
-										<td>
+										<td <?php if ($rright['ticket_description']==0) {echo 'style="padding:5px"';} ?>>
 											<?php
-											if ($rright['ticket_description']!=0 || $_GET['action']=='new')
+											if($rright['ticket_description']!=0 || $_GET['action']=='new')
 											{	
 												//display editor
 												echo '
@@ -984,20 +985,26 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 						<?php
 						if ($rright['ticket_attachment']!=0)
 						{
-							echo '
-							<div class="form-group">
-								<label class="col-sm-2 control-label no-padding-right" for="attachment">'.T_('Fichier joint').' :</label>
-								<div class="col-sm-8">
-										<table border="1" style="border: 1px solid #D8D8D8;" >
-										<tr>
-											<td style="padding:15px;">';
-												include "./attachement.php";
-												echo '
-											</td>
-										</tr>
-									</table>
-								</div>
-							</div>';
+							//not display field if ticket is close and no attachement
+							if($globalrow['state']==3 && !$globalrow['img1'] && !$globalrow['img2'] && !$globalrow['img3'] && !$globalrow['img4'] && !$globalrow['img5'])
+							{
+								//hide field
+							} else {
+								echo '
+								<div class="form-group">
+									<label class="col-sm-2 control-label no-padding-right" for="attachment">'.T_('Fichier joint').' :</label>
+									<div class="col-sm-8">
+											<table border="1" style="border: 1px solid #D8D8D8;" >
+											<tr>
+												<td style="padding:15px;">';
+													include "./attachement.php";
+													echo '
+												</td>
+											</tr>
+										</table>
+									</div>
+								</div>';
+							}
 						}
 						?>
 						<!-- END attachement part -->
@@ -1155,8 +1162,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 								?>
 							</div>
 						</div>
-						<!-- END time hope part -->
-							<!-- START Contrat ADMIN part -->
+						<!-- END time hope part -->					<!-- START Contrat ADMIN part -->
 							<?php
 if ($rright['admin_contrat'] != 0) {?>
 						<div class="form-group">
@@ -1266,7 +1272,6 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
 							</div>
 						</div>
 						<?php }?>
-
 						<!-- START priority part -->
 						<?php if($rright['ticket_priority_mandatory']!=0) {if(($_POST['priority']=="" && $_GET['action']=='new') || ($globalrow['priority']=="" && $_GET['action']!='new') || ($globalrow['criticality']=="0")) {$priority_error="has-error";} else {$priority_error="";}}  else {$priority_error="";} ?>
 						<div class="form-group <?php echo $priority_error; if($rright['ticket_priority_disp']==0) echo 'hide';?>">
@@ -1559,69 +1564,72 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
 						<!-- END availability part -->
 						<div class="form-actions center">
 							<?php
-							if (($rright['ticket_save']!=0 && $_GET['action']!='new') || ($rright['ticket_new_save']!=0 && $_GET['action']=='new'))
+							if(!$hide_button)
 							{
-								echo '
-								<button title="ALT+SHIFT+s" accesskey="s" name="modify" id="modify" value="modify" type="submit" class="btn btn-sm btn-success">
-									<i class="icon-save icon-on-right bigger-110"></i> 
-									&nbsp;'.T_('Enregistrer').'
-								</button>
-								&nbsp;
-								';
-								if($mobile==1) {echo '<br /><br />';}
-							}
-							if ($rright['ticket_save_close']!=0)
-							{
-								echo '
-								<button title="ALT+SHIFT+f" accesskey="f" name="quit" id="quit" value="quit" type="submit" class="btn btn-sm btn-purple">
-									<i class="icon-save icon-on-right bigger-110"></i> 
-									&nbsp;'.T_('Enregistrer et Fermer').'
-								</button>
-								&nbsp;
-								';
-								if($mobile==1) {echo '<br /><br />';}
-							}
-							if ($rright['ticket_new_send']!=0 && $_GET['action']=='new')
-							{
-								echo '
-								<button name="send" id="send" value="send" type="submit" class="btn btn-sm btn-success">
-									'.T_('Envoyer').'
-									&nbsp;<i class="icon-arrow-right icon-on-right bigger-110"></i> 
-								</button>
-								&nbsp;
-								';
-								if($mobile==1) {echo '<br /><br />';}
-							}
-							if ($rright['ticket_close']!=0 && $_POST['state']!='3' && $globalrow['state']!='3' && $_GET['action']!='new' && $lock_tech==0)
-							{
-								echo '
-								<button name="close" id="close" value="close" type="submit" class="btn btn-sm btn-grey">
-									<i class="icon-ok icon-on-right bigger-110"></i> 
-									&nbsp;'.T_('Clôturer le ticket').'
-								</button>
-								&nbsp;
-								';
-								if($mobile==1) {echo '<br /><br />';}
-							}
-							if ($rright['ticket_send_mail']!=0)
-							{
-								echo '
-								<button title="ALT+SHIFT+m" accesskey="m" name="mail" id="mail" value="mail" type="submit" class="btn btn-sm btn-primary">
-									<i class="icon-envelope icon-on-right bigger-110"></i> 
-									&nbsp;'.T_('Envoyer un mail').'
-								</button>
-								&nbsp;
-								';
-								if($mobile==1) {echo '<br /><br />';}
-							}
-							if ($rright['ticket_cancel']!=0)
-							{
-								echo '
-								<button title="ALT+SHIFT+c" accesskey="c" name="cancel" id="cancel" value="cancel" type="submit" class="btn btn-sm btn-danger">
-									<i class="icon-remove icon-on-right bigger-110"></i> 
-									&nbsp;'.T_('Annuler').'
-								</button>
-								';
+								if (($rright['ticket_save']!=0 && $_GET['action']!='new') || ($rright['ticket_new_save']!=0 && $_GET['action']=='new'))
+								{
+									echo '
+									<button title="ALT+SHIFT+s" accesskey="s" name="modify" id="modify" value="modify" type="submit" class="btn btn-sm btn-success">
+										<i class="icon-save icon-on-right bigger-110"></i> 
+										&nbsp;'.T_('Enregistrer').'
+									</button>
+									&nbsp;
+									';
+									if($mobile==1) {echo '<br /><br />';}
+								}
+								if ($rright['ticket_save_close']!=0)
+								{
+									echo '
+									<button title="ALT+SHIFT+f" accesskey="f" name="quit" id="quit" value="quit" type="submit" class="btn btn-sm btn-purple">
+										<i class="icon-save icon-on-right bigger-110"></i> 
+										&nbsp;'.T_('Enregistrer et Fermer').'
+									</button>
+									&nbsp;
+									';
+									if($mobile==1) {echo '<br /><br />';}
+								}
+								if ($rright['ticket_new_send']!=0 && $_GET['action']=='new')
+								{
+									echo '
+									<button name="send" id="send" value="send" type="submit" class="btn btn-sm btn-success">
+										'.T_('Envoyer').'
+										&nbsp;<i class="icon-arrow-right icon-on-right bigger-110"></i> 
+									</button>
+									&nbsp;
+									';
+									if($mobile==1) {echo '<br /><br />';}
+								}
+								if ($rright['ticket_close']!=0 && $_POST['state']!='3' && $globalrow['state']!='3' && $_GET['action']!='new' && $lock_tech==0)
+								{
+									echo '
+									<button name="close" id="close" value="close" type="submit" class="btn btn-sm btn-grey">
+										<i class="icon-ok icon-on-right bigger-110"></i> 
+										&nbsp;'.T_('Clôturer le ticket').'
+									</button>
+									&nbsp;
+									';
+									if($mobile==1) {echo '<br /><br />';}
+								}
+								if ($rright['ticket_send_mail']!=0)
+								{
+									echo '
+									<button title="ALT+SHIFT+m" accesskey="m" name="mail" id="mail" value="mail" type="submit" class="btn btn-sm btn-primary">
+										<i class="icon-envelope icon-on-right bigger-110"></i> 
+										&nbsp;'.T_('Envoyer un mail').'
+									</button>
+									&nbsp;
+									';
+									if($mobile==1) {echo '<br /><br />';}
+								}
+								if ($rright['ticket_cancel']!=0)
+								{
+									echo '
+									<button title="ALT+SHIFT+c" accesskey="c" name="cancel" id="cancel" value="cancel" type="submit" class="btn btn-sm btn-danger">
+										<i class="icon-remove icon-on-right bigger-110"></i> 
+										&nbsp;'.T_('Annuler').'
+									</button>
+									';
+								}
 							}
 							?>
 						</div>
@@ -1645,29 +1653,36 @@ $query = $db->query("SELECT * FROM `tcontrats` WHERE id ='$globalrow[contrats]'"
 
 <script type="text/javascript">
 
-// allow past clipboard screenshot with chrome
-document.getElementById("editor").focus();
-document.body.addEventListener("paste", function(e) {
-	for (var i = 0; i < e.clipboardData.items.length; i++) {
-		if (e.clipboardData.items[i].kind == "file" && e.clipboardData.items[i].type == "image/png") {
-			var imageFile = e.clipboardData.items[i].getAsFile();
-			var fileReader = new FileReader();
-			fileReader.onloadend = function(e) {
-				var image = document.createElement("IMG");
-				image.src = this.result;
-				var range = window.getSelection().getRangeAt(0);
-				range.insertNode(image);
-				range.collapse(false);
-				var selection = window.getSelection();
-				selection.removeAllRanges();
-				selection.addRange(range);
-			};
-			fileReader.readAsDataURL(imageFile);
-			e.preventDefault();
-			break;
+<?php
+if($rright['ticket_description']!=0 || $_GET['action']=='new')
+{
+	echo '
+	// allow past clipboard screenshot with chrome
+	document.getElementById("editor").focus();
+	document.body.addEventListener("paste", function(e) {
+		for (var i = 0; i < e.clipboardData.items.length; i++) {
+			if (e.clipboardData.items[i].kind == "file" && e.clipboardData.items[i].type == "image/png") {
+				var imageFile = e.clipboardData.items[i].getAsFile();
+				var fileReader = new FileReader();
+				fileReader.onloadend = function(e) {
+					var image = document.createElement("IMG");
+					image.src = this.result;
+					var range = window.getSelection().getRangeAt(0);
+					range.insertNode(image);
+					range.collapse(false);
+					var selection = window.getSelection();
+					selection.removeAllRanges();
+					selection.addRange(range);
+				};
+				fileReader.readAsDataURL(imageFile);
+				e.preventDefault();
+				break;
+			}
 		}
-	}
-}); 
+	}); 
+	';
+}
+?> 
 	
 jQuery(function($) {
 	<?php
@@ -1735,14 +1750,10 @@ $(document).ready(function(){
 				if(data.company) {$("#user_company").html('&nbsp;&nbsp;<i title="<?php echo T_('Société'); ?> '+data.company+'" class="icon-building blue bigger-130"></i> '+data.company);} else {$("#user_company").html('');}
 				if(data.other_ticket) {$("#user_other_ticket").html('&nbsp;&nbsp; <i title="<?php echo T_('Autres tickets de cet utilisateur'); ?>" class="icon-ticket blue bigger-130"></i>'+data.other_ticket);} else {$("#user_other_ticket").html('');}
 				if(data.asset_id) {$("#user_asset").html('&nbsp;&nbsp;&nbsp;<a target="_blank" href="./index.php?page=asset&id='+data.asset_id+'"><i title="<?php echo T_('Équipement associé'); ?>" class="icon-desktop blue bigger-120"></i></a> '+data.asset_netbios);} else {$("#user_asset").html('');}
+				if(data.ticket_remaining) {$("#user_ticket_remaining").html('&nbsp;&nbsp;&nbsp;<i title="<?php echo T_('Tickets restants'); ?>" class="icon-dashboard blue bigger-120"></i> '+data.ticket_remaining);} else {$("#user_ticket_remaining").html('');}
 				$('#user_warning').css('display', 'none');
 			}
 		});
 	}
 });
-
-
-
-        
-  
 </script>		

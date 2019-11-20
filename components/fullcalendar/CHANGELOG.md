@@ -1,4 +1,42 @@
 
+v4.2.0
+------
+- fix recurring event expansion when event starts before view and has duration (#4617, #4635)
+- simple event recurring now allows a duration property on the event object
+- internal Calendar::setOptions method removed (never meant to be public)
+
+
+v4.1.0 (2019-04-24)
+-------------------
+
+- scrollToTime method (#467)
+- ISO8601 datetime strings with no 'T' not parsed in Safari (#4610)
+- all-day dropped events after third not being draggable (#4616)
+- dateClick/selecting sometime report wrong dates after calendar resize (#4608)
+- js error when using navLinks with header=false (#4619)
+- js error when more+ link and multiple async event sources (#4585)
+- timeGridEventMinHeight is not defined in OptionsInput interface (#4605)
+- Interdependent package semvers with carrot, use tilde (#4620)
+- dayRender now called for day columns in timeGrid views
+
+
+v4.0.2 (2019-04-03)
+-------------------
+
+Bugfixes:
+- eventAllow and constraints not respected when dragging event between calendars
+- viewSkeletonRender now in typedefs (#4589)
+- invalid draggedEvent properties in eventAllow for external dnd (#4575)
+- forceEventDuration not working with external dnd (#4597)
+- rrule displaying time when allDay is true (#4576)
+- rrule events not displaying at interval start (#4596)
+- prev button not initially working when starting on 31st of a month (#4595)
+- clicking X in popover generating a dayClick (#4584)
+- locale file used as single script tag not affecting calendar locale (#4581)
+- header "today" button not translated for pt and pt-br (#4591)
+- fa locale typo (#4582)
+
+
 v4.0.1 (2019-03-18)
 -------------------
 

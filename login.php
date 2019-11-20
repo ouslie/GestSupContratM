@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 07/03/2010
-# @Update : 21/03/2019
-# @Version : 3.1.40
+# @Update : 01/10/2019
+# @Version : 3.1.44
 ################################################################################
 
 //initialize variables 
@@ -30,7 +30,6 @@ if(!isset($_GET['techread'])) $_GET['techread'] = '';
 if(!isset($_GET['userid'])) $_GET['userid'] = ''; 
 if(!isset($_GET['id'])) $_GET['id'] = '';
 
-//default values
 if($_GET['state']=='') $_GET['state'] = '%';
 	//actions on submit
 	if (isset($_POST['submit']))
@@ -122,7 +121,13 @@ if($_GET['state']=='') $_GET['state'] = '%';
 			$domain=$rparameters['ldap_domain'];
 			if ($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) 
 			{
-				$ldapbind = @ldap_bind($ldap, "$login@$domain", $pass);
+				//if UPN not add domain suffix
+				if($rparameters['ldap_login_field']=='UserPrincipalName')
+				{
+					$ldapbind = @ldap_bind($ldap, $login, $pass);
+				} else { 
+					$ldapbind = @ldap_bind($ldap, "$login@$domain", $pass);
+				}
 			} else { //open LDAP case
 				//generate DC Chain from domain parameter
 				$dcpart=explode(".",$domain);

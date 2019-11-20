@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 05/04/2017
-# @Update : 06/02/2018
-# @Version : 3.1.39 p1
+# @Update : 24/05/2019
+# @Version : 3.1.42
 ####################################################################################
 
 if(!isset($ldap_query)) $ldap_query = '';

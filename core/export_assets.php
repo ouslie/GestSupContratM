@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 11/02/2016
-# @Update : 26/01/2019
-# @Version : 3.1.39
+# @Update : 11/09/2019
+# @Version : 3.1.44
 ################################################################################
 
 //locales
@@ -28,6 +28,7 @@ T_textdomain($_GET['lang']);
 
 //initialize variables 
 if(!isset($_GET['token'])) $_GET['token'] = ''; 
+if(!isset($_COOKIE['token'])) $_COOKIE['token'] = ''; 
 
 //database connection
 require "../connect.php"; 
@@ -39,7 +40,7 @@ $db_company=strip_tags($_GET['company']);
 
 
 //secure connect from authenticated user
-if($_GET['token']==$_COOKIE['token']) 
+if($_GET['token']==$_COOKIE['token'] && $_GET['token']) 
 {
 	//get current date
 	$daydate=date('Y-m-d');

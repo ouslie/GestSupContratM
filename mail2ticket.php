@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 07/04/2013
-# @Update : 15/03/2019
-# @Version : 3.1.40 p2
+# @Update : 23/09/2019
+# @Version : 3.1.44
 ################################################################################
 
 //initialize variables 
@@ -33,13 +33,7 @@ T_textdomain($_GET['lang']);
 header('Content-Type: text/html; charset=utf-8');
 
 //call phpimap component
-require_once('components/PhpImap/IncomingMailHeader.php');
-require_once('components/PhpImap/IncomingMail.php');
-require_once('components/PhpImap/IncomingMailAttachment.php');
-require_once('components/PhpImap/Mailbox.php');
-use PhpImap\Mailbox as ImapMailbox;
-use PhpImap\IncomingMail;
-use PhpImap\IncomingMailAttachment;
+require_once('components/PhpImap/__autoload.php');
 
 //functions
 require_once('core/functions.php');
@@ -51,9 +45,12 @@ function func_attachement($c_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox
 	//move attachment to upload directory
 	$tabAttachments = $mail->getAttachments();
 	foreach ($tabAttachments as $tabAttachment){
-		$oldmask = umask(0);
-		@mkdir($c_name_dir_upload.$c_ticket_number,0777);
-		umask($oldmask);
+		if(!is_dir($c_name_dir_upload.$c_ticket_number))
+		{
+			$oldmask = umask(0);
+			@mkdir($c_name_dir_upload.$c_ticket_number,0777);
+			umask($oldmask);
+		}
 		//case image inside in mail
 		//if($tabAttachment->disposition=="inline" || $tabAttachment->disposition==null) #4015
 		if($tabAttachment->disposition=="inline" || $tabAttachment->disposition=="INLINE" || $tabAttachment->disposition==null) 
@@ -193,18 +190,18 @@ $c_name_dir_upload =  __DIR__.'/upload/';
 
 if($rparameters['imap_server'])
 {
-	echo 'IMAP server: <span style="color:green">'.$rparameters['imap_server'].'</span><br />';
+	echo 'IMAP server : <span style="color:green">'.$rparameters['imap_server'].'</span><br />';
 } else {
-	echo 'IMAP server: <span style="color:red">No IMAP server detected</span><br /><br />';
+	echo 'IMAP server : <span style="color:red">No IMAP server detected</span><br /><br />';
 }
 if($rparameters['imap_port'])
 {
-	echo 'IMAP port: <span style="color:green">'.$rparameters['imap_port'].'</span><br />';
+	echo 'IMAP port : <span style="color:green">'.$rparameters['imap_port'].'</span><br />';
 } else {
-	echo 'IMAP port: <span style="color:red">No IMAP port detected</span><br /><br />';
+	echo 'IMAP port : <span style="color:red">No IMAP port detected</span><br /><br />';
 }
 
-echo 'IMAP connection string: <span style="color:green">'.$hostname.'</span><br />';
+echo 'IMAP connection string : <span style="color:green">'.$hostname.'</span><br />';
 
 //define mailbox to check
 $mailboxes=array();
@@ -218,10 +215,10 @@ if ($rparameters['imap_mailbox_service']==1)
 		array_push($mailboxes, $row['mail']);		
 	}
 	$qry->closeCursor();
-	echo 'IMAP connector mode: <span style="color:green">MULTI</span><br /><br />';
+	echo 'IMAP connector mode : <span style="color:green">MULTI</span><br /><br />';
 } else {
 	array_push($mailboxes, $rparameters['imap_user']);
-	echo 'IMAP connector mode: <span style="color:green">SINGLE</span><br /><br />';
+	echo 'IMAP connector mode : <span style="color:green">SINGLE</span><br /><br />';
 	if(preg_match('/gs_en/',$rparameters['imap_password'])) {$rparameters['imap_password']=gs_crypt($rparameters['imap_password'], 'd' , $rparameters['server_private_key']);}
 	$mailbox_password=$rparameters['imap_password'];
 }
@@ -245,15 +242,15 @@ foreach ($mailboxes as $mailbox)
 	
 	//connect to mailbox
 	$con_mailbox = new PhpImap\Mailbox($hostname, $mailbox, $mailbox_password,$c_name_dir_upload) or die(T_('Impossible de se connecter au serveur de Messagerie: ') . imap_last_error());
-	if (!$con_mailbox ) {
-		echo '['.$mailbox.'] Connection to mailbox: <span style="color:red">KO</span><br />';
+	if (!$con_mailbox || $rparameters['imap']==0) {
+		echo '['.$mailbox.'] Connection to mailbox : <span style="color:red">KO</span><br />';
 	} else {
 		//check mail in mailbox
 		$mailsIds = $con_mailbox ->searchMailBox('ALL');
 		if(!$mailsIds) {
-			echo '['.$mailbox.'] Detect mail in mailbox: <span style="color:orange">KO</span><br />';
+			echo '['.$mailbox.'] Detect mail in mailbox : <span style="color:orange">KO</span><br />';
 		} else {
-			echo '['.$mailbox.'] Detect mail in mailbox: <span style="color:green">OK</span><br />';
+			echo '['.$mailbox.'] Detect mail in mailbox : <span style="color:green">OK</span><br />';
 		}
 		
 		//treatment for all mail inside mailbox
@@ -276,7 +273,7 @@ foreach ($mailboxes as $mailbox)
 					$mail_blacklist=explode(';',$rparameters['imap_blacklist']);
 					foreach ($mail_blacklist as $value) {
 						//check if each blacklist value exit in source mail as sender
-						if (preg_match("/$value/i", $from)){$blacklist_mail=1;}
+						if(preg_match("/$value/i", $from) && $value){$blacklist_mail=1;}
 					}
 				}
 				if($blacklist_mail==1) {
@@ -322,7 +319,7 @@ foreach ($mailboxes as $mailbox)
 						//get attachement and image 
 						if($contentype=='textHtml') { 
 							$message = (isset($c_FromMessage)?$c_FromMessage:'').func_attachement($find_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox,$count,$contentype);
-						} else { //case plaintext with attachment
+						} else { //case plain text with attachment
 							(isset($c_FromMessage)?$c_FromMessage:'').func_attachement($find_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox,$count,$contentype);
 						}
 						//delete ticket part from mail to keep only answer

@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 07/03/2010
-# @Update : 02/04/2019
-# @Version : 3.1.40 p9
+# @Update : 20/09/2019
+# @Version : 3.1.44 p2
 ################################################################################
 
 //cookies initialization
@@ -15,8 +15,7 @@ session_name(md5_file('connect.php'));
 session_start();
 
 //initialize variables
-if(!isset($_GET['page'])) $_GET['page'] = '';
-if(!isset($_GET['company'])) $_GET['company'] = '';
+require('core/init_get.php');
 if(!isset($currentpage)) $currentpage = '';
 if(!isset($_SERVER['HTTP_USER_AGENT'])) $_SERVER['HTTP_USER_AGENT'] = '';
 if(!isset($_COOKIE['token'])) $_COOKIE['token'] = '';
@@ -106,7 +105,7 @@ if(preg_match('#Microsoft-IIS#is', $_SERVER["SERVER_SOFTWARE"])) {$webserver='II
 //connexion script with database parameters
 require "connect.php";
 
-//switch SQL MODE to allow empty values with lastest version of MySQL
+//switch SQL MODE to allow empty values
 $db->exec('SET sql_mode = ""');
 
 $db_userid=strip_tags($db->quote($_GET['userid']));
@@ -118,7 +117,7 @@ $qry->execute();
 $rparameters=$qry->fetch();
 $qry->closeCursor();
 
-//logoff on timeout
+//log off on timeout
 if($rparameters['timeout'])
 {
 	if($rparameters['debug']) {$session_time='time='.(time() - $_SESSION['LAST_ACTIVITY']).'max='.(60*$rparameters['timeout']);}
@@ -198,7 +197,7 @@ if($_POST['userkeywords']||$_GET['userkeywords']) $userkeywords="$_GET[userkeywo
 if($_POST['assetkeywords']||$_GET['assetkeywords']) $assetkeywords="$_GET[assetkeywords]$_POST[assetkeywords]"; else  $assetkeywords='';
 
 //download file for backup page
-if ($_GET['download']!='' && $rright['admin']!=0)
+if ($_GET['download']!='' && $rright['admin']!=0 && $_SESSION['user_id'])
 {
 	header("location: ./backup/$_GET[download]"); 
 }
@@ -247,12 +246,15 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 		
 			<!-- datetimepicker styles -->
 			<link rel="stylesheet" href="./components/datetimepicker/build/css/bootstrap-datetimepicker.min.css" />
+			
+			<!-- colorize mandatory fields -->
+			<link rel="stylesheet" href="./template/assets/css/gestsup.css" /> 
 			';
 		}
 		if($_GET['page']=='calendar')
 		{
 			echo '
-			<!-- fullcalendar styles -->
+			<!-- fullcalendar4 styles -->
 			<link rel="stylesheet" href="./components/fullcalendar/packages/core/main.min.css" />
 			<link rel="stylesheet" href="./components/fullcalendar/packages/daygrid/main.min.css" />
 			<link rel="stylesheet" href="./components/fullcalendar/packages/timegrid/main.min.css" />
@@ -264,7 +266,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 		<link rel="stylesheet" href="./template/assets/css/ace.min.css" />
 		<link rel="stylesheet" href="./template/assets/css/ace-rtl.min.css" />
 		<link rel="stylesheet" href="./template/assets/css/ace-skins.min.css" /> 
-		<link rel="stylesheet" href="./template/assets/css/gestsup.css" /> 
+	
 		<!--<link rel="stylesheet" href="./template/assets/css/uncompressed/ace-skins.css" /> -->
 		
 		<!-- ui scripts -->
@@ -297,11 +299,16 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 			$row=$qry->fetch();
 			$qry->closeCursor();
 			
-			//special case to technician with multi service and multi agencies
-			if($rright['dashboard_service_only']!=0 && $rparameters['user_agency']==1 && $rparameters['user_limit_service']==1 && $cnt_service>1 && $cnt_agency>1) 
-			{$operator='OR'; $parenthese1='('; $parenthese2=')';}
-			else 
-			{$operator='AND'; $parenthese1=''; $parenthese2='';}
+			/*
+				bug with 2 svc + 2 agency
+				
+				//special case to technician with multi service and multi agencies
+				if($rright['dashboard_service_only']!=0 && $rparameters['user_agency']==1 && $rparameters['user_limit_service']==1 && $cnt_service>1 && $cnt_agency>1) #4489
+				{$operator='OR'; $parenthese1='('; $parenthese2=')';}
+				else 
+				{$operator='AND'; $parenthese1=''; $parenthese2='';}
+			*/ 
+			$operator='AND'; $parenthese1=''; $parenthese2='';
 			
 			//special case to limit ticket to services
 			if($rright['dashboard_service_only']!=0 && $rparameters['user_limit_service']==1) 
@@ -824,12 +831,14 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 									elseif ($_GET['page']=='asset_list' && $rright['asset']!=0 && $rparameters['asset']==1) {include("$_GET[page].php");}
 									//allow display pages from template function
 									elseif ($_GET['page']=='ticket' && $rright['ticket_template']!=0 && $_GET['action']=='template') {include("$_GET[page].php");}
+									//allow open new ticket
+									elseif ($_GET['page']=='ticket' && $_GET['action']=='new' && $rright['side_open_ticket']!=0) {include("$_GET[page].php");}
 									//allow display all ticket for user with display all service, if rights are enable
 									elseif ($_GET['page']=='dashboard' && $rright['side_all_service_disp']!=0) {include("$_GET[page].php");}
 									//allow display all tickets for user with display all agency, if rights are enable
 									elseif ($_GET['page']=='dashboard' && $rright['side_all_agency_disp']!=0) {include("$_GET[page].php");}
 									//allow modify ticket for user with same service service, if rights are enable (cnt_agency for case user have service and agency to allow edit)
-									elseif ($_GET['page']=='ticket' && $rright['side_all_service_edit']!=0 && $cnt_service!=0) {
+									elseif ($_GET['page']=='ticket' && $_GET['action']!='new' && $rright['side_all_service_edit']!=0 && $cnt_service!=0) {
 										//check if open ticket is associated to the same service as the current user services
 										$qry=$db->prepare("SELECT `u_service` FROM `tincidents` WHERE id=:id");
 										$qry->execute(array('id' => $_GET['id']));
@@ -846,16 +855,16 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 											$qry->closeCursor();
 											if($check_ticket_user_sender[0]!=$_SESSION['user_id'])
 											{
-												//check if open ticket is associated to the same agency as the current user agencies
-												$qry=$db->prepare("SELECT `u_agency` FROM `tincidents` WHERE id=:id");
+												//check if open ticket is associated to the same service as the current user service
+												$qry=$db->prepare("SELECT `u_service` FROM `tincidents` WHERE id=:id");
 												$qry->execute(array('id' => $_GET['id']));
-												$check_ticket_agency=$qry->fetch();
+												$check_ticket_service=$qry->fetch();
 												$qry->closeCursor();
-												$agency_check=0;
-												foreach($user_agencies as $value) {
-													if($check_ticket_agency[0]==$value){$agency_check=1;}
+												$service_check=0;
+												foreach($user_services as $value) {
+													if($check_ticket_service[0]==$value){$service_check=1;}
 												}
-												if($agency_check==1) {include("$_GET[page].php");}
+												if($service_check==1) {include("$_GET[page].php");}
 												else {
 													echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Vous n'avez pas les droits d'accès pour modifier le ticket de ce service, contacter votre administrateur").'.<br></div>';
 												}
@@ -882,7 +891,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 										else {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Vous n'avez pas les droits d'accès pour modifier le ticket de cette agence, contacter votre administrateur").'.<br></div>';}
 									}
 									//allow display pages to company view
-									elseif ($rparameters['user_company_view']==1 && $rright['side_company']!=0 && $ruser['company']!=0)	
+									elseif ($_GET['companyview']==1 && $rparameters['user_company_view']==1 && $rright['side_company']!=0 && $ruser['company']!=0)	
 									{
 										if($_GET['page']=='ticket' && $_GET['id'] && $_GET['action']!='template')
 										{
@@ -922,7 +931,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 										} else {$check_t_group=0;}
 									} else {$check_ticket['disable']=0; $check_ticket['technician']=0; $check_t_group=0;}
 									if($check_ticket['disable']==1 && $_SESSION['profile_id']!=4) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Ce ticket a été supprimé, pour le restaurer contacter votre administrateur").'.<br></div>';}
-									elseif ($_GET['page']=='ticket' && $_GET['id'] && $check_t_group[0]==0 && $check_ticket['technician']!=$_SESSION['user_id'] && $rright['side_all']==0 && $_SESSION['profile_id']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Vous n'avez pas les droits d'accès au ticket d'un autre technicien, contacter votre administrateur").'.<br></div>';}
+									elseif ($_GET['page']=='ticket' && $_GET['id']  && $check_t_group[0]==0 && $check_ticket['technician']!=$_SESSION['user_id'] && $rright['side_all']==0 && $_SESSION['profile_id']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Vous n'avez pas les droits d'accès au ticket d'un autre technicien, contacter votre administrateur").'.<br></div>';}
 									elseif ($_GET['page']=='procedure' && $rright['procedure']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès aux procédures, contacter votre administrateur').'.<br></div>';}
 									elseif ($_GET['page']=='ticket_template' && $rright['ticket_template']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès aux modèles de tickets, contacter votre administrateur').'.<br></div>';}
 									elseif ($_GET['page']=='preview_mail' && $rright['ticket_send_mail']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès à la prévisualisation des mails, contacter votre administrateur').'.<br></div>';}
@@ -936,7 +945,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 									elseif (preg_match( '/^stat.*/', $_GET['page']) && $rright['stat']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès aux statistiques du logiciel, contacter votre administrateur').'.<br></div>';}
 									elseif (preg_match( '/^core.*/', $_GET['page']) && $rright['admin']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès à cette page, contacter votre administrateur').'.<br></div>';}
 									elseif ($_GET['page']=='dashboard' && $_GET['userid']=='%' && $rright['side_all']==0 && $_GET['companyview']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès à la liste de tous les tickets, contacter votre administrateur').'.<br></div>';}
-									elseif ($_GET['page']=='dashboard' && $_GET['userid']!='%' && $rright['side_all']==0 && $_GET['companyview']==0 && $_GET['userid']!=$_SESSION['user_id']) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits de consulter les tickets d\'un autre utilisateurs, contacter votre administrateur').'.<br></div>';}
+									elseif ($_GET['page']=='dashboard' && $_GET['userid']!='%' && $rright['side_all']==0 && $_GET['companyview']==0 && $_GET['userid']!=$_SESSION['user_id']) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits de consulter les tickets d\'un autre utilisateur, contacter votre administrateur').'.<br></div>';}
 									elseif ($_GET['page']=='plugins/availability/index' && $rright['availability']==0) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès au module de disponibilité, contacter votre administrateur').'.<br></div>';}
 									elseif ($_GET['page']=='ticket' && $rright['dashboard_service_only']!=0 && $_GET['id'] && $rparameters['user_limit_service']==1 && $cnt_agency==0) //case to user profil super try to open another ticket of another service
 									{
@@ -951,7 +960,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 											$qry->execute(array('id' => $_GET['id']));
 											$check_ticket_tech_sender=$qry->fetch();
 											$qry->closeCursor();
-											if($check_ticket_tech_sender[0]!=$_SESSION['user_id'] && $check_ticket_tech_sender[1]!=$_SESSION['user_id']) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Vous n'avez pas les droits de consulter le ticket de ce service, contacter votre administrateur").'.<br></div>';} else {include("$_GET[page].php");}
+											if($check_ticket_tech_sender[0]!=$_SESSION['user_id'] && $check_ticket_tech_sender[1]!=$_SESSION['user_id']) {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').' : </strong> '.T_("Vous n'avez pas les droits de consulter le ticket de ce service, contacter votre administrateur").'.<br></div>';} else {include("$_GET[page].php");}
 										} else {
 											include("$_GET[page].php");
 										}
@@ -984,14 +993,23 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 				include "./event.php"; 
 				
 				//display change user password modalbox
-				$qry=$db->prepare("SELECT `chgpwd` FROM `tusers` WHERE id=:id");
+				$qry=$db->prepare("SELECT `chgpwd`,`last_pwd_chg` FROM `tusers` WHERE id=:id");
 				$qry->execute(array('id' => $_SESSION['user_id']));
 				$row=$qry->fetch();
 				$qry->closeCursor();
-				if ($row['chgpwd']=='1'){include "./modify_pwd.php";}
+				
+				if($row['chgpwd']=='1'){include "./modify_pwd.php";}
+				if($rparameters['user_password_policy'] && $rparameters['user_password_policy_expiration']!=0)
+				{
+					$password_expiration_date=date('Y-m-d', strtotime($row['last_pwd_chg']. ' + '.$rparameters['user_password_policy_expiration'].' days'));
+					if($password_expiration_date < date('Y-m-d') && $row['last_pwd_chg']!='0000-00-00') {include "./modify_pwd.php";}
+				}
 		}
 		else 
 		{
+			//launch cron
+			if($rparameters['cron_daily']!=date('Y-m-d')) {require('./core/cron.php');}
+
 			//check SSO
 			if($rparameters['ldap_sso']==1 && isset($_SERVER['REMOTE_USER']) && $_GET['action']!='logout')
 			{
@@ -1021,7 +1039,7 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 					} else {
 						if($redirectstate=='meta_all')
 						{
-							$www="./index.php?page=dashboard&userid=%25&state=meta";
+							$www='./index.php?page=dashboard&userid=%25&state=meta';
 						} else {
 							$www='./index.php?page=dashboard&userid='.$_SESSION['user_id'].'&state='.$redirectstate;
 						}
@@ -1074,6 +1092,8 @@ if ($_GET['download']!='' && $rright['admin']!=0)
 		//date conversion
 		function date_convert ($date) 
 		{return  substr($date,8,2) . '/' . substr($date,5,2) . '/' . substr($date,0,4) . ' '.T_('à').' ' . substr($date,11,2	) . 'h' . substr($date,14,2	);}
+		
+		//if($rparameters['debug']) {echo 'DEBUG MODE<br />'.$session_time;}
 		?>
 	</body>
 </html>

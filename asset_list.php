@@ -5,8 +5,8 @@
 # @Call : /menu.php
 # @Author : Flox
 # @Create : 20/11/2014
-# @Update : 27/02/2019
-# @Version : 3.1.39
+# @Update : 18/09/2019
+# @Version : 3.1.44
 ################################################################################
 
 //call functions
@@ -17,6 +17,7 @@ if(!isset($asc)) $asc = '';
 if(!isset($img)) $img= ''; 
 if(!isset($filter)) $filter=''; 
 if(!isset($col)) $col=''; 
+if(!isset($selectcursor)) $selectcursor=''; 
 
 if(!isset($_GET['sn_internal'])) $_GET['sn_internal']= '';
 if(!isset($_GET['ip'])) $_GET['ip']= '';

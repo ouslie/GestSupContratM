@@ -5,8 +5,8 @@
 # @Call : ./ticket.php
 # @Author : Flox
 # @Create : 28/10/2013
-# @Update : 14/03/2019
-# @Version : 3.1.40 p1
+# @Update : 26/09/2019
+# @Version : 3.1.44 p1
 ################################################################################
 
 //initialize variable
@@ -37,13 +37,13 @@ if($_GET['action']=='template') include('./ticket_template.php');
 //find incident number for new ticket
 if($_GET['action']=='new')
 {
-	$qry=$db->prepare("SELECT MAX(id) FROM `tincidents`");
-	$qry->execute();
+	$qry=$db->prepare("SELECT MAX(`auto_increment`) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA =:database AND table_name = 'tincidents';");
+	$qry->execute(array('database' => $db_name));
 	$row=$qry->fetch();
 	$qry->closeCursor();
-		
-	$_GET['id'] =$row[0]+1;
-	$db_id=$row[0]+1;
+	
+	$_GET['id']=$row[0];
+	$db_id=$row[0];
 }
 
 //action delete ticket
@@ -64,6 +64,18 @@ if (($_GET['action']=="delete") && ($rright['ticket_delete']!=0) && $_GET['id'])
 	$qry=$db->prepare("DELETE FROM `ttoken` WHERE ticket_id=:ticket_id"); //delete token
 	$qry->execute(array('ticket_id' => $_GET['id']));
 	
+	//remove upload files and folder if exist
+	$upload_dir_to_remove='upload/'.$_GET['id'].'/';
+	if(is_numeric($_GET['id']) && is_dir($upload_dir_to_remove)) 
+	{
+		//remove files before delete directory
+		$files_to_remove = array_diff(scandir($upload_dir_to_remove), array('.','..'));
+		foreach ($files_to_remove as $file_to_remove) {
+			if(file_exists($upload_dir_to_remove.$file_to_remove)) {unlink($upload_dir_to_remove.$file_to_remove);}
+		}
+		rmdir($upload_dir_to_remove); //remove empty dir
+	}
+	
 	//display delete message
 	echo '<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i>	'.T_('Ticket supprimé').'.</center></div>';
 	
@@ -82,21 +94,15 @@ if (($_GET['action']=="delete") && ($rright['ticket_delete']!=0) && $_GET['id'])
 //action to lock thread
 if ($_GET['lock_thread'] && $rright['ticket_thread_private']!=0) 
 {
-	$qry=$db->prepare("UPDATE `tthreads` SET `private`=:private WHERE `id`=:id");
-	$qry->execute(array(
-		'private' => 1,
-		'id' => $_GET['lock_thread']
-		));
+	$qry=$db->prepare("UPDATE `tthreads` SET `private`='1' WHERE `id`=:id");
+	$qry->execute(array('id' => $_GET['lock_thread']));
 }
 
 //action to unlock thread
 if ($_GET['unlock_thread'] && $rright['ticket_thread_private']!=0) 
 {
-	$qry=$db->prepare("UPDATE `tthreads` SET `private`=:private WHERE `id`=:id");
-	$qry->execute(array(
-		'private' => 0,
-		'id' => $_GET['unlock_thread']
-		));
+	$qry=$db->prepare("UPDATE `tthreads` SET `private`='0' WHERE `id`=:id");
+	$qry->execute(array('id' => $_GET['unlock_thread']));
 }
 
 //master query
@@ -130,12 +136,12 @@ if(substr($_POST['technician'], 0, 1) =='G')
 
 //database inputs if submit
 if($rparameters['debug']==1){ echo "<b><u>DEBUG MODE:</u></b><br /> <b>VAR:</b> save=$save post_modify=$_POST[modify] post_quit=$_POST[quit] post_mail=$_POST[mail] post_upload=$_POST[upload] post_send=$_POST[send] post_action=$_POST[action] get_action=$db_action post_category=$_POST[category] post_subcat=$_POST[subcat] post_technician=$_POST[technician] globalrow_technician=$globalrow[technician] post_u_service=$_POST[u_service] globalrow_u_service=$globalrow[u_service] post_u_agency=$_POST[u_agency] globalrow_u_agency=$globalrow[u_agency] post_asset_id=$_POST[asset_id] globalrow[asset_id]=$globalrow[asset_id] post_sender_service=$_POST[sender_service] globalrow_sender_service=$globalrow[sender_service] post_priority=$_POST[priority] post_title=$_POST[title]<br />";}
-if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1"||$_POST['send']||$_POST['action']) 
+if($_POST['addcalendar']||$_POST['addevent']||$_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1"||$_POST['send']||$_POST['action']) 
 {
 	//check mandatory fields
     if(($rright['ticket_priority_mandatory']!=0) && ($_POST['priority']=='')) {$error=T_('Merci de renseigner la priorité');}
     if(($rright['ticket_criticality_mandatory']!=0) && ($_POST['criticality']=='')) {$error=T_('Merci de renseigner la criticité');}
-	if(($rright['ticket_description_mandatory']!=0) && (ctype_space($_POST['text']) || $_POST['text']=='' || ctype_space(strip_tags($_POST['text']))==1 ) || strip_tags($_POST['text'])=='') {$error=T_('Merci de renseigner la description de ce ticket');} 
+	if(($rright['ticket_description_mandatory']!=0) && ((ctype_space($_POST['text']) || $_POST['text']=='' || ctype_space(strip_tags($_POST['text']))==1 ) || strip_tags($_POST['text'])=='')) {$error=T_('Merci de renseigner la description de ce ticket');} 
     if(($rright['ticket_asset_mandatory']!=0) && ($rparameters['asset']==1) && ($_POST['asset_id']==0)) {$error=T_("Merci de renseigner l'équipement");}
     if(($rright['ticket_agency_mandatory']!=0) && ($rparameters['user_agency']==1) && ($_POST['u_agency']==0)) {
 		//check if current user have multiple agencies to display empty mandatory alert
@@ -328,10 +334,13 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 	}
 	
 	//insert resolution date if state is change to resolve (3)
-	if ($_POST['state']=='3' && $globalrow['state']!='3' && ($_POST['date_res']=='' || $_POST['date_res']=='0000-00-00 00:00:00')) $_POST['date_res']=date("Y-m-d H:i:s");
+	if($_POST['state']=='3' && $globalrow['state']!='3' && ($_POST['date_res']=='' || $_POST['date_res']=='0000-00-00 00:00:00')) {$_POST['date_res']=date("Y-m-d H:i:s");}
+	
+	//remove resolution date if state change from 3 to other state
+	if($globalrow['state']=='3' && $_POST['state']!='3') {$_POST['date_res']='';}
 	
 	//unread ticket if another technician add thread
-	if (($_POST['resolution']!='') && ($globalrow['technician']!=$_SESSION['user_id'])) $techread=0; 
+	if(($_POST['resolution']!='') && ($globalrow['technician']!=$_SESSION['user_id'])) $techread=0; 
 	
 	//auto-attribute ticket to technician if user attachment is detected
 	if ($_POST['user'])
@@ -438,10 +447,11 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 			'end_availability' => $end_availability,
 			'availability_planned' => $_POST['availability_planned'],
 			'contrats' => $_POST['contrats']
-		));
+			));
 			
 		
-	} elseif ($error=="0")  {	
+	} elseif ($error=="0")  {
+		
 		//modify read state
 		if($_POST['technician']==$_SESSION['user_id']) {$techread=1; $techread_date=date("Y-m-d H:i:s");} //read ticket  
 		if($globalrow['technician']=='') {$techread=1; $techread_date=date("Y-m-d H:i:s");} //read ticket case when it's an unassigned ticket.
@@ -453,7 +463,7 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 		$qry->closeCursor();
 		if($rright['ticket_tech']==0) {if($row['technician']!=$_POST['technician']) {$_POST['technician']=$row['technician'];}}
 		if($rright['ticket_state']==0) {if($row['state']!=$_POST['state']) {$_POST['state']=$row['state'];}}
-		
+	
 		//update ticket
 		$query = "UPDATE tincidents SET 
 		user='$_POST[user]',
@@ -623,6 +633,7 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 	if($error=="0")
 	{
 	    echo '<div class="alert alert-block alert-success"><center><i class="icon-ok green"></i>	'.T_('Ticket sauvegardé').'. </center></div>';
+	if($_GET['action']=='new') {$hide_button=1;} //case press save button during saving ticket
 	} else {
 	    // new page ticket redirect
         echo '<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_($error).' </div>';
@@ -654,7 +665,7 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 		';
 	}
 	
-    if($error=="0")
+    if($error=="0" && !$_POST['addcalendar']&& !$_POST['addevent'])
     {
 		//global redirect on current ticket
 		$url="./index.php?page=ticket&id=$_GET[id]&action=$_POST[action]&edituser=$_POST[edituser]&cat=$_POST[category]&editcat=$_POST[subcat]&$url_get_parameters$down";
@@ -676,12 +687,8 @@ if($_POST['modify']||$_POST['quit']||$_POST['mail']||$_POST['upload']||$save=="1
 if($_POST['close'] && $rright['ticket_close']!=0) 
 {
 	//update tincidents
-	$qry=$db->prepare("UPDATE `tincidents` SET `state`=:state,`date_res`=:date_res WHERE `id`=:id");
-	$qry->execute(array(
-		'state' => 3,
-		'date_res' => $datetime,
-		'id' => $_GET['id']
-		));
+	$qry=$db->prepare("UPDATE `tincidents` SET `state`='3',`date_res`=:date_res WHERE `id`=:id");
+	$qry->execute(array('date_res' => $datetime,'id' => $_GET['id']));
 		
 	//auto send mail
 	$_POST['state']=3;
@@ -690,11 +697,8 @@ if($_POST['close'] && $rright['ticket_close']!=0)
 	if($_SESSION['profile_id']!=0 && $_SESSION['profile_id']!=4)
 	{
 		//unread ticket for technician only if user close ticket
-		$qry=$db->prepare("UPDATE `tincidents` SET `techread`=:techread WHERE `id`=:id");
-		$qry->execute(array(
-			'techread' => 0,
-			'id' => $_GET['id']
-			));
+		$qry=$db->prepare("UPDATE `tincidents` SET `techread`='0' WHERE `id`=:id");
+		$qry->execute(array('id' => $_GET['id']));
 	}
 	//update thread
 	$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`type`,`author`) VALUES (:ticket,:date,:type,:author)");

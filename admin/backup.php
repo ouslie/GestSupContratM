@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 25/04/2013
-# @Update : 11/09/2018
-# @Version : 3.1.35
+# @Update : 06/08/2019
+# @Version : 3.1.44
 ################################################################################
 
 //initialize variables 
@@ -22,7 +22,7 @@ if(!isset($_GET['action'])) $_GET['action'] = '';
 //date
 $date = date("Y_m_d_H_i_s");
 
-if ($_GET['action']=="backup" && $rright['admin']!=0)
+if ($_GET['action']=="backup" && $rright['admin']!=0 && $rright['admin_backup']!=0)
 {
 	//dump SQL
 	$file = "./_SQL/backup-gestsup-$rparameters[version]-$date.sql";

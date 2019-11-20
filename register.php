@@ -4,9 +4,9 @@
 # @Description : create gestsup user
 # @Call : /index.php
 # @Author : Flox
-# @Version : 3.1.40
+# @Version : 3.1.41
 # @Create : 20/03/2014
-# @Update : 21/03/2019
+# @Update : 07/05/2019
 ################################################################################
 
 //init language
@@ -144,10 +144,6 @@ if ($rparameters['user_register']==1)
 		<br />
 		<br />
 		<br />
-		<br />
-		<br />
-		<br />
-		<br />
 		<div class="main-container">
 			<div class="main-content">
 				<div class="row">
@@ -159,7 +155,20 @@ if ($rparameters['user_register']==1)
 									<span class="white">GestSup</span>
 								</h1>
 								<h4 class="blue">';if (isset($rparameters['company'])) echo $rparameters['company']; echo' </h4>
-								<img style="border-style: none" alt="logo" src="./upload/logo/'; if ($rparameters['logo']=='') echo 'logo.png'; else echo $rparameters['logo'];  echo '" />
+								';
+								//re-size logo if height superior 40px
+								if ($rparameters['logo']!='' && file_exists("./upload/logo/$rparameters[logo]")) 
+								{
+									$size = getimagesize("./upload/logo/$rparameters[logo]");
+									$width=$size[0];
+									if ($width>300) {$logo_width='width="300"';} else {$logo_width='';}
+								} else {$logo_width=''; }
+								//display logo if image file exist
+								if (file_exists("./upload/logo/$rparameters[logo]"))
+								{
+									echo '<img style="border-style: none" alt="logo" '.$logo_width.' src="./upload/logo/'; if ($rparameters['logo']=='') echo 'logo.png'; else echo $rparameters['logo'];  echo '" />';
+								}
+								echo '
 							</div>
 							<br />
 							'.$message.'

@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 27/11/2015
-# @Update : 05/03/2019
-# @Version : 3.1.40
+# @Update : 09/07/2019
+# @Version : 3.1.43
 ################################################################################
 
 //initialize variables 
@@ -156,7 +156,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 <div id="row">
 	<div class="col-xs-12">
 		<div class="widget-box">
-			<form class="form-horizontal" name="myform" id="myform" enctype="multipart/form-data" method="post" action="" onsubmit="loadVal();" >
+			<form class="form-horizontal" name="myform" id="myform" enctype="multipart/form-data" method="post" action="" onsubmit="" >
 				<div class="widget-header">
 					<h4>
 						<i class="icon-desktop"></i>
@@ -183,7 +183,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 					<span class="widget-toolbar">
 						<?php 
 							//display specific buttons for IP asset
-							if(($ip_asset==1) || ($wifi_asset==1) || $iface)
+							if((($ip_asset==1) || ($wifi_asset==1) || $iface) && $rparameters['asset_ip'])
 							{
 								if($rparameters['asset_vnc_link']==1){
 									echo '<a target="_blank" href="http://'.$iface['ip'].':5800"><img title="'.T_('Ouvre un nouvel onglet sur le prise de contrôle distant web VNC').'" src="./images/remote.png" /></a>&nbsp;&nbsp;';
@@ -369,7 +369,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 										<?php echo T_('Utilisateur'); ?> :
 									</label>
 									<div class="col-sm-4">
-										<select <?php if($mobile==0) {echo 'class="chosen-select"';}?> id="user" name="user" style="width:195px" onchange="loadVal(); submit();">
+										<select <?php if($mobile==0) {echo 'class="chosen-select"';}?> id="user" name="user" style="width:195px">
 											<?php
 											//limit select list to users who have the same company than current connected user
 											if($rright['asset_list_company_only']!=0)
@@ -406,7 +406,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 										<?php echo T_('Service'); ?> :
 									</label>
 									<div class="col-sm-4">
-										<select id="department" name="department" style="width:195px" onchange="loadVal(); submit();">
+										<select id="department" name="department" style="width:195px" >
 											<?php
 											echo '<option value="0">Aucun</option>';
 											//display service list
@@ -415,7 +415,8 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 											while($row=$qry->fetch()) 
 											{
 												if ($row['id']==0) {$row['name']=T_($row['name']);} //translate none value from db
-												if ($globalrow['department']==$row['id']) {
+												if($_POST['department']==$row['id']) {echo '<option selected value="'.$row['id'].'">'.$row['name'].'</option>';}
+												elseif ($globalrow['department']==$row['id']) {
 													echo '<option selected value="'.$row['id'].'">'.$row['name'].'</option>';
 												} else {
 													echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';
@@ -430,102 +431,105 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								
 								<!-- START iface part -->
 								<?php
-									//check if asset iface exist and display it
-									$qry=$db->prepare("SELECT COUNT(id) FROM `tassets_iface` WHERE asset_id=:asset_id AND disable='0'");
-									$qry->execute(array('asset_id' => $globalrow['id']));
-									$iface_counter=$qry->fetch();
-									$qry->closeCursor();
-									if($iface_counter[0]>0)
+									if($rparameters['asset_ip'])
 									{
-										if ($rparameters['debug']==1) {$debug_error=$iface_counter[0].' IFACE DETECTED: Display each iface';}
-										//display each iface
-										$qry=$db->prepare("SELECT id,role_id,date_ping_ok,date_ping_ko,netbios,mac,ip FROM `tassets_iface` WHERE asset_id=:asset_id AND disable='0' ORDER BY role_id ASC");
+										//check if asset iface exist and display it
+										$qry=$db->prepare("SELECT COUNT(id) FROM `tassets_iface` WHERE asset_id=:asset_id AND disable='0'");
 										$qry->execute(array('asset_id' => $globalrow['id']));
-										while($row=$qry->fetch()) 
+										$iface_counter=$qry->fetch();
+										$qry->closeCursor();
+										if($iface_counter[0]>0)
 										{
-											//init var
-											if(!isset($_POST["netbios_$row[id]"])) $_POST["netbios_$row[id]"] = '';
-											if(!isset($_POST["ip_$row[id]"])) $_POST["ip_$row[id]"] = '';
-											if(!isset($_POST["mac_$row[id]"])) $_POST["mac_$row[id]"] = '';
-											//get name of role of current iface
-											$qry2=$db->prepare("SELECT `name` FROM `tassets_iface_role` WHERE id=:id");
-											$qry2->execute(array('id' => $row['role_id']));
-											$row2=$qry2->fetch();
-											$qry2->closeCursor();
-											$iface_name=$row2[0];
-											//display if bloc
+											if ($rparameters['debug']==1) {$debug_error=$iface_counter[0].' IFACE DETECTED: Display each iface';}
+											//display each iface
+											$qry=$db->prepare("SELECT id,role_id,date_ping_ok,date_ping_ko,netbios,mac,ip FROM `tassets_iface` WHERE asset_id=:asset_id AND disable='0' ORDER BY role_id ASC");
+											$qry->execute(array('asset_id' => $globalrow['id']));
+											while($row=$qry->fetch()) 
+											{
+												//init var
+												if(!isset($_POST["netbios_$row[id]"])) $_POST["netbios_$row[id]"] = '';
+												if(!isset($_POST["ip_$row[id]"])) $_POST["ip_$row[id]"] = '';
+												if(!isset($_POST["mac_$row[id]"])) $_POST["mac_$row[id]"] = '';
+												//get name of role of current iface
+												$qry2=$db->prepare("SELECT `name` FROM `tassets_iface_role` WHERE id=:id");
+												$qry2->execute(array('id' => $row['role_id']));
+												$row2=$qry2->fetch();
+												$qry2->closeCursor();
+												$iface_name=$row2[0];
+												//display if bloc
+												echo '
+												<div class="form-group">
+													<label class="col-sm-4 control-label no-padding-right" for="iface">
+														';
+														//display ping flags
+														if($row['date_ping_ok']>$row['date_ping_ko'])
+														{
+															echo '<i title="'.T_('Dernier ping réussi le').' '.date("d/m/Y H:i:s", strtotime($row['date_ping_ok'])).'" class="icon-flag green"></i>';
+														} elseif($row['date_ping_ko']>$row['date_ping_ok']) 
+														{
+															echo '<i title="'.T_('Dernier ping échoué le').' '.date("d/m/Y H:i:s", strtotime($row['date_ping_ko'])).'" class="icon-flag red"></i>';
+														}
+														echo '
+														'.T_('Interface IP').' '.$iface_name.' :
+													</label>
+													<div class="col-sm-8">
+														<input name="netbios_'.$row['id'].'" id="netbios_'.$row['id'].'" type="text" placeholder="Nom NetBIOS" size="12" value="';if($_POST["netbios_$row[id]"]) {echo $_POST["netbios_$row[id]"];} else { echo $row['netbios'];} echo'" />
+														<input name="ip_'.$row['id'].'" id="ip_'.$row['id'].'" type="text" size="14" placeholder="Adresse IP" value="';if($_GET['findip'] && $_GET['iface']==$row['id']) {echo $_GET['findip'];} elseif($_POST["ip_$row[id]"]) {echo $_POST["ip_$row[id]"];} else { echo $row['ip'];} echo'" />
+														<input title="'.T_('Noter sans séparateurs : ou - ').'" name="mac_'.$row['id'].'" id="mac_'.$row['id'].'" type="text" size="14" placeholder="Adresse MAC" value="';if($_POST["mac_$row[id]"]) {echo $_POST["mac_$row[id]"];} else { echo $row['mac'];} echo'" />
+														&nbsp;<i class="icon-search green bigger-130" title="'.T_('Trouver une adresse IP pour cette interface').'" onclick="document.forms[\'myform\'].action.value=\'findip_'.$row['id'].'\';document.forms[\'myform\'].submit();"></i>
+														&nbsp;<a href="./index.php?page=asset&id='.$globalrow['id'].'&state='.$_GET['state'].'&action=editiface&iface='.$row['id'].'&'.$url_get_parameters.'"><i class="icon-pencil orange bigger-130" title="'.T_('Modifier le rôle de l\'interface').'" onclick=" document.forms[\'myform\'].action.value=\'editcat\';document.forms[\'myform\'].submit();"></i></a>
+														&nbsp;<a href="./index.php?page=asset&id='.$globalrow['id'].'&state='.$_GET['state'].'&action=delete_iface&iface='.$row['id'].'&'.$url_get_parameters.'"><i class="icon-trash red bigger-130"  title="'.T_('Supprimer l\'interface').'"></i></a>
+													</div>
+												</div>
+												';
+											}
+											$qry->closeCursor();
+										}
+
+										//display default iface fields when asset not have iface and when it's ip asset
+										$qry=$db->prepare("SELECT COUNT(id) FROM `tassets_iface` WHERE asset_id=:asset_id AND disable='0'");
+										$qry->execute(array('asset_id' => $globalrow['id']));
+										$iface_lan_counter=$qry->fetch();
+										$qry->closeCursor();
+										
+										$qry=$db->prepare("SELECT COUNT(id) FROM `tassets_iface` WHERE asset_id=:asset_id AND role_id='2' AND disable='0'");
+										$qry->execute(array('asset_id' => $globalrow['id']));
+										$iface_wifi_counter=$qry->fetch();
+										$qry->closeCursor();
+										
+										if ($ip_asset=='1' && $iface_lan_counter[0]==0)
+										{
+											if ($rparameters['debug']==1) {$debug_error='NO LAN IFACE DETECTED: display default LAN input';}
 											echo '
 											<div class="form-group">
-												<label class="col-sm-4 control-label no-padding-right" for="iface">
-													';
-													//display ping flags
-													if($row['date_ping_ok']>$row['date_ping_ko'])
-													{
-														echo '<i title="'.T_('Dernier ping réussi le').' '.date("d/m/Y H:i:s", strtotime($row['date_ping_ok'])).'" class="icon-flag green"></i>';
-													} elseif($row['date_ping_ko']>$row['date_ping_ok']) 
-													{
-														echo '<i title="'.T_('Dernier ping échoué le').' '.date("d/m/Y H:i:s", strtotime($row['date_ping_ko'])).'" class="icon-flag red"></i>';
-													}
-													echo '
-													'.T_('Interface IP').' '.$iface_name.' :
-												</label>
+												<label class="col-sm-4 control-label no-padding-right" for="ip">'.T_('Interface IP LAN').' :</label>
 												<div class="col-sm-8">
-													<input name="netbios_'.$row['id'].'" id="netbios_'.$row['id'].'" type="text" placeholder="Nom NetBIOS" size="12" value="';if($_POST["netbios_$row[id]"]) {echo $_POST["netbios_$row[id]"];} else { echo $row['netbios'];} echo'" />
-													<input name="ip_'.$row['id'].'" id="ip_'.$row['id'].'" type="text" size="14" placeholder="Adresse IP" value="';if($_GET['findip'] && $_GET['iface']==$row['id']) {echo $_GET['findip'];} elseif($_POST["ip_$row[id]"]) {echo $_POST["ip_$row[id]"];} else { echo $row['ip'];} echo'" />
-													<input title="'.T_('Noter sans séparateurs : ou - ').'" name="mac_'.$row['id'].'" id="mac_'.$row['id'].'" type="text" size="14" placeholder="Adresse MAC" value="';if($_POST["mac_$row[id]"]) {echo $_POST["mac_$row[id]"];} else { echo $row['mac'];} echo'" />
-													&nbsp;<i class="icon-search green bigger-130" title="'.T_('Trouver une adresse IP pour cette interface').'" onclick="document.forms[\'myform\'].action.value=\'findip_'.$row['id'].'\';document.forms[\'myform\'].submit();"></i>
-													&nbsp;<a href="./index.php?page=asset&id='.$globalrow['id'].'&state='.$_GET['state'].'&action=editiface&iface='.$row['id'].'&'.$url_get_parameters.'"><i class="icon-pencil orange bigger-130" title="'.T_('Modifier le rôle de l\'interface').'" onclick="loadVal(); document.forms[\'myform\'].action.value=\'editcat\';document.forms[\'myform\'].submit();"></i></a>
-													&nbsp;<a href="./index.php?page=asset&id='.$globalrow['id'].'&state='.$_GET['state'].'&action=delete_iface&iface='.$row['id'].'&'.$url_get_parameters.'"><i class="icon-trash red bigger-130"  title="'.T_('Supprimer l\'interface').'"></i></a>
+													<input name="netbios_lan_new" id="netbios_lan_new" type="text" placeholder="Nom NetBIOS" size="12" value="'.$_POST['netbios_lan_new'].'" />
+													<input name="ip_lan_new" id="ip_lan_new" type="text" size="14" placeholder="Adresse IP" value="'; if($_GET['findip'] && $_GET['iface']=='ip_lan_new') {echo $_GET['findip'];} else {echo $_POST['ip_lan_new'];} echo'" />
+													<input title="'.T_('Noter sans les séparateurs : ou - ').'" name="mac_lan_new" id="mac_lan_new" type="text" size="14" placeholder="Adresse MAC" value="'.$_POST['mac_lan_new'].'" />
+													&nbsp;<i class="icon-search green bigger-130" title="'.T_('Trouver une adresse IP pour cette interface').'" onclick="document.forms[\'myform\'].action.value=\'findip1\';document.forms[\'myform\'].submit();"></i>
 												</div>
 											</div>
 											';
 										}
-										$qry->closeCursor();
-									}
-
-									//display default iface fields when asset not have iface and when it's ip asset
-									$qry=$db->prepare("SELECT COUNT(id) FROM `tassets_iface` WHERE asset_id=:asset_id AND disable='0'");
-									$qry->execute(array('asset_id' => $globalrow['id']));
-									$iface_lan_counter=$qry->fetch();
-									$qry->closeCursor();
-									
-									$qry=$db->prepare("SELECT COUNT(id) FROM `tassets_iface` WHERE asset_id=:asset_id AND role_id='2' AND disable='0'");
-									$qry->execute(array('asset_id' => $globalrow['id']));
-									$iface_wifi_counter=$qry->fetch();
-									$qry->closeCursor();
-									
-									if ($ip_asset=='1' && $iface_lan_counter[0]==0)
-									{
-										if ($rparameters['debug']==1) {$debug_error='NO LAN IFACE DETECTED: display default LAN input';}
-										echo '
-										<div class="form-group">
-											<label class="col-sm-4 control-label no-padding-right" for="ip">'.T_('Interface IP LAN').' :</label>
-											<div class="col-sm-8">
-												<input name="netbios_lan_new" id="netbios_lan_new" type="text" placeholder="Nom NetBIOS" size="12" value="'.$_POST['netbios_lan_new'].'" />
-												<input name="ip_lan_new" id="ip_lan_new" type="text" size="14" placeholder="Adresse IP" value="'; if($_GET['findip'] && $_GET['iface']=='ip_lan_new') {echo $_GET['findip'];} else {echo $_POST['ip_lan_new'];} echo'" />
-												<input title="'.T_('Noter sans les séparateurs : ou - ').'" name="mac_lan_new" id="mac_lan_new" type="text" size="14" placeholder="Adresse MAC" value="'.$_POST['mac_lan_new'].'" />
-												&nbsp;<i class="icon-search green bigger-130" title="'.T_('Trouver une adresse IP pour cette interface').'" onclick="document.forms[\'myform\'].action.value=\'findip1\';document.forms[\'myform\'].submit();"></i>
+										if ($wifi_asset=='1' && $iface_wifi_counter[0]==0)
+										{
+											if ($rparameters['debug']==1) {$debug_error='NO WIFI IFACE DETECTED: display default WIFI input';}
+											echo '
+											<div class="form-group">
+												<label class="col-sm-4 control-label no-padding-right" for="wifi">'.T_('Interface IP WIFI').' :</label>
+												<div class="col-sm-8">
+													<input name="netbios_wifi_new" id="netbios_wifi_new" type="text" placeholder="Nom NetBIOS" size="12" value="'.$_POST['netbios_wifi_new'].'" />
+													<input name="ip_wifi_new" id="ip_wifi_new" type="text" size="14" placeholder="Adresse IP" value="';if($_GET['findip'] && $_GET['iface']=='ip_wifi_new') {echo $_GET['findip'];} else {echo $_POST['ip_wifi_new'];} echo'" />
+													<input title="'.T_('Noter sans séparateurs : ou - ').'" name="mac_wifi_new" id="mac_wifi_new" type="text" size="14" placeholder="Adresse MAC" value="'.$_POST['mac_wifi_new'].'" />
+													&nbsp;<i class="icon-search green bigger-130" title="'.T_('Trouver une adresse IP pour cette interface').'" onclick="document.forms[\'myform\'].action.value=\'findip2\';document.forms[\'myform\'].submit();"></i>
+												</div>
 											</div>
-										</div>
-										';
+											';
+										}
+										//need to use onclick action of findip
+										echo'<input type="hidden" name="action" value="">'; 
 									}
-									if ($wifi_asset=='1' && $iface_wifi_counter[0]==0)
-									{
-										if ($rparameters['debug']==1) {$debug_error='NO WIFI IFACE DETECTED: display default WIFI input';}
-										echo '
-										<div class="form-group">
-											<label class="col-sm-4 control-label no-padding-right" for="wifi">'.T_('Interface IP WIFI').' :</label>
-											<div class="col-sm-8">
-												<input name="netbios_wifi_new" id="netbios_wifi_new" type="text" placeholder="Nom NetBIOS" size="12" value="'.$_POST['netbios_wifi_new'].'" />
-												<input name="ip_wifi_new" id="ip_wifi_new" type="text" size="14" placeholder="Adresse IP" value="';if($_GET['findip'] && $_GET['iface']=='ip_wifi_new') {echo $_GET['findip'];} else {echo $_POST['ip_wifi_new'];} echo'" />
-												<input title="'.T_('Noter sans séparateurs : ou - ').'" name="mac_wifi_new" id="mac_wifi_new" type="text" size="14" placeholder="Adresse MAC" value="'.$_POST['mac_wifi_new'].'" />
-												&nbsp;<i class="icon-search green bigger-130" title="'.T_('Trouver une adresse IP pour cette interface').'" onclick="document.forms[\'myform\'].action.value=\'findip2\';document.forms[\'myform\'].submit();"></i>
-											</div>
-										</div>
-										';
-									}
-									//need to use onclick action of findip
-									echo'<input type="hidden" name="action" value="">'; 
 								?>
 								<!-- END iface part -->
 								
@@ -583,7 +587,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 											'.T_('Localisation').' :
 										</label>
 										<div class="col-sm-4">
-											<select '; if($mobile==0) {echo 'class="chosen-select"';} echo ' id="location" name="location" style="width:195px" onchange="loadVal(); submit();">
+											<select '; if($mobile==0) {echo 'class="chosen-select"';} echo ' id="location" name="location" style="width:195px">
 												';
 												//display location list
 												$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_location` WHERE disable='0' ORDER BY id!=0,name ASC");
@@ -605,7 +609,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 								
 								<!-- START socket part -->
 								<?php
-								if ($ip_asset=='1' && $globalrow['virtualization']==0)
+								if ($ip_asset=='1' && $globalrow['virtualization']==0 && $rparameters['asset_ip'])
 									{
 										echo '
 										<div class="form-group">
@@ -626,7 +630,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 										<?php echo T_('Installateur'); ?> :
 									</label>
 									<div class="col-sm-4">
-										<select id="technician" name="technician" style="width:195px" onchange="loadVal(); submit();">
+										<select id="technician" name="technician" style="width:195px">
 											<?php
 											//display technician list
 											$qry=$db->prepare("SELECT `id`,`lastname`,`firstname` FROM `tusers` WHERE (profile='0' || profile='4') AND disable='0' ORDER BY lastname ASC, firstname ASC");
@@ -658,7 +662,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 										<?php echo T_('Maintenance'); ?> :
 									</label>
 									<div class="col-sm-4">
-										<select id="maintenance" name="maintenance" style="width:195px" onchange="loadVal(); submit();">
+										<select id="maintenance" name="maintenance" style="width:195px">
 											<?php
 											echo '<option value="0">'.T_('Aucun').'</option>';
 											//display service list
@@ -787,7 +791,7 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 										<?php echo T_('État'); ?> :
 									</label>
 									<div class="col-sm-4">
-										<select id="state" name="state" style="width:195px" onchange="loadVal(); submit();">
+										<select id="state" name="state" style="width:195px">
 											<?php
 											//display states list
 											$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_state` WHERE disable='0' ORDER BY `order` ASC");
@@ -892,8 +896,6 @@ if ($globalrow['date_recycle']=='0000-00-00' || $globalrow['date_recycle']=='') 
 </div> <!-- div end row -->
 
 <?php if ($rparameters['debug']==1 && $debug_error) {echo "<u><b>DEBUG MODE:</b></u><br /> $debug_error";} ?>
-
-<?php include ('./wysiwyg.php'); ?>
 
 <!-- datetime picker scripts  -->
 <script src="./components/moment/min/moment.min.js" charset="UTF-8"></script>

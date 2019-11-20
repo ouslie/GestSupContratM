@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 06/09/2013
-# @Update : 01/03/2019
-# @Version : 3.1.39
+# @Update : 26/09/2019
+# @Version : 3.1.44
 ################################################################################
 
 //initialize variables 
@@ -204,7 +204,7 @@ if(!isset($state)) $state = '';
 					if ($rright['side_your_tech_group']!=0 && ($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profile_id']==3) )
 					{
 						//check if technician have group
-						$qry=$db->prepare("SELECT `group` FROM `tgroups_assoc` WHERE user=:user");
+						$qry=$db->prepare("SELECT `group` FROM `tgroups_assoc`, `tgroups` WHERE `tgroups_assoc`.group=`tgroups`.id AND user=:user AND `tgroups`.disable=0");
 						$qry->execute(array('user' => $_SESSION['user_id']));
 						while($row=$qry->fetch()) 
 						{
@@ -564,27 +564,27 @@ if(!isset($state)) $state = '';
 				</a>
 			</li>';
 		}
-				
+
 		if ($rright['admin_contrat']!=0)
-	{
-		if($_GET['page']=='contrats') echo '<li class="active">'; else echo '<li>'; echo '
-			<a href="./index.php?page=plugins/contrats2/contratsadmin&type=1">
-				<i class="icon-briefcase"></i>
-				<span class="menu-text">'.T_('Contrats').'</span>
-			</a>
-		</li>';
-	}
-
-	if ($rright['contrat_displayuser']!=0)
-	{
-		if($_GET['page']=='contrats') echo '<li class="active">'; else echo '<li>'; echo '
-			<a href="./index.php?page=plugins/contrats2/contrats&type=1">
-				<i class="icon-briefcase"></i>
-				<span class="menu-text">'.T_('Contrats').'</span>
-			</a>
-		</li>';
-	}
-
+		{
+			if($_GET['page']=='contrats') echo '<li class="active">'; else echo '<li>'; echo '
+				<a href="./index.php?page=plugins/contrats2/contratsadmin&type=1">
+					<i class="icon-briefcase"></i>
+					<span class="menu-text">'.T_('Contrats').'</span>
+				</a>
+			</li>';
+		}
+	
+		if ($rright['contrat_displayuser']!=0)
+		{
+			if($_GET['page']=='contrats') echo '<li class="active">'; else echo '<li>'; echo '
+				<a href="./index.php?page=plugins/contrats2/contrats&type=1">
+					<i class="icon-briefcase"></i>
+					<span class="menu-text">'.T_('Contrats').'</span>
+				</a>
+			</li>';
+		}
+		
 		if ($rright['admin']!=0 || $rright['admin_groups']!=0 || $rright['admin_lists']!=0 )
 		{
 			//select destination page by rights
@@ -642,18 +642,24 @@ if(!isset($state)) $state = '';
 					}
 					if($rright['admin']!=0)
 					{
-						if($_GET['page']=='admin' && $_GET['subpage']=='backup') echo '<li class="active">'; else echo '<li>'; echo '
-							<a href="./index.php?page=admin&subpage=backup">
-								<i class="icon-save"></i>
-								'.T_('Sauvegardes').'
-							</a>
-						</li>';
-						if($_GET['page']=='admin' && $_GET['subpage']=='update') echo '<li class="active">'; else echo '<li>'; echo '
+						if($rright['admin_backup'])
+						{
+							if($_GET['page']=='admin' && $_GET['subpage']=='backup') echo '<li class="active">'; else echo '<li>'; echo '
+								<a href="./index.php?page=admin&subpage=backup">
+									<i class="icon-save"></i>
+									'.T_('Sauvegardes').'
+								</a>
+							</li>';
+						}
+						if($rparameters['update_menu'])
+						{
+							if($_GET['page']=='admin' && $_GET['subpage']=='update') echo '<li class="active">'; else echo '<li>'; echo '
 							<a href="./index.php?page=admin&subpage=update">
 								<i class="icon-circle-arrow-up"></i>
 								'.T_('Mise à jour').'
 							</a>
-						</li>';
+							</li>';
+						}
 						if($_GET['page']=='admin' && $_GET['subpage']=='system') echo '<li class="active">'; else echo '<li>'; echo '
 							<a href="./index.php?page=admin&subpage=system">
 								<i class="icon-desktop"></i>

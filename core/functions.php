@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 06/02/2018  
-# @Update : 06/02/2018  
-# @Version : 3.1.40 p1
+# @Update : 07/04/2019  
+# @Version : 3.1.41
 ################################################################################
 
 //crypt 
@@ -35,4 +35,5 @@ if (!function_exists("date_cnv")){
 		return substr($date,8,2) . "/" . substr($date,5,2) . "/" . substr($date,0,4);
 	}
 }
+
 ?>

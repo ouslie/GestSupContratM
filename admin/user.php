@@ -5,8 +5,8 @@
 # @Call : admin.php
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 21/03/2019
-# @Version : 3.1.40
+# @Update : 26/07/2019
+# @Version : 3.1.43
 ################################################################################
 
 //initialize variables 
@@ -158,12 +158,7 @@ if($_POST['Modifier'])
 	$error=0;
 	if($_POST['mail']) //mail control
 	{
-		if(!strpos($_POST['mail'],'.')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("L'adresse mail doit posséder un point.").' </div>';}
-		if(strpos($_POST['mail'],'@'))
-		{
-			$mail_domain=explode('@',$_POST['mail']);
-			if(!strpos($mail_domain[1],'.')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("Le domaine de l'adresse mail doit posséder un point.").' </div>';}
-		} else {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("L'adresse mail doit posséder un arobase.").' </div>';}
+		if(!filter_var($_POST['mail'], FILTER_VALIDATE_EMAIL)) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("L'adresse mail est incorrecte").' </div>';}
 	}
 	if($_POST['login']) //existing account control
 	{
@@ -171,21 +166,37 @@ if($_POST['Modifier'])
 		$qry->execute(array('login' => $_POST['login'],'id' => $_GET['userid']));
 		$row=$qry->fetch();
 		$qry->closeCursor();
-		if($row) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Un autre compte utilise déjà cet identifiant ('.$row['lastname'].' '.$row['firstname'].')').' </div>';}
+		if($row) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Un autre compte utilise déjà cet identifiant ('.$row['lastname'].' '.$row['firstname'].')').' </div>';}
 	}
-	if($_POST['password']!=$_POST['password2']) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Les mots de passes ne sont pas identique').' </div>';}
+	if($_POST['password']!=$_POST['password2']) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Les mots de passes ne sont pas identique').' </div>';}
+	//password policy
+	if($rparameters['user_password_policy'] && $_POST['password'])
+	{
+		if(strlen($_POST['password'])<$rparameters['user_password_policy_min_lenght'])
+		{
+			$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit faire').' '.$rparameters['user_password_policy_min_lenght'].' '.T_('caractères minimum').'</div>';
+		}elseif($rparameters['user_password_policy_special_char'] && !preg_match('/[^a-zA-Z\d]/', $_POST['password']))
+		{
+			$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit contenir un caractère spécial').'</div>';
+		}elseif($rparameters['user_password_policy_min_maj'] && (!preg_match('/[A-Z]/', $_POST['password']) || !preg_match('/[a-z]/', $_POST['password'])))
+		{
+			$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit au moins une lettre majuscule et une minuscule').'</div>';
+		}
+	}
 	
 	if (!$error)
 	{
 		if($_POST['password'])
 		{
 			$hash=password_hash($_POST['password'], PASSWORD_DEFAULT);
+			$last_pwd_chg=date('Y-m-d');
 		} else {
-			$qry=$db->prepare("SELECT `password` FROM `tusers` WHERE id=:id AND disable=0 ");
+			$qry=$db->prepare("SELECT `password`,`last_pwd_chg` FROM `tusers` WHERE id=:id AND disable=0 ");
 			$qry->execute(array('id' => $_GET['userid']));
 			$row=$qry->fetch();
 			$qry->closeCursor();
 			$hash=$row['password'];
+			$last_pwd_chg=$row['last_pwd_chg'];
 		}
 		 
 		$qry=$db->prepare("
@@ -213,6 +224,7 @@ if($_POST['Modifier'])
 		dashboard_ticket_order=:dashboard_ticket_order,
 		default_ticket_state=:default_ticket_state,
 		chgpwd=:chgpwd,
+		last_pwd_chg=:last_pwd_chg,
 		language=:language,
 		useridfacture=:useridfacture
 		WHERE id=:id
@@ -241,6 +253,7 @@ if($_POST['Modifier'])
 			'dashboard_ticket_order' => $_POST['dashboard_ticket_order'],
 			'default_ticket_state' => $_POST['default_ticket_state'],
 			'chgpwd' => $_POST['chgpwd'],
+			'last_pwd_chg' => $last_pwd_chg,
 			'language' => $_POST['language'],
 			'useridfacture' => $_POST['useridfacture'],
 			'id' => $_GET['userid']
@@ -424,6 +437,20 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 		
 		if($row) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Un autre compte utilise déjà cet identifiant').' </div>';}
 	}
+	//password policy
+	if($rparameters['user_password_policy'] && $_POST['password'])
+	{
+		if(strlen($_POST['password'])<$rparameters['user_password_policy_min_lenght'])
+		{
+			$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit faire').' '.$rparameters['user_password_policy_min_lenght'].' '.T_('caractères minimum').'</div>';
+		}elseif($rparameters['user_password_policy_special_char'] && !preg_match('/[^a-zA-Z\d]/', $_POST['password']))
+		{
+			$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit contenir un caractère spécial').'</div>';
+		}elseif($rparameters['user_password_policy_min_maj'] && (!preg_match('/[A-Z]/', $_POST['password']) || !preg_match('/[a-z]/', $_POST['password'])))
+		{
+			$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit au moins une lettre majuscule et une minuscule').'</div>';
+		}
+	}
 	
 	if(!$error)
 	{
@@ -449,6 +476,7 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 		profile,
 		login,
 		chgpwd,
+		last_pwd_chg,
 		skin,
 		function
 		) VALUES (
@@ -469,6 +497,7 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 		:profile,
 		:login,
 		:chgpwd,
+		:last_pwd_chg,
 		:skin,
 		:function
 		)");
@@ -490,6 +519,7 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 			'profile' => $_POST['profile'],
 			'login' => $_POST['login'],
 			'chgpwd' => $_POST['chgpwd'],
+			'last_pwd_chg' => date('Y-m-d'),
 			'skin' => $_POST['skin'],
 			'function' => $_POST['function']
 			));
@@ -521,7 +551,12 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 if($_POST['cancel'])
 {
 	//redirect
-	$www = "./index.php?page=dashboard&userid=$uid&state=%25";
+	if($rright['admin'] && $_GET['subpage']=='user')
+	{
+		$www = "./index.php?page=admin&subpage=user";
+	} else {
+		$www = "./index.php?page=dashboard&userid=$uid&state=%25";
+	}
 	echo '<script language="Javascript">
 	<!--
 	document.location.replace("'.$www.'");
@@ -896,11 +931,11 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 														}
                     								echo'
                                             </div>
-                                            <div id="infos" class="tab-pane'; if ($_GET['tab']=='infos' || $_GET['tab']=='') echo 'active'; echo '">
+											<div id="infos" class="tab-pane'; if ($_GET['tab']=='infos' || $_GET['tab']=='') echo 'active'; echo '">
 												<label for="useridfacture">'.T_('useridfacture').':</label>
 												<input name="useridfacture" type="text" value="'; if($user1['useridfacture']) echo "$user1[useridfacture]"; else echo ""; echo'" />
 												<div class="space-4"></div>	
-												<label for="firstname">'.T_('Prénom').' :</label>
+                                    			<label for="firstname">'.T_('Prénom').' :</label>
                 								<input name="firstname" type="text" value="'.$user1['firstname'].'" />
                 								<div class="space-4"></div>
                 								<label for="lastname">'.T_('Nom').' :</label>

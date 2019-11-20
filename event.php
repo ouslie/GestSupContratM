@@ -6,8 +6,8 @@
 # @Parameters :  
 # @Author : Flox
 # @Create : 20/07/2011
-# @Update : 05/03/2019
-# @Version : 3.1.40
+# @Update : 23/08/2019
+# @Version : 3.1.44 p1
 ################################################################################
 
 //initialize variables 
@@ -21,109 +21,127 @@ if(!isset($_GET['id'])) $_GET['id'] = '';
 if(!isset($_GET['technician'])) $_GET['technician'] = ''; 
 if(!isset($_GET['planning'])) $_GET['planning'] = ''; 
 
-$db_event=strip_tags($db->quote($_GET['event']));
+if(!isset($_POST['addevent'])) $_POST['addevent'] = ''; 
+if(!isset($_POST['addcalendar'])) $_POST['addcalendar'] = ''; 
+
 $db_id=strip_tags($db->quote($_GET['id']));
 
-if(!isset($_POST['direct'])) $_POST['direct'] = '';
-if(!isset($_POST['date'])) $_POST['date'] = '';
-if(!isset($_POST['date_start'])) $_POST['date_start'] = '';
-if(!isset($_POST['hide'])) $_POST['hide'] = '';
+if(!isset($_POST['event_date'])) $_POST['event_date'] = '';
+if(!isset($_POST['event_hour'])) $_POST['event_hour'] = '';
+if(!isset($_POST['event_direct'])) $_POST['event_direct'] = '';
+if(!isset($_POST['calendar_date_start'])) $_POST['calendar_date_start'] = '';
+if(!isset($_POST['calendar_hour_start'])) $_POST['calendar_hour_start'] = '';
+if(!isset($_POST['calendar_date_end'])) $_POST['calendar_date_end'] = '';
+if(!isset($_POST['calendar_hour_end'])) $_POST['calendar_hour_end'] = '';
 
 //disable event
 if ($_GET['event']!='' && $_GET['disable']==1)
 {
-	$db->exec("UPDATE tevents SET disable='1' where id=$db_event");
+	$qry=$db->prepare("UPDATE `tevents` SET `disable`='1' WHERE `id`=:id");
+	$qry->execute(array('id' => $_GET['event']));
 }
 //display event
-if($_GET['hide']!=1)
+$qry=$db->prepare("SELECT id,date_start,incident FROM `tevents` WHERE technician=:technician and disable='0' and type='1'");
+$qry->execute(array('technician' => $_SESSION['user_id'])); 
+while($event=$qry->fetch()) 
 {
-	$qry=$db->prepare("SELECT id,date_start,incident FROM `tevents` WHERE technician=:technician and disable='0' and type='1'");
-	$qry->execute(array('technician' => $_SESSION['user_id'])); 
-	while($event=$qry->fetch()) 
+	$devent=explode(" ",$event['date_start']);
+	//day check
+	if ($devent[0]<=$daydate) 
 	{
-		$devent=explode(" ",$event['date_start']);
-		//day check
-		if ($devent[0]<=$daydate) 
+		//hour check
+		$currenthour=date("H:i:s");
+		$eventhour=explode(" ",$event['date_start']);
+		if ($currenthour>$eventhour[1])
 		{
-			//hour check
-			$currenthour=date("H:i:s");
-			$eventhour=explode(" ",$event['date_start']);
-			if ($currenthour>$eventhour[1])
-			{
-				//get ticket data
-				$qry=$db->prepare("SELECT `title` FROM `tincidents` WHERE id=:id");
-				$qry->execute(array('id' => $event['incident']));
-				$rticket=$qry->fetch();
-				$qry->closeCursor();
-				
-				//send data to box
-				$boxtitle="<i class='icon-bell red bigger-120'></i>  Rappel pour le ticket n°$event[incident]";
-				$boxtext="
-					<u>Titre:</u><br /> $rticket[title]
-					<div class=\"space-4\"></div>				
-				";
-				$valid="Voir le ticket";
-				$action1="document.location.href='./index.php?page=ticket&id=$event[incident]&hide=1'";
-				$cancel="Accréditer";
-				$action2="document.location.href='./index.php?page=dashboard&&userid=$_GET[userid]&state=%25&event=$event[id]&disable=1'";
-				include "./modalbox.php"; 
-			}
+			//get ticket data
+			$qry=$db->prepare("SELECT `title` FROM `tincidents` WHERE id=:id");
+			$qry->execute(array('id' => $event['incident']));
+			$rticket=$qry->fetch();
+			$qry->closeCursor();
+			
+			//send data to box
+			$boxtitle="<i class='icon-bell red bigger-120'></i>  Rappel pour le ticket n°$event[incident]";
+			$boxtext="
+				<u>Titre:</u><br /> $rticket[title]
+				<div class=\"space-4\"></div>				
+			";
+			$valid="Voir le ticket";
+			$action1="document.location.href='./index.php?page=ticket&id=$event[incident]&hide=1'";
+			$cancel="Accréditer";
+			$action2="document.location.href='./index.php?page=dashboard&userid=$_GET[userid]&state=%25&event=$event[id]&disable=1'";
+			include "./modalbox.php"; 
 		}
 	}
-	$qry->closeCursor();
 }
-//add new event
-if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
+$qry->closeCursor();
+
+
+
+//database inputs event if posted data
+if($_GET['id'] && (($_POST['event_date'] && $_POST['event_hour']) || $_POST['event_direct']) && $rright['ticket_event'])
 {
-	//database inputs
-	if($_POST['date'] || $_POST['direct'] || $_POST['date_start'])
-	{
-		//get ticket title
-		$qry=$db->prepare("SELECT `id`,`title` FROM `tincidents` WHERE id=:id");
-		$qry->execute(array('id' => $_GET['id']));
-		$rticket=$qry->fetch();
-		$qry->closeCursor();
-			
-		if ($_GET['action']!='addcalendar')
-		{
-			if($_POST['direct']!='') {$date=$_POST['direct'];} else {$date="$_POST[date] $_POST[hour]";}
-			$qry=$db->prepare("INSERT INTO `tevents` (`technician`,`incident`,`date_start`,`type`,`title`,`classname`) VALUES (:technician,:incident,:date_start,:type,:title,:classname)");
-			$qry->execute(array(
-				'technician' => $_SESSION['user_id'],
-				'incident' => $_GET['id'],
-				'date_start' => $date,
-				'type' => '1',
-				'title' => "Rappel: $rticket[title]",
-				'classname' => 'label-warning'
-				));
-			//redirect
-			$www = "./index.php?page=ticket&id=$_GET[id]&userid=$_GET[userid]";
-			echo '<script language="Javascript">
-			<!--
-			document.location.replace("'.$www.'");
-			// -->
-			</script>';
-		} else {
-			$qry=$db->prepare("INSERT INTO `tevents` (`technician`,`incident`,`date_start`,`date_end`,`type`,`title`,`classname`) VALUES (:technician,:incident,:date_start,:date_end,:type,:title,:classname)");
-			$qry->execute(array(
-				'technician' => $globalrow['technician'],
-				'incident' => $_GET['id'],
-				'date_start' => "$_POST[date_start] $_POST[hour]",
-				'date_end' => "$_POST[date_end] $_POST[hour_fin]",
-				'type' => 2,
-				'title' => "Ticket $rticket[id]: $rticket[title]",
-				'classname' => 'label-success'
-				));
-			
-			//redirect
-			$www = "./index.php?page=ticket&id=$_GET[id]&userid=$_GET[userid]";
-			echo '<script language="Javascript">
-			<!--
-			document.location.replace("'.$www.'");
-			// -->
-			</script>';
-		}
-	}
+	//get ticket title
+	$qry=$db->prepare("SELECT `id`,`title` FROM `tincidents` WHERE id=:id");
+	$qry->execute(array('id' => $_GET['id']));
+	$rticket=$qry->fetch();
+	$qry->closeCursor();
+		
+	if($_POST['event_direct']!='') {$date=$_POST['event_direct'];} else {$date="$_POST[event_date] $_POST[event_hour]";}
+	$qry=$db->prepare("INSERT INTO `tevents` (`technician`,`incident`,`date_start`,`type`,`title`,`classname`) VALUES (:technician,:incident,:date_start,:type,:title,:classname)");
+	$qry->execute(array(
+		'technician' => $_SESSION['user_id'],
+		'incident' => $_GET['id'],
+		'date_start' => $date,
+		'type' => '1',
+		'title' => "Rappel ticket $rticket[id] : $rticket[title]",
+		'classname' => 'label-warning'
+		));
+	//redirect
+	$www = "./index.php?page=ticket&id=$_GET[id]&userid=$_GET[userid]";
+	echo '<script language="Javascript">
+	<!--
+	document.location.replace("'.$www.'");
+	// -->
+	</script>';
+	
+}
+
+//database inputs calendar if posted data
+if($_GET['id'] && $_POST['calendar_date_start'] && $_POST['calendar_hour_start'] && $_POST['calendar_date_end'] && $_POST['calendar_hour_end'] && $rright['ticket_calendar'])
+{
+	//get ticket title
+	$qry=$db->prepare("SELECT `id`,`title` FROM `tincidents` WHERE id=:id");
+	$qry->execute(array('id' => $_GET['id']));
+	$rticket=$qry->fetch();
+	$qry->closeCursor();
+		
+	$qry=$db->prepare("INSERT INTO `tevents` (`technician`,`incident`,`date_start`,`date_end`,`type`,`title`,`classname`) VALUES (:technician,:incident,:date_start,:date_end,:type,:title,:classname)");
+		$qry->execute(array(
+			'technician' => $globalrow['technician'],
+			'incident' => $_GET['id'],
+			'date_start' => "$_POST[calendar_date_start] $_POST[calendar_hour_start]",
+			'date_end' => "$_POST[calendar_date_end] $_POST[calendar_hour_end]",
+			'type' => 2,
+			'title' => "Ticket $rticket[id] : $rticket[title]",
+			'classname' => 'label-success'
+			));
+		
+		//redirect
+		$www = "./index.php?page=ticket&id=$_GET[id]&userid=$_GET[userid]";
+		echo '<script language="Javascript">
+		<!--
+		document.location.replace("'.$www.'");
+		// -->
+		</script>';
+	
+}
+
+
+
+//add new event
+if(($_POST['addevent'] || $_POST['addcalendar']) && $_GET['id'])
+{
 	//calculate dates
 	$date = date("Y-m-d H:i");
 	$day= date('Y-m-d',strtotime("+1 day ", strtotime($date)));
@@ -133,9 +151,9 @@ if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
 	$year= date('Y-m-d',strtotime("+1 year ", strtotime($date)));
 	
 	//display form
-	if ($_GET['id']!="" && $_POST['hide']!=1)
+	if($_GET['id'])
 	{
-		if ($_GET['action']!='addcalendar')
+		if($_POST['addevent'])
 		{
 			$boxsize='height: 450,';
 			$boxtitle='<i class=\'icon-bell-alt orange \'></i> '.T_('Ajouter un rappel');
@@ -143,11 +161,10 @@ if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
 			<form name="form" method="POST" action="" id="form">
 				<label>'.T_('Date').':</label> 
 				<div class="space-1"></div>
-				<input autocomplete="off" type="text" name="date" id="date"  />
-				<input type="hidden" name="hide" id="hide" value="1"/>
+				<input autocomplete="off" type="text" name="event_date" id="event_date"  />
 				<div class="space-4"></div>
 				<label>'.T_('Heure').':</label> 
-				<select id="hour" name="hour" autofocus="true" >
+				<select id="event_hour" name="event_hour" autofocus="true" >
 					<option value="00:00:00">00h00</option>
 					<option value="01:00:00">01h00</option>
 					<option value="02:00:00">02h00</option>
@@ -173,24 +190,21 @@ if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
 					<option value="23:00:00">23h00</option>
 			</select>
 			<hr />
-			<input type="radio" name="direct" value="'.$day.' 08:00:00"> '.T_('Demain').' <br />
-			<input type="radio" name="direct" value="'.$afterday.' 08:00:00"> '.T_('Après demain').' <br />
-			<input type="radio" name="direct" value="'.$week.' 08:00:00"> '.T_('Dans une semaine').' <br />
-			<input type="radio" name="direct" value="'.$month.' 08:00:00"> '.T_('Dans un mois').' <br />
-			<input type="radio" name="direct" value="'.$year.' 08:00:00"> '.T_('Dans un an').'<br />
+			<input type="radio" name="event_direct" value="'.$day.' 08:00:00"> '.T_('Demain').' <br />
+			<input type="radio" name="event_direct" value="'.$afterday.' 08:00:00"> '.T_('Après demain').' <br />
+			<input type="radio" name="event_direct" value="'.$week.' 08:00:00"> '.T_('Dans une semaine').' <br />
+			<input type="radio" name="event_direct" value="'.$month.' 08:00:00"> '.T_('Dans un mois').' <br />
+			<input type="radio" name="event_direct" value="'.$year.' 08:00:00"> '.T_('Dans un an').'<br />
 			';
-		} else {
-			$boxsize='height: 440,width: 350,';
-			$boxtitle='<i class=\'icon-calendar green\'></i> '.T_('Planifier une intervention');
+		} elseif($_POST['addcalendar']) {
+			$boxsize='height: 480,width: 350,';
+			$boxtitle='<i class=\'icon-calendar\'></i> '.T_('Planifier une intervention');
 			$boxtext='
 			<form name="form" method="POST" action="" id="form">
-				<label>'.T_('Date début').':</label> 
-				<div class="space-2"></div>
-				<input autocomplete="off" type="text" name="date_start" id="date_start" />
-				<input type="hidden" name="hide" id="hide" value="1"/>
-				<div class="space-4"></div>
-				<label>'.T_('Heure début').':</label> 
-				<select class="textfield" id="hour" name="hour" autofocus="true" >
+				<label>'.T_('Début').' :</label> 
+				
+				<input size="8" autocomplete="off" type="text" name="calendar_date_start" id="calendar_date_start" />
+				<select class="textfield" id="calendar_hour_start" name="calendar_hour_start" autofocus="true" >
 					<option value="00:00:00">00h00</option>
 					<option value="01:00:00">01h00</option>
 					<option value="02:00:00">02h00</option>
@@ -215,13 +229,11 @@ if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
 					<option value="22:00:00">22h00</option>
 					<option value="23:00:00">23h00</option>
 				</select>
-				<hr />
-				<label>'.T_('Date de fin').':</label> 
-				<div class="space-2"></div>
-				<input autocomplete="off" type="text" name="date_end" id="date_end" />
-				<div class="space-4"></div>
-				<label>'.T_('Heure de fin').':</label> 
-				<select class="textfield" id="hour_fin" name="hour_fin" >
+				<br />
+				<br />
+				<label>'.T_('Fin').' :</label> 
+				<input size="8" autocomplete="off" type="text" name="calendar_date_end" id="calendar_date_end" />
+				<select class="textfield" id="calendar_hour_end" name="calendar_hour_end" >
 					<option value="00:00:00">00h00</option>
 					<option value="01:00:00">01h00</option>
 					<option value="02:00:00">02h00</option>
@@ -246,6 +258,8 @@ if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
 					<option value="22:00:00">22h00</option>
 					<option value="23:00:00">23h00</option>
 				</select>
+				<br /><br /><br /><br /><br /><br />
+				<br /><br /><br /><br /><br /><br />
 				';
 		}
 		echo "	
@@ -255,7 +269,8 @@ if ($_GET['action']=='addevent' || $_GET['action']=='addcalendar')
 	$valid=T_('Ajouter');
 	$action1="$('form#form').submit();";
 	$cancel=T_('Annuler');
-	$action2="$( this ).dialog( \"close\" ); ";
+	//$action2="$( this ).dialog( \"close\" ); ";
+	$action2="window.location = window.location.href;";
 	include "./modalbox.php"; 
 }
 ?>

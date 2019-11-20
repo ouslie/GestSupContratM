@@ -6,8 +6,8 @@
 # @Parameters : $boxtitle $boxtext $valid $cancel $action1 $action2
 # @Author : Flox
 # @Create : 19/10/2013
-# @Update : 28/01/2019
-# @Version : 3.1.38
+# @Update : 21/06/2019
+# @Version : 3.1.42
 ################################################################################
 
 //initialize variables 
@@ -35,17 +35,15 @@ if(!isset($_GET['id'])) $_GET['id'] = '';
 <!-- inline scripts related to this page date_start -->
 <script type="text/javascript">
 	jQuery(function($) {
-		$('#date').datetimepicker({
+		$('#event_date').datetimepicker({
 			format: 'YYYY-MM-DD',
 		});
-		$('#date_start').datetimepicker({
+		$('#calendar_date_start').datetimepicker({
 			format: 'YYYY-MM-DD',
 		});
-		$('#date_end').datetimepicker({
+		$('#calendar_date_end').datetimepicker({
 			format: 'YYYY-MM-DD',
 		});
-			
-		
 	});
 	
 	jQuery(function($) {

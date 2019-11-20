@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 06/03/2019
-# @Version : 3.1.40
+# @Update : 24/09/2019
+# @Version : 3.1.44
 ################################################################################
 
 //functions
@@ -29,6 +29,9 @@ if(!isset($error)) $error = '';
 if(!isset($_POST['maxline'])) $_POST['maxline'] = '';
 if(!isset($_POST['submit_general'])) $_POST['submit_general'] = '';
 if(!isset($_POST['ticket_type'])) $_POST['ticket_type'] = '';
+if(!isset($_POST['ticket_autoclose'])) $_POST['ticket_autoclose'] = '';
+if(!isset($_POST['ticket_autoclose_delay'])) $_POST['ticket_autoclose_delay'] = '';
+if(!isset($_POST['ticket_autoclose_state'])) $_POST['ticket_autoclose_state'] = '';
 if(!isset($_POST['ticket_increment_number'])) $_POST['ticket_increment_number'] = '';
 if(!isset($_POST['submit_connector'])) $_POST['submit_connector'] = '';
 if(!isset($_POST['submit_function'])) $_POST['submit_function'] = '';
@@ -44,6 +47,11 @@ if(!isset($_POST['user_agency'])) $_POST['user_agency'] = '';
 if(!isset($_POST['user_limit_service'])) $_POST['user_limit_service'] = '';
 if(!isset($_POST['user_disable_attempt'])) $_POST['user_disable_attempt'] = '';
 if(!isset($_POST['user_disable_attempt_number'])) $_POST['user_disable_attempt_number'] = '';
+if(!isset($_POST['user_password_policy'])) $_POST['user_password_policy'] = '';
+if(!isset($_POST['user_password_policy_min_lenght'])) $_POST['user_password_policy_min_lenght'] = '';
+if(!isset($_POST['user_password_policy_special_char'])) $_POST['user_password_policy_special_char'] = '';
+if(!isset($_POST['user_password_policy_min_maj'])) $_POST['user_password_policy_min_maj'] = '';
+if(!isset($_POST['user_password_policy_expiration'])) $_POST['user_password_policy_expiration'] = '';
 if(!isset($_POST['mail'])) $_POST['mail']= '';
 if(!isset($_POST['mail_auth'])) $_POST['mail_auth']= '';
 if(!isset($_POST['mail_auto'])) $_POST['mail_auto']= '';
@@ -63,6 +71,7 @@ if(!isset($_POST['ldap'])) $_POST['ldap']= '';
 if(!isset($_POST['ldap_auth'])) $_POST['ldap_auth']= '';
 if(!isset($_POST['ldap_sso'])) $_POST['ldap_sso']= '';
 if(!isset($_POST['ldap_type'])) $_POST['ldap_type']= '';
+if(!isset($_POST['ldap_login_field'])) $_POST['ldap_login_field']= '';
 if(!isset($_POST['ldap_service'])) $_POST['ldap_service']= '';
 if(!isset($_POST['ldap_service_url'])) $_POST['ldap_service_url']= '';
 if(!isset($_POST['ldap_agency'])) $_POST['ldap_agency']= '';
@@ -211,6 +220,9 @@ if($_POST['submit_general'])
 	$_POST['mail_order']=strip_tags($_POST['mail_order']);
 	$_POST['time_display_msg']=strip_tags($_POST['time_display_msg']);
 	$_POST['user_disable_attempt_number']=strip_tags($_POST['user_disable_attempt_number']);
+	$_POST['user_password_policy_min_lenght']=strip_tags($_POST['user_password_policy_min_lenght']);
+	$_POST['ticket_autoclose_delay']=strip_tags($_POST['ticket_autoclose_delay']);
+	$_POST['ticket_autoclose_state']=strip_tags($_POST['ticket_autoclose_state']);
 
 	//update general tab
 	$qry=$db->prepare("
@@ -241,6 +253,11 @@ if($_POST['submit_general'])
 		`user_limit_service`=:user_limit_service,
 		`user_disable_attempt`=:user_disable_attempt,
 		`user_disable_attempt_number`=:user_disable_attempt_number,
+		`user_password_policy`=:user_password_policy,
+		`user_password_policy_min_lenght`=:user_password_policy_min_lenght,
+		`user_password_policy_special_char`=:user_password_policy_special_char,
+		`user_password_policy_min_maj`=:user_password_policy_min_maj,
+		`user_password_policy_expiration`=:user_password_policy_expiration,
 		`company_limit_ticket`=:company_limit_ticket,
 		`user_limit_ticket`=:user_limit_ticket,
 		`user_company_view`=:user_company_view,
@@ -255,6 +272,9 @@ if($_POST['submit_general'])
 		`order`=:order,
 		`ticket_places`=:ticket_places,
 		`ticket_type`=:ticket_type,
+		`ticket_autoclose`=:ticket_autoclose,
+		`ticket_autoclose_delay`=:ticket_autoclose_delay,
+		`ticket_autoclose_state`=:ticket_autoclose_state,
 		`ticket_default_state`=:ticket_default_state,
 		`meta_state`=:meta_state
 		WHERE
@@ -287,6 +307,11 @@ if($_POST['submit_general'])
 		'user_limit_service' => $_POST['user_limit_service'],
 		'user_disable_attempt' => $_POST['user_disable_attempt'],
 		'user_disable_attempt_number' => $_POST['user_disable_attempt_number'],
+		'user_password_policy' => $_POST['user_password_policy'],
+		'user_password_policy_min_lenght' => $_POST['user_password_policy_min_lenght'],
+		'user_password_policy_special_char' => $_POST['user_password_policy_special_char'],
+		'user_password_policy_min_maj' => $_POST['user_password_policy_min_maj'],
+		'user_password_policy_expiration' => $_POST['user_password_policy_expiration'],
 		'company_limit_ticket' => $_POST['company_limit_ticket'],
 		'user_limit_ticket' => $_POST['user_limit_ticket'],
 		'user_company_view' => $_POST['user_company_view'],
@@ -301,6 +326,9 @@ if($_POST['submit_general'])
 		'order' => $_POST['order'],
 		'ticket_places' => $_POST['ticket_places'],
 		'ticket_type' => $_POST['ticket_type'],
+		'ticket_autoclose' => $_POST['ticket_autoclose'],
+		'ticket_autoclose_delay' => $_POST['ticket_autoclose_delay'],
+		'ticket_autoclose_state' => $_POST['ticket_autoclose_state'],
 		'ticket_default_state' => $_POST['ticket_default_state'],
 		'meta_state' => $_POST['meta_state'],
 		'id' => '1'
@@ -325,6 +353,7 @@ if($_POST['submit_connector'] || $_POST['test_ldap'])
 	$_POST['ldap_server']=str_replace('|','',$_POST['ldap_server']);
 	$_POST['ldap_domain']=strip_tags($_POST['ldap_domain']);
 	$_POST['ldap_user']=strip_tags($_POST['ldap_user']);
+	$_POST['ldap_login_field']=strip_tags($_POST['ldap_login_field']);
 	$_POST['ldap_password']=strip_tags($_POST['ldap_password']);
 	$_POST['imap_server']=strip_tags($_POST['imap_server']);
 	$_POST['imap_server']=str_replace('|','',$_POST['imap_server']);
@@ -349,6 +378,7 @@ if($_POST['submit_connector'] || $_POST['test_ldap'])
 	`ldap_type`=:ldap_type, 
 	`ldap_service`=:ldap_service, 
 	`ldap_service_url`=:ldap_service_url, 
+	`ldap_login_field`=:ldap_login_field, 
 	`ldap_agency`=:ldap_agency, 
 	`ldap_agency_url`=:ldap_agency_url, 
 	`ldap_server`=:ldap_server, 
@@ -388,6 +418,7 @@ if($_POST['submit_connector'] || $_POST['test_ldap'])
 		'ldap_type' => $_POST['ldap_type'],
 		'ldap_service' => $_POST['ldap_service'],
 		'ldap_service_url' => $_POST['ldap_service_url'],
+		'ldap_login_field' => $_POST['ldap_login_field'],
 		'ldap_agency' => $_POST['ldap_agency'],
 		'ldap_agency_url' => $_POST['ldap_agency_url'],
 		'ldap_server' => $_POST['ldap_server'],
@@ -678,7 +709,7 @@ if($_POST['submit_function'])
 	$qry->execute(array());
 	while ($rowyear=$qry->fetch())
 	{
-		$qry2 = $db->prepare("SELECT * FROM `tavailability`");
+		$qry2 = $db->prepare("SELECT `subcat` FROM `tavailability`");
 		$qry2->execute();
 	    while ($rowsubcat=$qry2->fetch())
 	    {
@@ -991,6 +1022,32 @@ if ($test_install_file==1)
 										<span class="lbl">&nbsp;<?php echo T_('Gestion des types'); ?></span>
 										<i title="<?php echo T_('Permet de définir un type à un ticket (ex: Demande, Incident...), ajoute une ligne sur le ticket, la liste des types est administrable dans Administration > Liste'); ?>" class="icon-question-sign blue bigger-110"></i>
 									</label>
+									<div class="space-4"></div>
+									<label>
+										<input type="checkbox" <?php if ($rparameters['ticket_autoclose']==1) {echo "checked";} ?> name="ticket_autoclose" class="ace" value="1">
+										<span class="lbl">&nbsp;<?php echo T_('Fermeture automatique'); ?></span>
+										<i title="<?php echo T_('Permet de modifier automatiquement les tickets dans l\'état résolu après X jours depuis la date de création du ticket. A noter les modifications sont réalisées une fois par jour lors de l\'affichage de la page de login'); ?>" class="icon-question-sign blue bigger-110"></i>
+									</label>
+									<?php
+										if($rparameters['ticket_autoclose']==1)
+										{
+											echo '
+												<blockquote>
+													<label>
+														'.T_('Délais').' : <input name="ticket_autoclose_delay" type="text" value="'.$rparameters['ticket_autoclose_delay'].'" size="3" /> jours
+														<i title="'.T_('Définit le nombre de jours avant la clôture automatique du ticket').'" class="icon-question-sign blue bigger-110"></i>
+														<div class="space-4"></div>
+														'.T_('État').' :
+														<select class="textfield" id="ticket_autoclose_state" name="ticket_autoclose_state">
+															<option '; if($rparameters['ticket_autoclose_state']==0) {echo 'selected';} echo ' value="0">'.T_('Tous').'</option>
+															<option '; if($rparameters['ticket_autoclose_state']==6) {echo 'selected';} echo ' value="6">'.T_('Attente retour').'</option>
+														</select>
+														<i title="'.T_("Spécifie si la fermeture automatique s'applique à tous les états ou uniquement aux tickets dans l'état Attente retour ").'" class="icon-question-sign blue bigger-110"></i>
+													</label>
+												</blockquote>
+											';
+										}
+									?>
 								</span>
 							</div>
 						</div>
@@ -1059,7 +1116,7 @@ if ($test_install_file==1)
 									<label> 
 										<input class="ace" type="checkbox" <?php if ($rparameters['user_limit_service']==1) echo "checked"; ?> name="user_limit_service" value="1">
 										<span class="lbl">&nbsp;<?php echo T_('Les utilisateurs ne voient que les tickets de leurs services'); ?></span>
-										<i title="<?php echo T_('Permet de cloisonner la liste de tickets ainsi que les catégories, un droit additionnel est nécessaire dashboard_service_only'); ?>.)" class="icon-question-sign blue bigger-110"></i>
+										<i title="<?php echo T_('Permet de cloisonner la liste de tickets ainsi que les catégories, droits associés : dashboard_service_only, side_all, side_all_service_disp, side_all_service_edit'); ?>.)" class="icon-question-sign blue bigger-110"></i>
 										<br />
 									</label>
 									<br />
@@ -1075,6 +1132,34 @@ if ($test_install_file==1)
 											&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-caret-right blue"></i>
 											Nombre de tentatives : 
 											<input name="user_disable_attempt_number" type="text" value="'.$rparameters['user_disable_attempt_number'].'" size="3">
+											';
+										}
+										?>
+										
+									</label>
+									<br />
+									<label> 
+										<input class="ace" type="checkbox" <?php if ($rparameters['user_password_policy']==1) {echo "checked";} ?> name="user_password_policy" value="1">
+										<span class="lbl">&nbsp;<?php echo T_("Politique de gestion des mots de passes"); ?></span>
+										<i title="<?php echo T_("Permet d'ajouter des contraintes lors de la définition de mot de passe utilisateur"); ?>" class="icon-question-sign blue bigger-110"></i>
+										<br />
+										<?php
+										if($rparameters['user_password_policy'])
+										{
+											echo '
+											&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-caret-right blue"></i>
+											Longueur minimum : <input name="user_password_policy_min_lenght" type="text" value="'.$rparameters['user_password_policy_min_lenght'].'" size="2"> '.T_('caractères').'<br />
+											&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-caret-right blue"></i>
+											Caractères spéciaux obligatoire : <input style="vertical-align: middle;" class="ace" type="checkbox" '; if ($rparameters['user_password_policy_special_char']==1) {echo "checked";} echo ' name="user_password_policy_special_char" value="1">
+											<span class="lbl">&nbsp;</span>
+											<br />
+											&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-caret-right blue"></i>
+											Minuscule et majuscule obligatoire : <input style="vertical-align: middle;" class="ace" type="checkbox" '; if ($rparameters['user_password_policy_min_maj']==1) {echo "checked";} echo ' name="user_password_policy_min_maj" value="1">
+											<span class="lbl">&nbsp;</span>
+											<br />
+											&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-caret-right blue"></i>
+											Expiration après : <input name="user_password_policy_expiration" type="text" value="'.$rparameters['user_password_policy_expiration'].'" size="2"> '.T_('jours').'
+											<i title="'.T_("Si la valeur est définie à 0, alors ce paramètre est désactivé").'" class="icon-question-sign blue bigger-110"></i>
 											';
 										}
 										?>
@@ -1247,7 +1332,7 @@ if ($test_install_file==1)
 										<option ';if ($rparameters['mail_smtp_class']=='IsSMTP()') echo "selected "; echo' value="IsSMTP()">IsSMTP ('.T_('Défaut').')</option>
 										<option ';if ($rparameters['mail_smtp_class']=='IsSendMail()') echo "selected "; echo' value="IsSendMail()">IsSendMail</option>
 									</select>
-									<i title="'.T_('Classe PHPMailer, par défaut utiliser isSMTP(), certains hébergements n\'autorisent que le isSendMail() (exemple: 1&1 utilise isSendMail() )').'" class="icon-question-sign blue bigger-110"></i>
+									<i title="'.T_('Classe PHPMailer, par défaut utiliser isSMTP(), certains hébergements n\'autorisent que le isSendMail() (exemple: OVH et 1&1 utilise isSendMail() )').'" class="icon-question-sign blue bigger-110"></i>
 									<div class="space-4"></div>
 									<label>
 										<input class="ace" type="checkbox"'; if ($rparameters['mail_auth']==1) {echo "checked";}  echo ' name="mail_auth" value="1">
@@ -1388,6 +1473,21 @@ if ($test_install_file==1)
 										<input name="ldap_url" type="text" value="'.$rparameters['ldap_url'].'" size="80" />
 										<i title="'.T_('Emplacement dans l\'annuaire des utilisateurs. Par défaut pour Active Directory cn=users, si vous utilisez plusieurs unités d\'organisation séparer avec un point virgule (ou=France,ou=utilisateurs;ou=Belgique,ou=utilisateurs) Attention il ne doit pas être suffixé du domaine').'." class="icon-question-sign blue bigger-110"></i> <br />
 										<div class="space-4"></div>
+										';
+											if($rparameters['ldap_type']==0)
+											{
+												echo '
+												'.T_('Champ login').' : 
+												<select id="ldap_login_field" name="ldap_login_field" >
+													<option ';if ($rparameters['ldap_login_field']=='UserPrincipalName') {echo "selected ";} echo ' value="UserPrincipalName">UserPrincipalName</option>
+													<option ';if ($rparameters['ldap_login_field']=='SamAcountName') {echo "selected ";} echo ' value="SamAcountName">SamAcountName</option>
+												</select>
+												<i title="'.T_("Permet de configurer le champ AD à utiliser pour le login GestSup").'." class="icon-question-sign blue bigger-110"></i><br />
+												<div class="space-4"></div>
+												';
+											}
+											
+										echo '
 										'.T_('Utilisateur').' : <input name="ldap_user" type="text" value="'.$rparameters['ldap_user'].'" size="20" />
 										<i title="'.T_('Utilisateur présent dans l\'annuaire LDAP, pour OpenLDAP l\'utilisateur doit être à la racine et de type CN').'" class="icon-question-sign blue bigger-110"></i> <br />
 										<div class="space-4"></div>

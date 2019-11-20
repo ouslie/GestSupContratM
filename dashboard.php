@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 17/07/2009
-# @Update : 01/04/2019
-# @Version : 3.1.40 p2
+# @Update : 19/09/2019
+# @Version : 3.1.44 p1
 ################################################################################
 
 //call functions
@@ -97,6 +97,9 @@ if(!isset($_POST['criticality'])) $_POST['criticality']=$_GET['criticality'];
 if(!isset($_POST['type'])) $_POST['type']=$_GET['type']; 
 if(!isset($_POST['u_group'])) $_POST['u_group']=$_GET['u_group']; 
 if(!isset($_POST['t_group'])) $_POST['t_group']=$_GET['t_group']; 
+
+//init post var
+require('core/init_post.php');
 
 //default values
 if ($techread=='') $techread='%';
@@ -288,7 +291,7 @@ if(
 		if ($find!=false)
 		{			
 			$date_create=explode("/",$date_create);
-			$_POST['date_create']="$date_create[2]-$date_create[1]-$date_create[0]";
+			if(isset($date_create[2]) && isset($date_create[1]) && isset($date_create[0])){$_POST['date_create']="$date_create[2]-$date_create[1]-$date_create[0]";}
 		}
 	}
 	if ($_POST['date_hope']!='%')
@@ -299,7 +302,7 @@ if(
 		if ($find!=false)
 		{			
 			$date_hope=explode("/",$date_hope);
-			$_POST['date_hope']="$date_hope[2]-$date_hope[1]-$date_hope[0]";
+			if(isset($date_hope[2]) && isset($date_hope[1]) && isset($date_hope[0])){$_POST['date_hope']="$date_hope[2]-$date_hope[1]-$date_hope[0]";}
 		}
 	}
 	if ($_POST['date_res']!='%')
@@ -310,7 +313,7 @@ if(
 		if ($find!=false)
 		{			
 			$date_res=explode("/",$date_res);
-			$_POST['date_res']="$date_res[2]-$date_res[1]-$date_res[0]";
+			if(isset($date_res[2]) && isset($date_res[1]) && isset($date_res[0])){$_POST['date_res']="$date_res[2]-$date_res[1]-$date_res[0]";}
 		}
 	}
 	if ($keywords && $reload==0)
@@ -391,8 +394,16 @@ if(
 		//special case to filter query
 		if ($rparameters['user_company_view']==1 && $rright['side_company']!=0)
 		{
-			$join.='LEFT JOIN tusers ON tincidents.user=tusers.id ';
-			$where.="AND tusers.company='$ruser[company]' ";
+			//check if company table is not empty, before add join
+			$qry=$db->prepare("SELECT count(id) FROM `tcompany`");
+			$qry->execute();
+			$row=$qry->fetch();
+			$qry->closeCursor();
+			if($row[0]>1)
+			{
+				$join.='LEFT JOIN tusers ON tincidents.user=tusers.id ';
+				$where.="AND tusers.company='$ruser[company]' ";
+			}
 		}
 		//special case to filter query when user company right is enable
 		if ($rright['dashboard_col_company']!=0)
@@ -549,6 +560,19 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 				$qry->execute(array('incident' => $row['id']));
 				$qry=$db->prepare("DELETE FROM `ttoken` WHERE ticket_id=:ticket_id"); //delete token
 				$qry->execute(array('ticket_id' => $row['id']));
+				
+				//remove upload files and folder if exist
+				$upload_dir_to_remove='upload/'.$row['id'].'/';
+				if(is_numeric($row['id']) && is_dir($upload_dir_to_remove)) 
+				{
+					//remove files before delete directory
+					$files_to_remove = array_diff(scandir($upload_dir_to_remove), array('.','..'));
+					foreach ($files_to_remove as $file_to_remove) {
+						if(file_exists($upload_dir_to_remove.$file_to_remove)) {unlink($upload_dir_to_remove.$file_to_remove);}
+					}
+					rmdir($upload_dir_to_remove); //remove empty dir
+				}
+				
 				echo '<div class="alert alert-block alert-success"><i class="icon-remove"></i> '.T_('Ticket').' '.$row['id'].' '.T_('supprimé').'.</div>';
 			} else {			
 				$db->exec("UPDATE tincidents SET state='$_POST[selectrow]' WHERE id LIKE '$row[id]'");
@@ -1519,7 +1543,7 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 									echo '
 									<td>
 										<center>
-											<input name="date_create" style="width:100%" onchange="submit();" type="text"  value="'; if ($_POST['date_create']!='%' && !$_GET['view']) {echo $_POST['date_create'];} echo '" />
+											<input title="'.T_('La date doit être au format JJ/MM/AAAA').'" name="date_create" style="width:100%" onchange="submit();" type="text"  value="'; if ($_POST['date_create']!='%' && !$_GET['view']) {echo $_POST['date_create'];} echo '" />
 										</center>
 									</td>
 									';
@@ -1539,7 +1563,7 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 									echo '
 									<td>
 										<center>
-											<input name="date_hope" style="width:100%" onchange="submit();" type="text"  value="'; if ($_POST['date_hope']!='%' && !$_GET['view']) {echo $_POST['date_hope'];} echo '" />
+											<input title="'.T_('La date doit être au format JJ/MM/AAAA').'" name="date_hope" style="width:100%" onchange="submit();" type="text"  value="'; if ($_POST['date_hope']!='%' && !$_GET['view']) {echo $_POST['date_hope'];} echo '" />
 										</center>
 									</td>
 									';
@@ -1559,7 +1583,7 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 									echo '
 									<td>
 										<center>
-											<input name="date_res" style="width:100%" onchange="submit();" type="text"  value="'; if ($_POST['date_res']!='%' && !$_GET['view']) {echo $_POST['date_res'];} echo '" />
+											<input title="'.T_('La date doit être au format JJ/MM/AAAA').'" name="date_res" style="width:100%" onchange="submit();" type="text"  value="'; if ($_POST['date_res']!='%' && !$_GET['view']) {echo $_POST['date_res'];} echo '" />
 										</center>
 									</td>
 									';
@@ -2050,7 +2074,7 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 	{
 		echo '
 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp	<i class="icon-level-down icon-rotate-180 icon-2x"></i>&nbsp&nbsp&nbsp
-			<select title="'.T_('Effectue des actions pour les tickets sélectionnés dans la liste des tickets').'." name="selectrow" onchange="if(confirm(\''.T_('Êtes-vous réaliser cette opération sur les tickets sélectionnés').'?\')) this.form.submit();">
+			<select title="'.T_('Effectue des actions pour les tickets sélectionnés dans la liste des tickets').'." name="selectrow" onchange="if(confirm(\''.T_('Êtes-vous sûr de réaliser cette opération sur les tickets sélectionnés').'?\')) this.form.submit();">
 				<option value="selectall"> > '.T_('Sélectionner tout').'</option>
 				<option selected> > '.T_('Pour la selection').':</option>
 				';

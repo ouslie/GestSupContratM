@@ -6,8 +6,8 @@
 # @Parameters : GET_[ip] or globalping and server key for command line execution
 # @Author : Flox
 # @Create : 19/12/2015
-# @Update : 23/03/2018
-# @Version : 3.1.32
+# @Update : 01/07/2019
+# @Version : 3.1.42
 ################################################################################
 
 //initialize variables 
@@ -45,9 +45,13 @@ if(!$rparameters['server_private_key'])
 	T_bindtextdomain($_GET['lang'], LOCALE_DIR);
 	T_bind_textdomain_codeset($_GET['lang'], $encoding);
 	T_textdomain($_GET['lang']);
+	
+	if($rparameters['server_timezone']) {date_default_timezone_set($rparameters['server_timezone']);}
+
 }
 
 $today=date("Y-m-d");
+$datetime=date("Y-m-d H:i:s");
 
 //multi ping for update all assets last ping value
 if ($argv[1]=='globalping')
@@ -55,13 +59,8 @@ if ($argv[1]=='globalping')
 	if($argv[2]==$rparameters['server_private_key'] && $rparameters['server_private_key'])
 	{
 		//load all enabled iface of all enabled assets with ip adresse
-		$qry=$db->prepare("SELECT tassets.id, tassets.netbios, tassets_iface.ip FROM tassets_iface,tassets WHERE tassets.id=tassets_iface.asset_id AND tassets_iface.ip!=:ip AND tassets.state=:state AND tassets.disable=:tassets_disable AND tassets_iface.disable=:tassets_iface_disable ORDER BY tassets.id");
-		$qry->execute(array(
-			'ip' => '',
-			'state' => 2,
-			'tassets_disable' => 0,
-			'tassets_iface_disable' => 0
-		));
+		$qry=$db->prepare("SELECT tassets.id AS asset_id,tassets_iface.id AS asset_iface_id, tassets.netbios AS asset_netbios, tassets_iface.ip AS asset_iface_ip  FROM tassets_iface,tassets WHERE tassets.id=tassets_iface.asset_id AND tassets_iface.ip!='' AND tassets.state='2' AND tassets.disable='0' AND tassets_iface.disable='0' ORDER BY tassets.id");
+		$qry->execute();
 		if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') //windows server case
 		{
 			while ($row=$qry->fetch())
@@ -69,24 +68,33 @@ if ($argv[1]=='globalping')
 				//check if ipv4 is well formed
 				$error='';
 				$cnt=0;
-				if(!preg_match('#\.#', $row['ip'])) {$error='error no point detected';}
-				foreach (explode('.',$row['ip']) as $val) {$cnt++;if (!is_numeric($val)) { $error='not numeric value'; break;} if($val>254) { $error='error bloc more than 255'; break;}}
+				if(!preg_match('#\.#', $row['asset_iface_ip'])) {$error='error no point detected';}
+				foreach (explode('.',$row['asset_iface_ip']) as $val) {$cnt++;if (!is_numeric($val)) { $error='not numeric value'; break;} if($val>254) { $error='error bloc more than 255'; break;}}
 				if(!$error) {if ($cnt!=4) {$error='error not 4 blocs';}}
 				
-				if (!$error)
+				if(!$error)
 				{
-					echo '[WIN] ping '.$row['netbios'].' (id:'.$row['id'].') on IP '.$row['ip'].':';
-					$result=exec("ping -n 1 -w 1 $row[ip]");
+					echo '[WIN] ping '.$row['asset_netbios'].' (id:'.$row['asset_id'].') on IP '.$row['asset_iface_ip'].':';
+					$result=exec("ping -n 1 -w 1 $row[asset_iface_ip]");
 					if((preg_match('#ms#', $result)))
 					{
 						echo ' OK (updating asset last ping flag)'.PHP_EOL;
-						$db->exec('UPDATE tassets SET date_last_ping=\''.$today.'\' WHERE id=\''.$row['id'].'\'');
+						//update asset ping flag
+						$qry2=$db->prepare("UPDATE `tassets` SET `date_last_ping`=:date_last_ping WHERE `id`=:id");
+						$qry2->execute(array('date_last_ping' => $today, 'id' => $row['asset_id']));
+						
+						//update iface ping flag
+						$qry2=$db->prepare("UPDATE `tassets_iface` SET `date_ping_ok`=:date_ping_ok WHERE `id`=:id");
+						$qry2->execute(array('date_ping_ok' => $datetime, 'id' => $row['asset_iface_id']));
 					} else {
 						echo ' KO '.PHP_EOL;
+						//update iface ping flag
+						$qry2=$db->prepare("UPDATE `tassets_iface` SET `date_ping_ko`=:date_ping_ko WHERE `id`=:id");
+						$qry2->execute(array('date_ping_ko' => $datetime, 'id' => $row['asset_iface_id']));
 					}
 					sleep(1); //timeout 1 seconds to limit network trafic
 				} else {
-					echo '[WIN] ping '.$row['netbios'].' (id:'.$row['id'].') on IP '.$row['ip'].': no check, invalid ip address ('.$error.')'.PHP_EOL;
+					echo '[WIN] ping '.$row['asset_netbios'].' (id:'.$row['asset_id'].') on IP '.$row['asset_iface_ip'].': no check, invalid ip address ('.$error.')'.PHP_EOL;
 				}
 			}
 			$qry->closeCursor();
@@ -96,24 +104,33 @@ if ($argv[1]=='globalping')
 				//check if ipv4 is well formed
 				$error='';
 				$cnt=0;
-				if(!preg_match('#\.#', $row['ip'])) {$error='error no point detected';}
-				foreach (explode('.',$row['ip']) as $val) {$cnt++;if (!is_numeric($val)) { $error='not numeric value'; break;} if($val>254) { $error='error bloc more than 255'; break;}}
+				if(!preg_match('#\.#', $row['asset_iface_ip'])) {$error='error no point detected';}
+				foreach (explode('.',$row['asset_iface_ip']) as $val) {$cnt++;if (!is_numeric($val)) { $error='not numeric value'; break;} if($val>254) { $error='error bloc more than 255'; break;}}
 				if(!$error) {if ($cnt!=4) {$error='error not 4 blocs';}}
 				
 				if (!$error)
 				{
-					echo '[LINUX] ping '.$row['netbios'].' (id:'.$row['id'].') on IP '.$row['ip'].':';
-					$result=exec("ping -W 1 -c 1  $row[ip]");
+					echo '[LINUX] ping '.$row['asset_netbios'].' (id:'.$row['asset_id'].') on IP '.$row['asset_iface_ip'].':';
+					$result=exec("ping -W 1 -c 1  $row[asset_iface_ip]");
 					if((preg_match('#min#', $result)))
 					{
 						echo ' OK (updating asset last ping flag)'.PHP_EOL;
-						$db->exec('UPDATE tassets SET date_last_ping=\''.$today.'\' WHERE id=\''.$row['id'].'\'');
+						//update asset ping flag
+						$qry2=$db->prepare("UPDATE `tassets` SET `date_last_ping`=:date_last_ping WHERE `id`=:id");
+						$qry2->execute(array('date_last_ping' => $today, 'id' => $row['asset_id']));
+						
+						//update iface ping flag
+						$qry2=$db->prepare("UPDATE `tassets_iface` SET `date_ping_ok`=:date_ping_ok WHERE `id`=:id");
+						$qry2->execute(array('date_ping_ok' => $datetime, 'id' => $row['asset_iface_id']));
 					} else {
 						echo ' KO '.PHP_EOL;
+						//update iface ping flag
+						$qry2=$db->prepare("UPDATE `tassets_iface` SET `date_ping_ko`=:date_ping_ko WHERE `id`=:id");
+						$qry2->execute(array('date_ping_ko' => $datetime, 'id' => $row['asset_iface_id']));
 					}
 					sleep(1); //timeout 1 seconds to limit network trafic
 				} else {
-					echo '[LINUX] ping '.$row['netbios'].' (id:'.$row['id'].') on IP '.$row['ip'].': no check, invalid ip address ('.$error.')'.PHP_EOL;;
+					echo '[LINUX] ping '.$row['asset_netbios'].' (id:'.$row['asset_id'].') on IP '.$row['asset_iface_ip'].': no check, invalid ip address ('.$error.')'.PHP_EOL;;
 				}
 			}
 			$qry->closeCursor();
@@ -122,10 +139,7 @@ if ($argv[1]=='globalping')
 } elseif($_GET['iptoping']) { //single ping from ticket with OS detection
 	//test each iface with ip
 	$qry=$db->prepare("SELECT `id`,`ip`,`date_ping_ok`,`date_ping_ko` FROM `tassets_iface` WHERE asset_id=:asset_id AND disable=:disable");
-	$qry->execute(array(
-		'asset_id' => $globalrow['id'],
-		'disable' => 0
-		));
+	$qry->execute(array('asset_id' => $globalrow['id'],'disable' => 0));
 	while($row=$qry->fetch()) 
 	{
 		if($row['ip'])

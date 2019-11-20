@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 12/04/2017
-# @Update : 06/02/2019
-# @Version : 3.1.39 p1
+# @Update : 24/06/2019
+# @Version : 3.1.42
 ####################################################################################
 
 if(!isset($ldap_query)) $ldap_query = '';
@@ -94,7 +94,6 @@ if($rparameters['ldap_port']==636) {
 } else {
 	$hostname=$rparameters['ldap_server'];
 }
-
 
 //Generate DC Chain from domain parameter
 $dcpart=explode(".",$domain);

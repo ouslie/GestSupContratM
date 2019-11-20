@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 25/01/2019
-# @Update : 26/01/2019
-# @Version : 3.1.40 p2
+# @Update : 13/05/2019
+# @Version : 3.1.43
 ################################################################################
 
 //initialize variables 
@@ -18,7 +18,7 @@ if(!isset($_COOKIE['token'])) $_COOKIE['token']='';
 if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') 
 {
 	//check post value and token
-	if($_POST['user'] && $_GET['token']==$_COOKIE["token"])
+	if($_POST['user'] && $_GET['token']==$_COOKIE['token'] && $_GET['token'])
 	{
 		//init var
 		$service='';
@@ -27,6 +27,12 @@ if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
 		
 		//db connect
 		require('../connect.php');
+		
+		//load parameters table
+		$qry=$db->prepare("SELECT * FROM `tparameters`");
+		$qry->execute();
+		$rparameters=$qry->fetch();
+		$qry->closeCursor();
 		
 		//get user data
 		$qry=$db->prepare("SELECT `phone`,`mobile`,`mail`,`function`,`company` FROM `tusers` WHERE id=:id");
@@ -64,6 +70,40 @@ if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
 		$asset=$qry->fetch();
 		$qry->closeCursor(); 
 		
+		//check if company limit tickets
+		if($rparameters['company_limit_ticket'] )
+		{
+			$qry=$db->prepare("SELECT `tcompany`.`id`,`tcompany`.`limit_ticket_number`,`tcompany`.`limit_ticket_days`,`tcompany`.`limit_ticket_date_start` FROM `tcompany`,`tusers` WHERE `tusers`.`company`=`tcompany`.`id` AND `tusers`.id=:id");
+			$qry->execute(array('id' => $_POST['user']));
+			$rcompany=$qry->fetch();
+			$qry->closeCursor();
+			
+			if($rcompany['limit_ticket_days']!=0 && $rcompany['limit_ticket_date_start']!='0000-00-00')
+			{
+				//generate date start and date end
+				$date_start=$rcompany['limit_ticket_date_start'];
+				
+				//calculate end date	
+				$date_start_conv = date_create($rcompany['limit_ticket_date_start']);
+				date_add($date_start_conv, date_interval_create_from_date_string("$rcompany[limit_ticket_days] days"));
+				$date_end=date_format($date_start_conv, 'Y-m-d');
+			
+				//count number of ticket remaining in period
+				$qry=$db->prepare("SELECT COUNT(tincidents.id) FROM `tincidents`,`tusers` WHERE tusers.id=tincidents.user AND tusers.company=:company AND date_create BETWEEN :date_start AND :date_end AND tincidents.disable='0'");
+				$qry->execute(array('company' => $rcompany['id'],'date_start' => $date_start,'date_end' => $date_end));
+				$nbticketused=$qry->fetch();
+				$qry->closeCursor();
+				
+				//check number of tickets in current range date
+				if (date('Y-m-d')>$date_end || date('Y-m-d')<$date_start)
+				{
+					$nbticketremaining=0;
+				} else {
+					$nbticketremaining=$rcompany['limit_ticket_number']-$nbticketused[0];
+				}
+			} else {$nbticketremaining='';}
+		} else {$nbticketremaining='';}
+		
 		//encode result ajax call
 		if($user) {
 			echo json_encode(
@@ -78,7 +118,8 @@ if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
 					"agency" => $agency,
 					"asset_id" => $asset['id'],
 					"asset_netbios" => $asset['netbios'],
-					"other_ticket" => $other_ticket
+					"other_ticket" => $other_ticket,
+					"ticket_remaining" => $nbticketremaining
 				)
 			);
 		} else {

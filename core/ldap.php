@@ -5,8 +5,8 @@
 # @call : /admin/user.php
 # @Author : Flox
 # @Create : 15/10/2012
-# @Update : 06/02/2019
-# @Version : 3.1.40 p1
+# @Update : 02/10/2019
+# @Version : 3.1.44 p1
 ################################################################################
 
 //initialize variables
@@ -102,7 +102,7 @@ if ($_GET['subpage']=='user')
 	<div class="page-header position-relative">
 		<h1>
 			<i class="icon-refresh"></i>   
-			'.T_('Synchronisation').': '.$ldap_type.' > GestSup 
+			'.T_('Synchronisation').' : '.$ldap_type.' > GestSup 
 		</h1>
 	</div>';
 }
@@ -131,7 +131,7 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 					if ($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) {$filter="(&(objectClass=user)(objectCategory=person)(cn=*))";} else {$filter="(uid=*)";}	
 					$pagesize = 100;
 					$cookie = '';
-					$justthese = array('samaccountname', 'useraccountcontrol', 'givenname', 'sn', 'telephonenumber', 'mobile', 'streetaddress', 'postalcode', 'l', 'mail', 'company', 'facsimiletelephonenumber', 'userAccountControl', 'title', 'department', 'uid', 'manager');
+					$justthese = array('samaccountname', 'userprincipalname', 'objectguid', 'uid', 'entryuuid', 'useraccountcontrol', 'givenname', 'sn', 'telephonenumber', 'mobile', 'streetaddress', 'postalcode', 'l', 'mail', 'company', 'facsimiletelephonenumber', 'title', 'department', 'manager');
 					do {
 						ldap_control_paged_result($ldap, $pagesize, true, $cookie);
 						$query  = ldap_search($ldap, $ldap_url, $filter, $justthese);
@@ -149,11 +149,12 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 				$qry->closeCursor();
 				
 				$sync_date=date('d/m/Y H:i:s');
-				echo '<i class="icon-book green"></i> <b><u>'.T_('Vérification des Annuaires').'</u></b><br />';
-				echo '&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre d\'utilisateurs trouvés dans l\'annuaire').' '.$ldap_type.' : '.$cnt_ldap.'<br />';
-				echo '&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre d\'utilisateurs actif trouvés dans GestSup').' : '.$cnt_gestsup[0].'<br />';
-				echo '&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Date').' : '.$sync_date.'<br /><br />';
-				echo '<i class="icon-edit-sign red"></i> <b><u>'.T_('Modifications à apporter dans GestSup').' :</u></b><br /><br />';
+				
+				echo '<i class="icon-book blue icon-large"></i> <b>'.T_('Vérification des Annuaires').'  :</b><br />';
+				echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-circle blue"></i> '.T_('Nombre d\'utilisateurs trouvés dans l\'annuaire').' '.$ldap_type.' : '.$cnt_ldap.'<br />';
+				echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-circle blue"></i> '.T_('Nombre d\'utilisateurs actif trouvés dans GestSup').' : '.$cnt_gestsup[0].'<br />';
+				echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-circle blue"></i> '.T_('Date').' : '.$sync_date.'<br /><br />';
+				echo '<i class="icon-edit orange icon-large"></i> <b>'.T_('Modifications à apporter dans GestSup').' :</b><br />';
 				
 				//init counter
 				$cnt_maj=0;
@@ -162,13 +163,21 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 				$cnt_enable=0;
 				
 				//display all data for debug
-				//print_r($data);
+				/*
+				echo '<pre>';
+				print_r($data);
+				echo '</pre>';
+				*/
 				
 				//for each LDAP user 
 				for ($i=0; $i < $cnt_ldap; $i++) 
 				{
 					//Initialize variable for empty data
 					if(!isset($data[$i]['samaccountname'][0])) $data[$i]['samaccountname'][0] = '';
+					if(!isset($data[$i]['userprincipalname'][0])) $data[$i]['userprincipalname'][0] = '';
+					if(!isset($data[$i]['objectguid'][0])) $data[$i]['objectguid'][0] = '';
+					if(!isset($data[$i]['uid'][0])) $data[$i]['uid'][0] = ''; //OpenLDAP object only
+					if(!isset($data[$i]['entryuuid'][0])) $data[$i]['entryuuid'][0] = ''; //OpenLDAP object only
 					if(!isset($data[$i]['useraccountcontrol'][0])) $data[$i]['useraccountcontrol'][0] = '';
 					if(!isset($data[$i]['givenname'][0])) $data[$i]['givenname'][0] = '';
 					if(!isset($data[$i]['sn'][0])) $data[$i]['sn'][0] = '';
@@ -180,46 +189,84 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 					if(!isset($data[$i]['mail'][0])) $data[$i]['mail'][0] = '';
 					if(!isset($data[$i]['company'][0])) $data[$i]['company'][0] = '';
 					if(!isset($data[$i]['facsimiletelephonenumber'][0])) $data[$i]['facsimiletelephonenumber'][0] = '';
-					if(!isset($data[$i]['userAccountControl'][0])) $data[$i]['userAccountControl'][0] = '';
 					if(!isset($data[$i]['title'][0])) $data[$i]['title'][0] = '';
 					if(!isset($data[$i]['department'][0])) $data[$i]['department'][0] = '';					
-					if(!isset($data[$i]['uid'][0])) $data[$i]['uid'][0] = '';
-					//if(!isset($data[$i]['manager'][0])) $data[$i]['manager'][0] = '';
+					if(!isset($data[$i]['manager'][0])) $data[$i]['manager'][0] = '';					
 					
-					//get user data from Windows AD or Samba4 or OpenLDAP
-					if ($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) $samaccountname=$data[$i]['samaccountname'][0];  else $samaccountname=$data[$i]['uid'][0];
+														  
+																																									
+					$UPN=$data[$i]['userprincipalname'][0];
 					$UAC=$data[$i]['useraccountcontrol'][0];
+					$GUID=$data[$i]['objectguid'][0];
+					$GUID=unpack("H*hex",$data[$i]['objectguid'][0]);
+					$GUID=$GUID['hex'];
+					$entryuuid=$data[$i]['entryuuid'][0]; 
 					$givenname=$data[$i]['givenname'][0];
 					$sn=$data[$i]['sn'][0];
-					$mail=$data[$i]['mail'][0];
 					$telephonenumber=$data[$i]['telephonenumber'][0];  
 					$mobile=$data[$i]['mobile'][0];  
 					$streetaddress=$data[$i]['streetaddress'][0];  
 					$postalcode=$data[$i]['postalcode'][0]; 
 					$l=$data[$i]['l'][0]; 
+					$mail=$data[$i]['mail'][0];
 					$company=$data[$i]['company'][0]; 
 					$fax=$data[$i]['facsimiletelephonenumber'][0]; 
 					$title=$data[$i]['title'][0]; 
-					$department=$data[$i]['department'][0]; 
-					//$manager=($data[$i]['manager'][0]);
+					$department=$data[$i]['department'][0];
+					//get specific fields from Windows AD or Samba4 or OpenLDAP
+					if($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) {
+						$samaccountname=$data[$i]['samaccountname'][0];
+						$ldap_guid=$GUID;
+					} else {
+						$samaccountname=$data[$i]['uid'][0];
+						$ldap_guid=$entryuuid;
+					}
 					
+					//remove special characters
+					$UPN=str_replace(array('�','','','�ַ','M틣','˃','`'), '', $UPN); 
+					$UAC=str_replace(array('�','','','�ַ','M틣','˃','`'), '', $UAC); 
+					$ldap_guid=str_replace(array('�','','','�ַ','M틣','˃','`'), '', $ldap_guid); 
+																							
+					$givenname=str_replace (array('�','','','�ַ','M틣','˃','`'), '', $givenname); 
+					$sn=str_replace (array('�','','','�ַ','M틣','˃','`'), '', $sn); 
+					$telephonenumber=str_replace (array('�','','','�ַ','M틣','˃','`'), '', $telephonenumber); 
+					$mobile=str_replace (array('�','','','�ַ','M틣','˃','`'), '', $mobile); 
+					$streetaddress=str_replace (array('�','','','�ַ','M틣','˃','`'), '', $streetaddress); 
+					$postalcode=str_replace (array('�','','','�ַ','M틣','˃','`'), '', $postalcode); 
+					$l=str_replace (array('�','','','�ַ','M틣','˃','`'), '', $l); 
+					$mail=str_replace (array('�','','','�ַ','M틣','˃','`'), '', $mail); 
+					$company=str_replace(array('�','','','�ַ','M틣','˃','`'), '', $company); 
+					$fax=str_replace(array('�','','','�ַ','M틣','˃','`'), '', $fax); 
+					$title=str_replace(array('�','','','�ַ','M틣','˃','`'), '', $title); 
+					$department=str_replace(array('�','','','�ַ','M틣','˃','`'), '', $department); 
 					
-					//special characters treatment
-					$title=str_replace ('','', $title); //special char SPA treatment
-					
-					if($rparameters['debug']==1) echo "- LDAP_SamAccountName=$samaccountname LDAP_UAC=$UAC LDAP_company=$company LDAP_department=$department";
+					if($rparameters['ldap_login_field']=='UserPrincipalName' && $UPN)
+					{
+						$LDAP_login=$UPN;
+					} else {
+						$LDAP_login=$samaccountname;
+					}
+					if($rparameters['debug']==1) echo "[DEBUG MODE] - LDAP_SamAccountName=$samaccountname LDAP_UPN=$UPN LDAP_login=$LDAP_login ldap_guid=$ldap_guid LDAP_UAC=$UAC LDAP_company=$company LDAP_department=$department";
 					
 					////check if account not exist in GestSup user database
 					//1st check login
-					$find_login=0;
-					$qry=$db->prepare("SELECT * FROM `tusers`");
+					$find_guid=0;
+					$qry=$db->prepare("SELECT `id`,`login`,`firstname`,`lastname`, `disable`,`mail`, `phone`,`mobile`,`mobile`,`address1`,`zip`,`city`,`company`,`fax`,`function`,`ldap_guid` FROM `tusers`");
 					$qry->execute();
 					while($row=$qry->fetch()) 
 					{
-						if($samaccountname==$row['login']) 
+						//update ldap guid for old user
+						if(strtolower($LDAP_login)==strtolower($row['login']) && !$row['ldap_guid'] && $ldap_guid) 
+						{
+								$qry2=$db->prepare("UPDATE `tusers` SET `ldap_guid`=:ldap_guid WHERE `id`=:id");
+								$qry2->execute(array('ldap_guid' => $ldap_guid,'id' => $row['id']));
+								$g_guid=$ldap_guid;
+						} else {$g_guid=$row['ldap_guid'];}
+						
+						if($ldap_guid==$g_guid)
 						{
 							//get user data from GS db
-							$find_login=$row['login'];
+							$g_login=$row['login'];
 							$g_firstname=$row['firstname'];
 							$g_lastname=$row['lastname'];
 							$g_disable=$row['disable'];
@@ -232,12 +279,13 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 							$g_company=$row['company'];
 							$g_fax=$row['fax'];
 							$g_title=$row['function'];
-							//$g_service= $row['service'];
+							
+							$find_guid=$ldap_guid;
 						}
 					}
 					$qry->closeCursor();
-					if($rparameters['debug']==1) echo "<b>|</b> GS_login=$find_login GS_company=$g_company<br>";
-					if ($find_login!='')
+					if($rparameters['debug']==1) echo "<b>|</b> GS_login=$g_login GS_company=$g_company find_guid=$find_guid <br />";
+					if ($find_guid!='')
 					{	
 						////update exist account
 						if (($UAC=='66050' || $UAC=='514' || $UAC=='546' || $UAC=='66082') && ($g_disable==0)) //66050=Disabled Password Doesn't Expire, 514=Disabled Account, 546=Disabled Password Not Required, 66082=Disabled Password Doesn't Expire & Not Required 
@@ -245,28 +293,22 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 							//disable GestSup account if AD user is disabled
 							$cnt_disable=$cnt_disable+1;
 							if($_GET['action']=='run') {
-								echo '<i class="icon-remove-sign icon-large red"></i><font color="red"> '.T_('Utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$samaccountname.'), '.T_('désactivé').'.</font><br />';
-								$qry=$db->prepare("UPDATE `tusers` SET `disable`=:disable WHERE `login`=:login");
-								$qry->execute(array(
-									'disable' => 1,
-									'login' => $find_login
-									));
+								echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-remove-sign red"></i><font color="red"> '.T_('Utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$LDAP_login.'), '.T_('désactivé').'.</font><br />';
+								$qry=$db->prepare("UPDATE `tusers` SET `disable`=1 WHERE `ldap_guid`=:ldap_guid");
+								$qry->execute(array('ldap_guid' => $find_guid));
 							} else {
-								echo '<i class="icon-remove-sign icon-large red"></i><font color="red"> '.T_('Désactivation de l\'utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$samaccountname.'). <span style="font-size: x-small;">'.T_('Raison').': '.T_('Utilisateur désactivé dans l\'annuaire LDAP').'.</span></font><br />';
+								echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-remove-sign red"></i><font color="red"> '.T_('Désactivation de l\'utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$LDAP_login.'). <span style="font-size: x-small;">'.T_('Raison').': '.T_('Utilisateur désactivé dans l\'annuaire LDAP').'.</span></font><br />';
 							}
-						}elseif($UAC=='512' || $UAC=='544' || $UAC=='66048' || $UAC=='66080') { //512=Enabled Account, 544=Enabled Password Not Required, 66048=Enabled Password Doesn't Expire, 66080=Enabled Password Doesn't Expire & Not Required
+						}elseif((($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) && ($UAC=='512' || $UAC=='544' || $UAC=='66048' || $UAC=='66080')) || $rparameters['ldap_type']==1) { //512=Enabled Account, 544=Enabled Password Not Required, 66048=Enabled Password Doesn't Expire, 66080=Enabled Password Doesn't Expire & Not Required
 							if($g_disable=='1') //enable gestsup account if LDAP user is re-activate
 							{
 								$cnt_enable=$cnt_enable+1;
 								if($_GET['action']=='run') {
-								echo '<i class="icon-ok-sign icon-large green"></i><font color="green"> '.T_('Utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$samaccountname.'), '.T_('activé').'.</font><br />';
-								$qry=$db->prepare("UPDATE `tusers` SET `disable`=:disable WHERE `login`=:login");
-								$qry->execute(array(
-									'disable' => 0,
-									'login' => $samaccountname
-									));
+								echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign green"></i><font color="green"> '.T_('Utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$LDAP_login.'), '.T_('activé').'.</font><br />';
+								$qry=$db->prepare("UPDATE `tusers` SET `disable`='0' WHERE `ldap_guid`=:ldap_guid");
+								$qry->execute(array('ldap_guid' => $find_guid));
 								} else {
-									echo '<i class="icon-ok-sign icon-large green"></i><font color="green"> '.T_('Activation de l\'utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$samaccountname.').</font><br />';
+									echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign green"></i><font color="green"> '.T_('Activation de l\'utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$LDAP_login.').</font><br />';
 								}
 							} else { //update gestsup account if LDAP have informations
 								//compare data 
@@ -275,110 +317,89 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 								{
 									$update=T_('du prénom').' "'.$givenname.'"';
 									if($_GET['action']=='run') {
-										$qry=$db->prepare("UPDATE `tusers` SET `firstname`=:firstname WHERE `login`=:login");
-										$qry->execute(array(
-											'firstname' => $givenname,
-											'login' => $samaccountname
-											));
+										$qry=$db->prepare("UPDATE `tusers` SET `firstname`=:firstname WHERE `ldap_guid`=:ldap_guid");
+										$qry->execute(array('firstname' => $givenname,'ldap_guid' => $find_guid));
 									}
 								}
 								if($g_lastname!=$sn) 
 								{
 									$update=T_('du nom').' "'.$sn.'"';
 									if($_GET['action']=='run') {
-										$qry=$db->prepare("UPDATE `tusers` SET `lastname`=:lastname WHERE `login`=:login");
-										$qry->execute(array(
-											'lastname' => $sn,
-											'login' => $samaccountname
-											));										
+										$qry=$db->prepare("UPDATE `tusers` SET `lastname`=:lastname WHERE `ldap_guid`=:ldap_guid");
+										$qry->execute(array('lastname' => $sn,'ldap_guid' => $find_guid));										
 									}
 								}
 								if($g_mail!=$mail) 
 								{
 									$update=T_('de l\'adresse mail').' "'.$mail.'"';
 									if($_GET['action']=='run') {
-										$qry=$db->prepare("UPDATE `tusers` SET `mail`=:mail WHERE `login`=:login");
-										$qry->execute(array(
-											'mail' => $mail,
-											'login' => $samaccountname
-											));		
+										$qry=$db->prepare("UPDATE `tusers` SET `mail`=:mail WHERE `ldap_guid`=:ldap_guid");
+										$qry->execute(array('mail' => $mail,'ldap_guid' => $find_guid));		
 									}
 								}
 								if(($g_telephonenumber=='') && ($telephonenumber!='')) //special case for no tel number in AD
 								{
 									$update=T_('du numéro de téléphone').' "'.$telephonenumber.'" ';
 									if($_GET['action']=='run') {
-										$qry=$db->prepare("UPDATE `tusers` SET `phone`=:phone WHERE `login`=:login");
-										$qry->execute(array(
-											'phone' => $telephonenumber,
-											'login' => $samaccountname
-											));
+										$qry=$db->prepare("UPDATE `tusers` SET `phone`=:phone WHERE `ldap_guid`=:ldap_guid");
+										$qry->execute(array('phone' => $telephonenumber,'ldap_guid' => $find_guid));
 									}
 								}
 								if(($g_mobile=='') && ($mobile!='')) //special case for no tel number in AD
 								{
 									$update=T_('du numéro du mobile').' "'.$mobile.'" ';
 									if($_GET['action']=='run') {
-										$qry=$db->prepare("UPDATE `tusers` SET `mobile`=:mobile WHERE `login`=:login");
-										$qry->execute(array(
-											'mobile' => $mobile,
-											'login' => $samaccountname
-											));
+										$qry=$db->prepare("UPDATE `tusers` SET `mobile`=:mobile WHERE `ldap_guid`=:ldap_guid");
+										$qry->execute(array('mobile' => $mobile,'ldap_guid' => $find_guid));
 									}
 								}
 								if($g_streetaddress!=$streetaddress) 
 								{
 									$update=T_('de l\'adresse').' "'.$streetaddress.'" ';
 									if($_GET['action']=='run') {
-										$qry=$db->prepare("UPDATE `tusers` SET `address1`=:address1 WHERE `login`=:login");
-										$qry->execute(array(
-											'address1' => $streetaddress,
-											'login' => $samaccountname
-											));
+										$qry=$db->prepare("UPDATE `tusers` SET `address1`=:address1 WHERE `ldap_guid`=:ldap_guid");
+										$qry->execute(array('address1' => $streetaddress,'ldap_guid' => $find_guid));
 									}
 								}
 								if($g_postalcode!=$postalcode) 
 								{
 									$update=T_('du code postal').' "'.$postalcode.'" ';
 									if($_GET['action']=='run') {
-										$qry=$db->prepare("UPDATE `tusers` SET `zip`=:zip WHERE `login`=:login");
-										$qry->execute(array(
-											'zip' => $postalcode,
-											'login' => $samaccountname
-											));
+										$qry=$db->prepare("UPDATE `tusers` SET `zip`=:zip WHERE `ldap_guid`=:ldap_guid");
+										$qry->execute(array('zip' => $postalcode,'ldap_guid' => $find_guid));
 									}
 								}
 								if($g_l!=$l) 
 								{
 									$update=T_('de la ville').' "'.$l.'" ';
 									if($_GET['action']=='run') {
-										$qry=$db->prepare("UPDATE `tusers` SET `city`=:city WHERE `login`=:login");
-										$qry->execute(array(
-											'city' => $l,
-											'login' => $samaccountname
-											));
+										$qry=$db->prepare("UPDATE `tusers` SET `city`=:city WHERE `ldap_guid`=:ldap_guid");
+										$qry->execute(array('city' => $l,'ldap_guid' => $find_guid));
 									}
 								}
 								if($g_fax!=$fax) 
 								{
 									$update=T_('du FAX').' "'.$fax.'"';
 									if($_GET['action']=='run') {
-										$qry=$db->prepare("UPDATE `tusers` SET `fax`=:fax WHERE `login`=:login");
-										$qry->execute(array(
-											'fax' => $fax,
-											'login' => $samaccountname
-											));
+										$qry=$db->prepare("UPDATE `tusers` SET `fax`=:fax WHERE `ldap_guid`=:ldap_guid");
+										$qry->execute(array('fax' => $fax,'ldap_guid' => $find_guid));
 									}
 								}
 								if($g_title!=$title) 
 								{
 									$update=T_('de la fonction').' "'.$title.'"';
 									if($_GET['action']=='run') {
-										$qry=$db->prepare("UPDATE `tusers` SET `function`=:function WHERE `login`=:login");
-										$qry->execute(array(
-											'function' => $title,
-											'login' => $samaccountname
-											));
+										$qry=$db->prepare("UPDATE `tusers` SET `function`=:function WHERE `ldap_guid`=:ldap_guid");
+										$qry->execute(array('function' => $title,'ldap_guid' => $find_guid));
+									}
+								}
+								//login update
+								if($LDAP_login && $g_login!=$LDAP_login)
+								{
+									$update=T_('du login ').' "'.$LDAP_login.'"';
+									if($_GET['action']=='run') {
+										$qry=$db->prepare("UPDATE `tusers` SET `login`=:login WHERE `ldap_guid`=:ldap_guid");
+										$qry->execute(array('login' => $LDAP_login,'ldap_guid' => $find_guid));
 									}
 								}
 								
@@ -416,20 +437,14 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 										//if company is find update company id else create company in gestsup
 										if ($find_company!='')
 										{
-											$qry=$db->prepare("UPDATE `tusers` SET `company`=:company WHERE `login`=:login");
-											$qry->execute(array(
-												'company' => $find_company,
-												'login' => $samaccountname
-												));
+											$qry=$db->prepare("UPDATE `tusers` SET `company`=:company WHERE `ldap_guid`=:ldap_guid");
+											$qry->execute(array('company' => $find_company,'ldap_guid' => $ldap_guid));
 										} 
 										elseif ($company!='')
 										{
 											$qry=$db->prepare("INSERT INTO `tcompany` (`name`) VALUES (:name)");
-											$qry->execute(array(
-												'name' => $company
-												));
-											
-											echo '<i class="icon-plus-sign green bigger-130"></i><font color="green"> '.T_('Société').' '.$company.' '.T_('crée').'.</font><br />';
+											$qry->execute(array('name' => $company));
+											echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-plus-sign green bigger-130"></i><font color="green"> '.T_('Société').' '.$company.' '.T_('crée').'.</font><br />';
 											//get GestSup company table
 											$qry=$db->prepare("SELECT `name`,`id` FROM `tcompany`");
 											$qry->execute();
@@ -441,11 +456,8 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 											//if company is find update company id else create company in gestsup
 											if ($find_company!='')
 											{
-												$qry=$db->prepare("UPDATE `tusers` SET `company`=:company WHERE `login`=:login");
-												$qry->execute(array(
-													'company' => $find_company,
-													'login' => $samaccountname
-													));
+												$qry=$db->prepare("UPDATE `tusers` SET `company`=:company WHERE `ldap_guid`=:ldap_guid");
+												$qry->execute(array('company' => $find_company, 'ldap_guid' => $find_guid));
 											}
 										}											
 									} 
@@ -460,7 +472,7 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 										}
 										$qry->closeCursor();
 										// if company is find update company id else create company in gestsup
-										if ($find_company=='')	echo '<i class="icon-plus-sign green bigger-130"></i><font color="green"> '.T_('Création de la Société').' '.$company.'.</font><br />';
+										if ($find_company=='')	echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-plus-sign green bigger-130"></i><font color="green"> '.T_('Création de la Société').' '.$company.'.</font><br />';
 									}
 								}
 								// ************************************START Synchronize service******************************************
@@ -479,18 +491,15 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 										{
 											$qry=$db->prepare("INSERT INTO `tservices` (`name`) VALUES (:name)");
 											$qry->execute(array('name' => $department));
-											echo '<i class="icon-plus-sign green bigger-130"></i><font color="green"> '.T_('Service').' '.$department.' '.T_('crée').'.</font><br />';
+											echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-plus-sign green bigger-130"></i><font color="green"> '.T_('Service').' '.$department.' '.T_('crée').'.</font><br />';
 										} else {
-											echo '<i class="icon-plus-sign green bigger-130"></i><font color="green"> '.T_('Création du service').' '.$department.'.</font><br />';
+											echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-plus-sign green bigger-130"></i><font color="green"> '.T_('Création du service').' '.$department.'.</font><br />';
 										}
 									//LDAP service already exist in GS DB
 									} else {
 										//check if exist an association with current GS user and service.
-										$qry2=$db->prepare("SELECT `id`,`user_id` FROM `tusers_services` WHERE user_id IN (SELECT id FROM tusers WHERE login=:login) AND service_id=:service_id");
-										$qry2->execute(array(
-										'login' => $samaccountname,
-										'service_id' => $row['id']
-										));
+										$qry2=$db->prepare("SELECT `id`,`user_id` FROM `tusers_services` WHERE user_id IN (SELECT id FROM tusers WHERE ldap_guid=:ldap_guid) AND service_id=:service_id");
+										$qry2->execute(array('ldap_guid' => $find_guid,'service_id' => $row['id']));
 										$row2=$qry2->fetch();
 										$qry2->closeCursor();
 										
@@ -501,14 +510,11 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 											if($_GET['action']=='run') 
 											{
 												//delete old association
-												$qry=$db->prepare("DELETE FROM tusers_services WHERE user_id IN (SELECT id FROM tusers WHERE login=:login)");
-												$qry->execute(array('login' => $samaccountname));
+												$qry=$db->prepare("DELETE FROM tusers_services WHERE user_id IN (SELECT id FROM tusers WHERE ldap_guid=:ldap_guid)");
+												$qry->execute(array('ldap_guid' => $find_guid));
 												//create new association
-												$qry=$db->prepare("INSERT INTO tusers_services (user_id,service_id) VALUES ((SELECT MAX(id) FROM tusers WHERE login=:user_id),:service_id)");
-												$qry->execute(array(
-													'user_id' => $samaccountname,
-													'service_id' => $row['id']
-													));
+												$qry=$db->prepare("INSERT INTO tusers_services (user_id,service_id) VALUES ((SELECT MAX(id) FROM tusers WHERE ldap_guid=:ldap_guid),:service_id)");
+												$qry->execute(array('ldap_guid' => $find_guid,'service_id' => $row['id']));
 											}
 										} 
 									}
@@ -518,9 +524,9 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 								{
 									$cnt_maj=$cnt_maj+1;
 									if($_GET['action']=='run') {
-										echo '<i class="icon-refresh orange"></i><font color="orange"> '.T_('Utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$samaccountname.'), '.T_('mis à jour').'.</font><br />';
+										echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-refresh orange"></i><font color="orange"> '.T_('Utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$LDAP_login.'), '.T_('mis à jour').'.</font><br />';
 									} else {
-										echo '<i class="icon-refresh orange"></i><font color="orange"> '.T_('Mise à jour').' '.$update.' '.T_('pour').' <b>'.$givenname.' '.$sn.'</b> ('.$samaccountname.').</font><br />';
+										echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-refresh orange"></i><font color="orange"> '.T_('Mise à jour').' '.$update.' '.T_('pour').' <b>'.$givenname.' '.$sn.'</b> ('.$LDAP_login.').</font><br />';
 									}
 								}
 							}
@@ -534,13 +540,13 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 							$pwd=md5($salt . md5($pwd)); 
 							
 						if($_GET['action']=='run') {
-							echo '<i class="icon-plus-sign green bigger-130"></i><font color="green"> '.T_('Utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$samaccountname.') '.T_('à été crée').'.</font><br />';
+							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-plus-sign green bigger-130"></i><font color="green"> '.T_('Utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$LDAP_login.') '.T_('à été crée').'.</font><br />';
 							$qry=$db->prepare("
-							INSERT INTO tusers (login,password,salt,firstname,lastname,profile,mail,phone,mobile,address1,zip,city,company,fax)
+							INSERT INTO tusers (login,password,salt,firstname,lastname,profile,mail,phone,mobile,address1,zip,city,company,fax,ldap_guid)
 							VALUES
-							(:login,:password,:salt,:firstname,:lastname,:profile,:mail,:phone,:mobile,:address1,:zip,:city,:company,:fax)");
+							(:login,:password,:salt,:firstname,:lastname,:profile,:mail,:phone,:mobile,:address1,:zip,:city,:company,:fax,:ldap_guid)");
 							$qry->execute(array(
-								'login' => $samaccountname,
+								'login' => $LDAP_login,
 								'password' => $pwd,
 								'salt' => $salt,
 								'firstname' => $givenname,
@@ -553,57 +559,62 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 								'zip' => $postalcode,
 								'city' => $l,
 								'company' => $company,
-								'fax' => $fax
+								'fax' => $fax,
+								'ldap_guid' => $ldap_guid
 								));
 						} else {
-							echo '<i class="icon-plus-sign green bigger-130"></i><font color="green"> '.T_('Création de l\'utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$samaccountname.').</font><br />';
+							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-plus-sign green bigger-130"></i><font color="green"> '.T_('Création de l\'utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$LDAP_login.').</font><br />';
 						}
 					}
 				}
+				
 				//for each Gestsup user (find user not present in LDAP for disable in GestSup)
-				if ($rparameters['ldap_disable_user']==1)
+				if($rparameters['ldap_disable_user']==1)
 				{
-					$qry=$db->prepare("SELECT * FROM `tusers`");
+					$qry=$db->prepare("SELECT `id`,`login`,`firstname`,`lastname`, `disable`,`mail`, `phone`,`mobile`,`mobile`,`address1`,`zip`,`city`,`company`,`fax`,`function`,`ldap_guid` FROM `tusers`");
 					$qry->execute();
 					while($row=$qry->fetch()) 	
 					{
-						
-						$find2_login='';
+						$find2_guid='';
 						for ($i=0; $i < $cnt_ldap; $i++) 
 						{
-							if ($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) {$samaccountname=$data[$i]['samaccountname'][0];} else {$samaccountname=utf8_encode($data[$i]['uid'][0]);}
-							if ($samaccountname==$row['login']) $find2_login=$row['login'];
+							if ($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) {
+								$GUID=$data[$i]['objectguid'][0];
+								$GUID=unpack("H*hex",$data[$i]['objectguid'][0]);
+								$ldap_guid=$GUID['hex'];
+							} else {
+								$ldap_guid=$data[$i]['uid'][0];
+							}
+							if($ldap_guid==$row['ldap_guid']) $find2_guid=$row['ldap_guid'];
 						}
-						if (($find2_login=='') && ($row['disable']=='0') && ($row['login']!='') && ($row['login']!=' ') && ($row['login']!='admin'))
+						if (($find2_guid=='') && ($row['disable']=='0') && ($row['ldap_guid']!='') && ($row['ldap_guid']!=' ') && ($row['login']!='admin'))
 						{
 							$cnt_disable=$cnt_disable+1;
 							if($_GET['action']=='run')
 							{
-								echo '<i class="icon-remove-sign icon-large red"></i><font color="red"> '.T_('Utilisateur').' <b>'.$row['firstname'].' '.$row['lastname'].'</b> ('.$row['login'].'), '.T_('désactivé').'.</font><br />';
-								$qry2=$db->prepare("UPDATE `tusers` SET `disable`=:disable WHERE `login`=:login");
-								$qry2->execute(array(
-									'disable' => 1,
-									'login' => $row['login']
-									));
+								echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-remove-sign red"></i><font color="red"> '.T_('Utilisateur').' <b>'.$row['firstname'].' '.$row['lastname'].'</b> ('.$row['login'].'), '.T_('désactivé').'.</font><br />';
+								$qry2=$db->prepare("UPDATE `tusers` SET `disable`=1 WHERE `ldap_guid`=:ldap_guid");
+								$qry2->execute(array('ldap_guid' => $row['ldap_guid']));
 							} else {
-								echo '<i class="icon-remove-sign icon-large red"></i><font color="red"> '.T_('Désactivation de l\'utilisateur').' <b>'.$row['firstname'].' '.$row['lastname'].'</b> ('.$row['login'].'). <span style="font-size: x-small;">'.T_('Raison').': '.T_('Utilisateur non présent dans l\'annuaire LDAP').'.</span></font><br />';
+								echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-remove-sign red"></i><font color="red"> '.T_('Désactivation de l\'utilisateur').' <b>'.$row['firstname'].' '.$row['lastname'].'</b> ('.$row['login'].'). <span style="font-size: x-small;">'.T_('Raison').': '.T_('Utilisateur non présent dans l\'annuaire LDAP').'.</span></font><br />';
 							}
 						}
 					}
 					$qry->closeCursor();
 				}
 				
-				if (($cnt_create=='0') && ($cnt_disable=='0') && ($cnt_maj=='0') && ($cnt_enable=='0')) echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i><font color="green"> '.T_('Aucune modification à apporter, les annuaires sont à jour').'.</font><br />';
-				echo'
-				<br />
-				&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à créer dans GestSup').' : '.$cnt_create.' <br />
-				&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à mettre à jour dans GestSup').' : '.$cnt_maj.' <br />
-				&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à désactiver dans GestSup').' : '.$cnt_disable.' <br />
-				&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à activer dans GestSup').' : '.$cnt_enable.' <br />
-				<br />
-				<i class="icon-info-sign blue"></i> <b><u>'.T_('Informations de Synchronisation').' :</u></b><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;'.T_('La jointure inter-annuaires est réalisée sur le login, les comptes existant dans GestSup qui possèdent un login doivent être existant dans l\'annuaire LDAP').'.<br />
-				';
+				if (($cnt_create=='0') && ($cnt_disable=='0') && ($cnt_maj=='0') && ($cnt_enable=='0'))
+				{
+					echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign green"></i><font color="green"> '.T_('Aucune modification à apporter, les annuaires sont à jour').'.</font><br />';
+				} else {
+					echo'
+					<br />
+					&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à créer dans GestSup').' : '.$cnt_create.' <br />
+					&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à mettre à jour dans GestSup').' : '.$cnt_maj.' <br />
+					&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à désactiver dans GestSup').' : '.$cnt_disable.' <br />
+					&nbsp;&nbsp;&nbsp;&nbsp;'.T_('Nombre de d\'utilisateurs à activer dans GestSup').' : '.$cnt_enable.' <br />
+					';
+				}
 		}
 		if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldap']=='1')) 
 		{
@@ -625,7 +636,7 @@ if(($_GET['action']=='simul') || ($_GET['action']=='run') || ($_GET['ldaptest']=
 		}
 		//unbind LDAP server
 		ldap_unbind($ldap);
-	} else if($_GET['subpage']=='user')
+	} elseif($_GET['subpage']=='user')
 	{
 		echo '
 		<div class="alert alert-danger">

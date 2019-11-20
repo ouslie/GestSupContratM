@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 06/12/2016
-# @Update : 22/03/2019
-# @Version : 3.1.40
+# @Update : 06/08/2019
+# @Version : 3.1.44
 ################################################################################
 
 //tickets states
@@ -236,6 +236,7 @@ echo T_("Bonjour, <br />Vous avez fait la demande suivante auprès du support:")
 echo T_("Affiche le bouton inserer image sur le champ description");
 echo T_("Affiche le bouton inserer image sur le champ résolution");
 echo T_("Affiche le menu projet");
+echo T_("Affiche menu sauvegarde");
 
 //Assets states
 echo T_("Stock");

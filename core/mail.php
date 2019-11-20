@@ -6,8 +6,8 @@
 # @Parameters : ticket id destinataires
 # @Author : Flox
 # @Create : 15/07/2014
-# @Update : 21/03/2019
-# @Version : 3.1.40
+# @Update : 29/07/2019
+# @Version : 3.1.43
 ################################################################################
 
 //call functions
@@ -36,6 +36,8 @@ if(!isset($rtech5['firstname'])) $rtech5['firstname'] = '';
 if(!isset($rtech5['lastname'])) $rtech5['lastname'] = '';
 if(!isset($rtechgroup4['name'])) $rtechgroup4['name'] = '';
 if(!isset($rtechgroup5['name'])) $rtechgroup5['name'] = '';
+if(!isset($mail_auto)) $mail_auto=true;
+if(!isset($creatorrow['mail'])) $creatorrow['mail']='';;
 
 $mail_send_error=false;
 
@@ -76,9 +78,9 @@ if ($globalrow['u_group']!=0)
 }
 
 //case no send mail from mail2ticket
-if(isset($_SESSION['user_id']))
+if($_SESSION['user_id'] && !$creatorrow['mail'])
 {
-	$qry=$db->prepare("SELECT * FROM `tusers` WHERE id=:id");
+	$qry=$db->prepare("SELECT mail FROM `tusers` WHERE id=:id");
 	$qry->execute(array('id' => $_SESSION['user_id']));
 	$creatorrow=$qry->fetch();
 	$qry->closeCursor();
@@ -110,7 +112,7 @@ if ($rparameters['ticket_places']==1)
 	{
 		$place='
 		<tr>
-			<td colspan="2"><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Lieu').' :</b> '.$placerow['name'].'</font></td>
+			<td style="padding:5px;" colspan="2"><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Lieu').' :</b> '.$placerow['name'].'</font></td>
 		</tr>
 		';
 	} else {$place='';}
@@ -428,6 +430,7 @@ if ($send==1)
 	$mail->Timeout = 30;
 	$mail->From = "$emetteur";
 	$mail->FromName = "$rparameters[mail_from_name]";
+	$mail->XMailer = ' ';
 
 	//generate adresse list
 	if ($_POST['receiver']!='none') {
@@ -523,11 +526,12 @@ if ($send==1)
 	if ($_POST['manual_address']!=''){$mail->AddCC("$_POST[manual_address]"); $dest_mail=1;}
     if ($_POST['withattachment']==1)
     {
-    	if ($globalrow['img1']!='')$mail->AddAttachment("./upload/$_GET[id]/$globalrow[img1]");
-    	if ($globalrow['img2']!='')$mail->AddAttachment("./upload/$_GET[id]/$globalrow[img2]");
-    	if ($globalrow['img3']!='')$mail->AddAttachment("./upload/$_GET[id]/$globalrow[img3]");
-    	if ($globalrow['img4']!='')$mail->AddAttachment("./upload/$_GET[id]/$globalrow[img4]");
-    	if ($globalrow['img5']!='')$mail->AddAttachment("./upload/$_GET[id]/$globalrow[img5]");
+		
+    	if($globalrow['img1']!='' && file_exists("./upload/$_GET[id]/$globalrow[img1]")) {$mail->AddAttachment("./upload/$_GET[id]/$globalrow[img1]");}
+    	if($globalrow['img2']!='' && file_exists("./upload/$_GET[id]/$globalrow[img2]")) {$mail->AddAttachment("./upload/$_GET[id]/$globalrow[img2]");}
+    	if($globalrow['img3']!='' && file_exists("./upload/$_GET[id]/$globalrow[img3]")) {$mail->AddAttachment("./upload/$_GET[id]/$globalrow[img3]");}
+    	if($globalrow['img4']!='' && file_exists("./upload/$_GET[id]/$globalrow[img4]")) {$mail->AddAttachment("./upload/$_GET[id]/$globalrow[img4]");}
+    	if($globalrow['img5']!='' && file_exists("./upload/$_GET[id]/$globalrow[img5]")) {$mail->AddAttachment("./upload/$_GET[id]/$globalrow[img5]");}
     }
 	$mail->Subject = "$objet";
 	
@@ -568,6 +572,36 @@ if ($send==1)
 			";
 		}
 		$mail->SmtpClose();
+		
+		if($mail_send_error==false)
+		{
+			$recipient_mail='';
+			if($mail_auto==true) {
+				$author=0;
+			} else {
+				$author=$_SESSION['user_id'];
+				//get dest mail to trace in thread from manual send
+				if($_POST['receiver']!='none') {$recipient_mail.=$_POST['receiver'].', ';}
+				if($_POST['usercopy']) {$recipient_mail.=$_POST['usercopy'].', ';}
+				if($_POST['usercopy2']) {$recipient_mail.=$_POST['usercopy2'].', ';}
+				if($_POST['usercopy3']) {$recipient_mail.=$_POST['usercopy3'].', ';}
+				if($_POST['usercopy4']) {$recipient_mail.=$_POST['usercopy4'].', ';}
+				if($_POST['usercopy5']) {$recipient_mail.=$_POST['usercopy5'].', ';}
+				if($_POST['usercopy6']) {$recipient_mail.=$_POST['usercopy6'].', ';}
+				if($_POST['manual_address']) {$recipient_mail.=$_POST['manual_address'];}
+			} 
+			
+			//trace mail in thread
+			$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`text`,`type`,`dest_mail`) VALUES (:ticket,:date,:author,:text,:type,:dest_mail)");
+			$qry->execute(array(
+				'ticket' => $_GET['id'],
+				'date' => $datetime,
+				'author' => $author,
+				'text' => '',
+				'type' => 3,
+				'dest_mail' => $recipient_mail
+				));
+		}
 	} else {
 		echo '<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>'.T_('Erreur').'.</b> '.T_('Aucune adresse mail renseignée.').' </center></div>';
 	}

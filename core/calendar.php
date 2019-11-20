@@ -6,11 +6,12 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 19/02/2018
-# @Update : 18/12/2018
-# @Version : 3.1.40 p2
+# @Update : 12/06/2019
+# @Version : 3.1.44 p1
 ################################################################################
 
 //init var
+if(!isset($_POST['allday'])) $_POST['allday'] = '';
 
 //db connection
 require "./../connect.php";
@@ -25,7 +26,8 @@ if($_POST['action']=='update_title')
 	$query = "UPDATE tevents SET title=? WHERE id=?";
 	$query = $db->prepare($query);
 	$query->execute(array($title,$id));
-} elseif($_POST['action']=='move_event' || $_POST['action']=='resize_event') {
+}
+if($_POST['action']=='move_event' || $_POST['action']=='resize_event') {
 	//data
 	$id=$_POST['id'];
 	$title=$_POST['title'];
@@ -36,7 +38,8 @@ if($_POST['action']=='update_title')
 	$query = "UPDATE tevents SET title=?, date_start=?, date_end=?, allday=? WHERE id=?";
 	$query = $db->prepare($query);
 	$query->execute(array($title,$start,$end,$allday,$id));
-} elseif($_POST['action']=='delete_event')
+} 
+if($_POST['action']=='delete_event')
 {
 	//db delete
 	{
@@ -44,9 +47,10 @@ if($_POST['action']=='update_title')
 		$query->execute(array(':id'=>$_POST['id']));
 	}
 	
-} elseif($_POST['action']=='add_event')
+}
+if($_POST['action']=='add_event')
 {
-		//data
+	//data
 	$title=$_POST['title'];
 	$start=$_POST['start'];
 	$end=$_POST['end'];

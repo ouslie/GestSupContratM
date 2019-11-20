@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 12/08/2013
-# @Update : 11/04/2018
-# @Version : 3.1.32 
+# @Update : 10/05/2019
+# @Version : 3.1.41 
 ################################################################################
 
 //initialize variables 
@@ -45,7 +45,7 @@ $db_id=strip_tags($db->quote($_GET['id']));
 if($_FILES['file1']['name'])
 {
 	//if id directory not exist, create it
-	if (is_dir("./upload/$_GET[id]")) echo ""; else mkdir ("./upload/$_GET[id]/", 0777);
+	if(!is_dir("./upload/$_GET[id]")) {mkdir ("./upload/$_GET[id]/", 0777);}
 	$filename=$_FILES['file1']['name'];
 	//secure check for extension
     $ext=explode('.',$filename);
@@ -65,7 +65,7 @@ if($_FILES['file1']['name'])
     } else {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').':</strong> '.T_('Fichier interdit').'.<br></div>';}
 } elseif($_FILES['file2']['name']) { 
 	//if id directory not exist, create it
-	if (is_dir("./upload/$_GET[id]")) echo ""; else mkdir ("./upload/$_GET[id]/", 0777);
+	if(!is_dir("./upload/$_GET[id]")) {mkdir ("./upload/$_GET[id]/", 0777);}
 	$filename=$_FILES['file2']['name'];
 	//secure check for extension
     $ext=explode('.',$filename);
@@ -85,7 +85,7 @@ if($_FILES['file1']['name'])
 	} else {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').':</strong> '.T_('Fichier interdit').'.<br></div>';}
 } elseif($_FILES['file3']['name']) { 
 	//if id directory not exist, create it
-	if (is_dir("./upload/$_GET[id]")) echo ""; else mkdir ("./upload/$_GET[id]/", 0777);
+	if(!is_dir("./upload/$_GET[id]")) {mkdir ("./upload/$_GET[id]/", 0777);}
 	$filename=$_FILES['file3']['name'];
 	//secure check for extension
     $ext=explode('.',$filename);
@@ -105,7 +105,7 @@ if($_FILES['file1']['name'])
 	} else {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').':</strong> '.T_('Fichier interdit').'.<br></div>';}
 } elseif($_FILES['file4']['name']) { 
 	//if id directory not exist, create it
-	if (is_dir("./upload/$_GET[id]")) echo ""; else mkdir ("./upload/$_GET[id]/", 0777);
+	if(!is_dir("./upload/$_GET[id]")) {mkdir ("./upload/$_GET[id]/", 0777);}
 	$filename=$_FILES['file4']['name'];
 	//secure check for extension
     $ext=explode('.',$filename);
@@ -125,7 +125,7 @@ if($_FILES['file1']['name'])
 	} else {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').':</strong> '.T_('Fichier interdit').'.<br></div>';}
 } elseif($_FILES['file5']['name']) { 
 	//if id directory not exist, create it
-	if (is_dir("./upload/$_GET[id]")) echo ""; else mkdir ("./upload/$_GET[id]/", 0777);
+	if(!is_dir("./upload/$_GET[id]")) {mkdir ("./upload/$_GET[id]/", 0777);}
 	$filename=$_FILES['file5']['name'];
 	//secure check for extension
     $ext=explode('.',$filename);

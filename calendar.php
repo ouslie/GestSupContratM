@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 19/02/2018
-# @Update : 02/04/2019
-# @Version : 3.1.40 p2
+# @Update : 12/06/2019
+# @Version : 3.1.42
 ################################################################################
 
 //init var
@@ -70,7 +70,6 @@ if($_POST['technician']!='%')
 		</div>
 	</div>
 </div>
-
 
 <!-- Fullcalendar 4 scripts -->
 <script src='./components/fullcalendar/packages/core/main.js'></script>
@@ -146,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			data: 'action=move_event&title='+info.event.title+'&start='+start+'&end='+end+'&allday='+allDay+'&id='+info.event.id+'&technician='+ <?php echo $_SESSION['user_id']; ?> ,
 			type: "POST",
 			success: function(json) {
-				//alert("event move : start"+start+"start="+end+"allday="+allDay);
+				//alert("event move : id="+info.event.id+" start"+start+"start="+end+"allday="+allDay);
 			}
 		});
 	}

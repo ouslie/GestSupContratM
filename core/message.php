@@ -6,8 +6,8 @@
 # @parameters : $from, $to, $message, $object
 # @Author : Flox
 # @Create : 21/11/2012
-# @Update : 06/02/2019
-# @Version : 3.1.39
+# @Update : 17/05/2019
+# @Version : 3.1.42
 ################################################################################
 
 //functions
@@ -37,8 +37,9 @@ $mail->IsHTML(true);
 $mail->Timeout = 30;
 $mail->From = "$from";
 $mail->FromName = "$from";
+$mail->XMailer = ' ';
 
-//multi adrress case
+//multi address case
 if(preg_match('#;#',$to))
 {
 	$to=explode(';',$to);

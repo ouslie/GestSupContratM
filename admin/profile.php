@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 06/07/2013
-# @Update : 18/12/2017
-# @Version : 3.1.29
+# @Update : 20/09/2019
+# @Version : 3.1.44
 ################################################################################
 
 // initialize variables 
@@ -71,10 +71,8 @@ echo '
 						<td>
 							<center>';
 								//find value
-								$qry2 = $db->prepare("SELECT * FROM `trights` WHERE profile=:profile");
-								$qry2->execute(array(
-									'profile' => 2
-									));
+								$qry2 = $db->prepare("SELECT * FROM `trights` WHERE profile=2");
+								$qry2->execute();
 								$rv=$qry2->fetch();
 								$qry2->closeCursor();
 								if($rv[$row[0]]!=0)

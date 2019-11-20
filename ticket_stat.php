@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 25/01/2016
-# @Update : 05/03/2019
-# @Version : 3.1.40
+# @Update : 14/05/2019
+# @Version : 3.1.41
 ################################################################################
 
 if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> where_service='.$where_service.' where_agency='.$where_agency.' POST_service='.$_POST['service'].' POST_agency='.$_POST['agency'].'';}
@@ -40,6 +40,11 @@ if ($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> w
 				}
 				//case user with only-one agency
 				if($cnt_agency!=0 && $cnt_service==0)
+				{
+					$where_service2=' 1=1';
+				}
+				//case error
+				if(!$where_service2)
 				{
 					$where_service2=' 1=1';
 				}

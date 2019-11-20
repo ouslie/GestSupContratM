@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 15/03/2011
-# @Update : 26/03/2019
-# @Version : 3.1.40
+# @Update : 12/07/2019
+# @Version : 3.1.43
 ################################################################################
 
 //initialize variables 
@@ -1397,16 +1397,15 @@ if ($_GET['action']=="add")
 		{
 			//check right before display list
 			if (
-				$rright['admin']!='0' ||
-				($cnt_service!='0' && $rparameters['user_limit_service']==1) &&
+				($rright['admin']!='0') ||
 				(
-					($_GET['table']=='tcategory' && $rright['admin_lists_category']!='0') ||
-					($_GET['table']=='tsubcat' && $rright['admin_lists_subcat']!='0') ||
-					($_GET['table']=='tcriticality' && $rright['admin_lists_criticality']!='0') ||
-					($_GET['table']=='tpriority' && $rright['admin_lists_priority']!='0') ||
-					($_GET['table']=='ttypes' && $rright['admin_lists_type']!='0')
-				) ||
-				($rright['admin_groups']!=0 && $rright['dashboard_service_only']==0)
+					($_GET['subpage']=='group' && $rright['admin_groups']!=0) ||
+					($_GET['subpage']=='list' && $_GET['table']=='tcategory' && $rright['admin_lists_category']!='0') ||
+					($_GET['subpage']=='list' && $_GET['table']=='tsubcat' && $rright['admin_lists_subcat']!='0') ||
+					($_GET['subpage']=='list' && $_GET['table']=='tcriticality' && $rright['admin_lists_criticality']!='0') ||
+					($_GET['subpage']=='list' && $_GET['table']=='tpriority' && $rright['admin_lists_priority']!='0') ||
+					($_GET['subpage']=='list' && $_GET['table']=='ttypes' && $rright['admin_lists_type']!='0')
+				)
 			)
 			{
 				echo '
@@ -1580,7 +1579,7 @@ if ($_GET['action']=="add")
 				<br /><br /><br /><br /><br /><br /><br /><br /><br />
 				';
 			} else {
-				echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Vous n'avez pas accès à cette liste ou vous ne disposer d'aucun service associé, contacter votre administrateur").'.<br></div>';
+				echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_("Vous n'avez pas accès à cette liste, contacter votre administrateur").'.<br></div>';
 			}
 		}
 		//display color informations and information on critical table

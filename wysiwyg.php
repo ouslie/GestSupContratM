@@ -18,20 +18,24 @@
 	//load text from editor to input value
 	function loadVal(){
 		<?php
-		if ($rright['ticket_description']!=0 || $_GET['action']=='new')
-		{
-			echo '
-			text = $("#editor").html();
-			document.myform.text.value = text;
-			';
+		if ($_GET['page']=='ticket') {
+			if ($rright['ticket_description']!=0 || $_GET['action']=='new')
+			{
+				echo '
+				text = $("#editor").html();
+				document.myform.text.value = text;
+				';
+			}
 		}
-		if ($rright['ticket_thread_add']!=0)
-		{
-			echo '
-			text2 = $("#editor2").html();
-			document.myform.text2.value = text2;
-			';
-		}
+			if ($rright['ticket_thread_add']!=0)
+			{
+				echo '
+				text2 = $("#editor2").html();
+				document.myform.text2.value = text2;
+				';
+			}
+		
+		
 		if ($_GET['page']=='procedure')
 		{
 			echo '

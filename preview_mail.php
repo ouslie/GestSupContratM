@@ -6,8 +6,8 @@
 # @Parameters: mail.php
 # @Author : Flox
 # @Create : 01/10/2014
-# @Update : 22/03/2019
-# @Version : 3.1.40
+# @Update : 16/05/2019
+# @Version : 3.1.42
 ################################################################################
 
 //initialize variables 
@@ -20,32 +20,8 @@ if ($_POST['mail'])
 {
 	//send
 	$send=1;
+	$mail_auto=false;
 	require('./core/mail.php');
-	
-	if($mail_send_error==false)
-	{
-		//get dest mail to trace in thread
-		$dest_mail='';
-		if($_POST['receiver']!='none') {$dest_mail.=$_POST['receiver'].', ';}
-		if($_POST['usercopy']) {$dest_mail.=$_POST['usercopy'].', ';}
-		if($_POST['usercopy2']) {$dest_mail.=$_POST['usercopy2'].', ';}
-		if($_POST['usercopy3']) {$dest_mail.=$_POST['usercopy3'].', ';}
-		if($_POST['usercopy4']) {$dest_mail.=$_POST['usercopy4'].', ';}
-		if($_POST['usercopy5']) {$dest_mail.=$_POST['usercopy5'].', ';}
-		if($_POST['usercopy6']) {$dest_mail.=$_POST['usercopy6'].', ';}
-		if($_POST['manual_address']) {$dest_mail.=$_POST['manual_address'];}
-		
-		//trace mail in thread
-		$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`text`,`type`,`dest_mail`) VALUES (:ticket,:date,:author,:text,:type,:dest_mail)");
-		$qry->execute(array(
-			'ticket' => $_GET['id'],
-			'date' => $datetime,
-			'author' => $_SESSION['user_id'],
-			'text' => '',
-			'type' => 3,
-			'dest_mail' => $dest_mail
-			));
-	}
 }
 //return to previous page
 elseif ($_POST['return'])

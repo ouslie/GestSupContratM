@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 10/11/2013
-# @Update : 13/03/2019
-# @Version : 3.1.40
+# @Update : 30/07/2019
+# @Version : 3.1.43
 ################################################################################
 
 
@@ -206,11 +206,6 @@ if ($_GET['page']!='admin')
 	$moment = file_get_contents('./components/moment/VERSION');	
 }
 
-//check php version
-$php_icon=phpversion();
-$php_icon=explode(".",$php_icon);
-if($php_icon[0]>=8){$php_icon='ok';}else{$php_icon='ok';}
-
 //get php session max lifetime parameter
 $maxlifetime = ini_get("session.gc_maxlifetime");
 
@@ -240,7 +235,14 @@ $db_size=formatfilesize($db_size);
 				&nbsp;&nbsp;&nbsp;&nbsp;<img src="./images/<?php echo strtolower($rdb_name).'_'.$rdb_icon.'.png'; ?>" style="border-style: none" alt="img" /> <?php echo '<b>'.$rdb_name.' :</b> '.$rdb_version.' <i>('.T_('base').' : '.$db_name.' '.$db_size.')</i><br />'; ?>
 				&nbsp;&nbsp;&nbsp;&nbsp;
 				<?php 
-				echo '<img src="./images/php_'.$php_icon.'.png" style="border-style: none" alt="img" /> <b>PHP :</b> '.phpversion();
+				//check php version
+				$php_version=phpversion();
+				$php_version=explode(".",$php_version);
+				if($php_version[0]<7){
+					echo '<i class="icon-remove-sign icon-large red"></i> <b>PHP :</b>  '.T_('Votre version de PHP ').phpversion().T_(' est obsolète, installer au minimum la version 7.X').'.';
+				}else{
+					echo '<img src="./images/php_ok.png" style="border-style: none" alt="img" /> <b>PHP :</b> '.phpversion();
+				}
 				?>  
 				<br />
 				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-ticket icon-large"></i> <b><?php echo T_('GestSup'); ?> :</b> <?php echo $rparameters['version']; ?><br />
@@ -373,7 +375,7 @@ $db_size=formatfilesize($db_size);
 				if($curl==1)
 				{
 					//test directory listing
-					$url='http://'.$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'];
+					$url=$http.'://'.$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'];
 					$url=explode('/index.php', $url);
 					$url=$url[0].'/upload/';
 					$c = curl_init($url);
@@ -384,9 +386,57 @@ $db_size=formatfilesize($db_size);
 					curl_close($c);
 					if($status=='403' || $status=='301')
 					{
-						echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>'.T_("Listing des répertoires").' : </b>'.T_('Désactivé');
+						echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>'.T_("Listing des répertoires").' : </b>'.T_('Désactivé').'<br />';
 					} else {
-						echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-remove-sign icon-large red"></i> <b>'.T_("Listing des répertoires").' : </b>'.T_("Activé, vérifier l'option \"Indexes\" de votre serveur Apache").'.';
+						echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-remove-sign icon-large red"></i> <b>'.T_("Listing des répertoires").' : </b>'.T_("Activé, vérifier l'option \"Indexes\" de votre serveur Apache").'.<br />';
+					}
+				}
+				if($_GET['subpage']=='system')
+				{
+					//check secure SMTP
+					if($rparameters['mail'])
+					{
+						if($rparameters['mail_port']=='587' || $rparameters['mail_port']=='465')
+						{
+							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>SMTP : </b>'.T_('Sécurisé').'<br />';
+						} else {
+							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>SMTP : </b>'.T_('Non sécurisé').' <i>('.T_('Régler le port 465 ou 587, dans la configuration du connecteur').').</i><br />';
+						}
+					}
+					//check secure IMAP
+					if($rparameters['imap'])
+					{
+						if($rparameters['imap_port']=='993/imap/ssl')
+						{
+							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>IMAP : </b>'.T_('Sécurisé').'<br />';
+						} else {
+							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>IMAP : </b>'.T_('Non sécurisé').' <i>('.T_('Régler le port 993, dans la configuration du connecteur').').</i><br />';
+						}
+					}
+					//check secure LDAP
+					if($rparameters['ldap'])
+					{
+						if($rparameters['ldap_port']=='636')
+						{
+							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>LDAP : </b>'.T_('Sécurisé').'<br />';
+						} else {
+							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>LDAP : </b>'.T_('Non sécurisé').' <i>('.T_('Régler le port 636, dans la configuration du connecteur').').</i><br />';
+						}
+					}
+					//check password policy
+					if($rparameters['ldap_auth'])
+					{
+						echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>Mots de passes : </b>'.T_('Gérer par le serveur LDAP').'<br />';
+					} elseif($rparameters['user_password_policy'])
+					{
+						if($rparameters['user_password_policy_min_lenght']>=8)
+						{
+							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>Mots de passes : </b>'.T_('Sécurisés').'<br />';
+						} else {
+							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>Mots de passes : </b>'.T_('Longueur de mot de passe trop faible').' <i>('.T_('Définir la longueur minimal à 8 caractères').').</i><br />';
+						}
+					} else {
+						echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>'.T_('Mots de passes').' : </b>'.T_('Aucune politique définie').' <i>('.T_('Définissez une politique de mot de passe dans Administration > Paramètres > Général > Utilisateur').').</i><br />';
 					}
 				}
 				?>

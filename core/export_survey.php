@@ -6,12 +6,13 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 01/05/2017
-# @Update : 26/01/2019
-# @Version : 3.1.38
+# @Update : 11/09/2019
+# @Version : 3.1.44
 ################################################################################
 
 //initialize variables 
 if(!isset($_GET['token'])) $_GET['token'] = ''; 
+if(!isset($_COOKIE['token'])) $_COOKIE['token'] = '';  
 
 //locales
 $lang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
@@ -33,7 +34,7 @@ T_textdomain($_GET['lang']);
 require "../connect.php"; 
 
 //secure connect from authenticated user
-if ($_GET['token']==$_COOKIE['token'])
+if ($_GET['token']==$_COOKIE['token'] && $_GET['token'])
 {
 	//get current date
 	$daydate=date('Y-m-d');

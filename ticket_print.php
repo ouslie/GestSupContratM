@@ -4,13 +4,14 @@
 # @Description : page to print ticket
 # @Call : /ticket.php
 # @Author : Flox
-# @Version : 3.1.38
+# @Version : 3.1.43
 # @Create : 09/02/2014
-# @Update : 11/03/2019
+# @Update : 31/07/2019
 ################################################################################
 
 //initialize variables 
 if(!isset($_GET['token'])) $_GET['token'] = ''; 
+if(!isset($_COOKIE["token"])) $_COOKIE["token"] = ''; 
 if(!isset($resolution)) $resolution = '';
 //connexion script with database parameters
 require "connect.php";
@@ -56,7 +57,7 @@ $globalrow=$qry->fetch();
 $qry->closeCursor();
 
 //secure connect
-if($_GET['token']==$_COOKIE["token"])
+if($_GET['token'] && $_GET['token']==$_COOKIE["token"])
 {
 	//database queries to find values for create print
 	$qry=$db->prepare("SELECT * FROM `tusers` WHERE id=:id");

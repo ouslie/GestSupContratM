@@ -5,13 +5,18 @@
 # @Call : ./core/ticket.php
 # @Parameters : ticket id 
 # @Author : Flox
-# @Update : 11/03/2019
-# @Version : 3.1.40 p5
+# @Update : 24/09/2019
+# @Version : 3.1.44
 ################################################################################
 
 //initialize variables 
 if(!isset($send)) $send = ''; 
 if(!isset($usermail['mail'])) $usermail['mail'] = ''; 
+if(!isset($_POST['resolution'])) $_POST['resolution'] = ''; 
+if(!isset($_POST['private'])) $_POST['private'] = ''; 
+if(!isset($_POST['modify'])) $_POST['modify']= ''; 
+if(!isset($_POST['quit'])) $_POST['quit'] = ''; 
+if(!isset($autoclose)) $autoclose = 0; //call from cron job
 
 //secure string
 $db_id=strip_tags($db->quote($_GET['id']));
@@ -19,7 +24,7 @@ $db_id=strip_tags($db->quote($_GET['id']));
 //check if mail is already sent
 $qry = $db->prepare("SELECT `open`,`close` FROM `tmails` WHERE incident=:id");
 $qry->execute(array('id' => $_GET['id']));
-$mail_event=$qry->fetch();
+$mail_send=$qry->fetch();
 $qry->closeCursor();
 
 //check user group defined as sender on ticket 
@@ -56,7 +61,7 @@ if($mail_u_group['u_group']!=0)
 if($rparameters['debug']==1) {echo "<b>AUTO MAIL VAR:</b> SESSION[profile_id]=$_SESSION[profile_id] mail_auto_user_modify=$rparameters[mail_auto_user_modify] _POST[resolution]=$_POST[resolution] _POST[private]=$_POST[private] <br />";}
 
 //case send auto mail to tech when technician attribution
-if(($rparameters['mail_auto_tech_attribution']==1) && (($_POST['modify'] || $_POST['quit']) && ($globalrow['technician']!=$_POST['technician']) || ($t_group) && ($_POST['technician']!=$_SESSION['user_id'])))
+if(($rparameters['mail_auto_tech_attribution']==1) && (($_POST['modify'] || $_POST['quit']) && (($globalrow['technician']!=$_POST['technician']) || ($t_group)) && ($_POST['technician']!=$_SESSION['user_id'])))
 {
 	//debug
 	if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b>  FROM system TO tech  (Reason: mail_auto_tech_attribution ticket technician attribution is detected)<br> ";}
@@ -102,13 +107,14 @@ if(($rparameters['mail_auto_tech_attribution']==1) && (($_POST['modify'] || $_PO
 			<br />
 			'.T_('Pour plus d\'informations vous pouvez consulter le ticket sur').' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'</a>.
 			';
+			$mail_auto=true;
 			require('./core/message.php');
 		} else {if($rparameters['debug']==1) {echo "technician mail is empty or no technician associated or tech group no change on this ticket";}}
 
 }
 
 //case send mail to user where ticket open by technician.
-if(($rparameters['mail_auto']==1) && ($mail_event['open']=='') && ($_POST['modify'] || $_POST['quit']) && ($_SESSION['profile_id']!=2 && $_SESSION['profile_id']!=3 && $_SESSION['profile_id']!=1))
+if(($rparameters['mail_auto']==1) && ((($mail_send['open']=='') && ($_POST['modify'] || $_POST['quit']) && ($_SESSION['profile_id']!=2 && $_SESSION['profile_id']!=3 && $_SESSION['profile_id']!=1)) || $autoclose==1))
 {
 	if($usermail['mail'] || $rparameters['mail_cc'])
 	{
@@ -116,6 +122,7 @@ if(($rparameters['mail_auto']==1) && ($mail_event['open']=='') && ($_POST['modif
 		if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b> FROM tech TO user (Reason: mail_auto enable, and open detect by technician.) <br />";}
 		//auto send open notification mail
 		$send=1;
+		$mail_auto=true;
 		include('./core/mail.php');
 		//insert mail table
 		$qry=$db->prepare("INSERT INTO `tmails` (`incident`,`open`,`close`) VALUES (:incident,:open,:close)");
@@ -132,12 +139,13 @@ if(($rparameters['mail_auto']==1) && ($mail_event['open']=='') && ($_POST['modif
 		//debug
 		if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b> FROM tech TO user (Reason: mail_auto enable, and close detect by technician.)<br />";}
 		
-		if ($mail_event['open']=='1')
+		if ($mail_send['open']=='1')
 		{
 			//check if is the first close mail
-			if ($mail_event['close']=='0')
+			if ($mail_send['close']=='0')
 			{
 				$send=1;
+				$mail_auto=true;
 				//auto send close notification mail
 				include('./core/mail.php');
 				//update mail table
@@ -164,6 +172,7 @@ if(($rparameters['mail_auto']==1) && ($mail_event['open']=='') && ($_POST['modif
 		if ($globalrow['user']!=$_SESSION['user_id'])
 		{
 			$send=1;
+			$mail_auto=true;
 			include('./core/mail.php');
 		}
 	} else {
@@ -206,6 +215,7 @@ if(($rparameters['mail_auto']==1) && ($mail_event['open']=='') && ($_POST['modif
 		<br />
 		'.T_('Pour plus d\'informations vous pouvez consulter le ticket sur').' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'</a>.
 		';
+		$mail_auto=true;
 		require('./core/message.php');
 	} else {
 		//debug
@@ -241,34 +251,37 @@ if(($rparameters['mail_auto']==1) && ($mail_event['open']=='') && ($_POST['modif
 	//check if tech have mail
 	if($to && $techrow['id']!=$_SESSION['user_id']) 
 	{
-		$object=T_('Votre ticket').' n°'.$_GET['id'].': '.$_POST['title'].' '.T_('a été modifié');
+		$object=T_('Votre ticket').' n°'.$_GET['id'].' : '.$_POST['title'].' '.T_('a été modifié');
 		//remove single quote in post data
 		$resolution = str_replace("'", "", $_POST['resolution']);
 		$title = str_replace("'", "", $_POST['title']);
 		$message = '
 		'.T_('Le ticket').' n°'.$_GET['id'].' '.T_('a été modifié ').' <br />
 		<br />
-		<u>'.T_('Objet').':</u><br />
+		<u>'.T_('Objet').' :</u><br />
 		'.$title.'<br />		
 		<br />	
-		<u>'.T_('Ajout du commentaire').':</u><br />
+		<u>'.T_('Ajout du commentaire').' :</u><br />
 		'.$resolution.'<br />
 		<br />
 		'.T_('Pour plus d\'informations vous pouvez consulter le ticket sur').' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'</a>.
 		';
+		$mail_auto=true;
 		require('./core/message.php');
 	} else {if($rparameters['debug']==1) {echo "technician mail is empty or no technician associated with this ticket";}}
 }
 
 //case send auto mail to user where user open ticket
-if(($rparameters['mail_auto_user_newticket']==1) && ($mail_event['open']=='') && $_GET['action']=='new' && ($_POST['send'] || $_POST['modify'] || $_POST['quit']) && ($_SESSION['profile_id']==2 || $_SESSION['profile_id']==3 || $_SESSION['profile_id']==1))
+if(($rparameters['mail_auto_user_newticket']==1) && ($mail_send['open']=='') && $_GET['action']=='new' && ($_POST['send'] || $_POST['modify'] || $_POST['quit']) && ($_SESSION['profile_id']==2 || $_SESSION['profile_id']==3 || $_SESSION['profile_id']==1))
 {
+	echo "case";
 	if($usermail['mail'] || $rparameters['mail_cc'])
 	{
 		//debug
-		if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b>  FROM user TO user (Reason: mail_auto_user_newticket enable, and open detect by user.) <br />";}
+		if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b> FROM user TO user (Reason: mail_auto_user_newticket enable, and open detect by user.) <br />";}
 		//auto send open notification mail
 		$send=1;
+		$mail_auto=true;
 		include('./core/mail.php');
 		//insert mail table
 		$qry=$db->prepare("INSERT INTO `tmails` (`incident`,`open`,`close`) VALUES (:incident,:open,:close)");
@@ -287,11 +300,11 @@ if(($rparameters['survey']==1) && ($_POST['modify'] || $_POST['quit'] || $_POST[
 		//debug
 		if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b> FROM tech TO user (Reason: survey enable and technician switch ticket in state $rparameters[survey_ticket_state].)<br> ";}
 		//check if survey answer already exist for this ticket
-		$qry = $db->prepare("SELECT ticket_id FROM tsurvey_answers WHERE ticket_id=:ticket_id");
-		$qry->execute(array('ticket_id' => $_GET['id']));
-		$row=$qry->fetch();
-		$qry->closeCursor();
-		if(!$row)
+		$qry2 = $db->prepare("SELECT ticket_id FROM tsurvey_answers WHERE ticket_id=:ticket_id");
+		$qry2->execute(array('ticket_id' => $_GET['id']));
+		$row2=$qry2->fetch();
+		$qry2->closeCursor();
+		if(!$row2)
 		{
 			//insert a token
 			$token=uniqid(); 
@@ -324,6 +337,7 @@ if(($rparameters['survey']==1) && ($_POST['modify'] || $_POST['quit'] || $_POST[
 			<br />
 			<a href="'.$rparameters['server_url'].'/survey.php?token='.$token.'">'.T_('Répondre au sondage').'</a>
 			';
+			$mail_auto=true;
 			require('./core/message.php');
 		}
 	} else {

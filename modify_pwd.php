@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 05/02/2012
-# @Update : 21/03/2019
-# @Version : 3.1.40
+# @Update : 03/07/2019
+# @Version : 3.1.42
 ################################################################################
 
 //initialize variables 
@@ -22,6 +22,7 @@ if(!isset($boxtext)) $boxtext = '';
   
 if($_POST['modifypwd'] && $_SESSION['user_id'])
 {
+	
 	//get user informations
 	$qry=$db->prepare("SELECT `salt`,`password` FROM `tusers` WHERE id=:id");
 	$qry->execute(array('id' => $_SESSION['user_id']));
@@ -32,32 +33,43 @@ if($_POST['modifypwd'] && $_SESSION['user_id'])
 	$oldpassword=0;
 	if(password_verify($_POST['oldpwd'],$row['password'])) {$oldpassword=1;}
 		
-	//check empty password
-	if($_POST['oldpwd']=="" || $_POST['newpwd1']=="" || $_POST['newpwd2']=="")
+	
+	if($_POST['oldpwd']=="" || $_POST['newpwd1']=="" || $_POST['newpwd2']=="") //check empty password
 	{
-		$boxtext='<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>'.T_('Erreur').':</b> '.T_('Veuillez remplir tous les champs').'.</center></div>';
+		$boxtext='<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>'.T_('Erreur').' :</b> '.T_('Veuillez remplir tous les champs').'.</center></div>';
 	}
-	//check old password
-	elseif ($oldpassword!='1')
+	elseif ($oldpassword!='1') //check old password
 	{
-		$boxtext='<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>'.T_('Erreur').':</b> '.T_('Votre ancien mot de passe est erroné').'.</center></div>';
+		$boxtext='<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>'.T_('Erreur').' :</b> '.T_('Votre ancien mot de passe est erroné').'.</center></div>';
 	}
-	//check new passwords
-	elseif ($_POST['newpwd1']!=$_POST['newpwd2'])
+	elseif ($_POST['newpwd1']!=$_POST['newpwd2']) //check new passwords
 	{
-		$boxtext='<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>'.T_('Erreur').':</b> '.T_('Les deux nouveaux mot de passes sont différents').'.</center></div>';
+		$boxtext='<div class="alert alert-block alert-danger"><center><i class="icon-remove red"></i> <b>'.T_('Erreur').' :</b> '.T_('Les deux nouveaux mot de passes sont différents').'.</center></div>';
+	}
+	elseif($rparameters['user_password_policy'] && $_POST['newpwd1'] && (strlen($_POST['newpwd1'])<$rparameters['user_password_policy_min_lenght'])) //password policy
+	{
+		$boxtext='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit faire').' '.$rparameters['user_password_policy_min_lenght'].' '.T_('caractères minimum').'</div>';
+	}
+	elseif($rparameters['user_password_policy'] && $_POST['newpwd1'] && ($rparameters['user_password_policy_special_char'] && !preg_match('/[^a-zA-Z\d]/', $_POST['newpwd1']))) //password policy
+	{
+		$boxtext='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit contenir un caractère spécial').'</div>';
+	}
+	elseif($rparameters['user_password_policy_min_maj'] && (!preg_match('/[A-Z]/', $_POST['newpwd1']) || !preg_match('/[a-z]/', $_POST['newpwd1']))) //password policy
+	{
+		$boxtext='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit au moins une lettre majuscule et une minuscule').'</div>';
 	}
 	else
 	{
 		if($_POST['newpwd1']!='') { //update password
+			$date=date('Y-m-d');
 			$hash = password_hash($_POST['newpwd1'], PASSWORD_DEFAULT);
-			$qry=$db->prepare("UPDATE `tusers` SET `chgpwd`=0, `password`=:password WHERE `id`=:id");
-			$qry->execute(array('password' => $hash,'id' => $_SESSION['user_id']));
+			$qry=$db->prepare("UPDATE `tusers` SET `chgpwd`=0, `last_pwd_chg`=:last_pwd_chg, `password`=:password WHERE `id`=:id");
+			$qry->execute(array('last_pwd_chg' => $date,'password' => $hash,'id' => $_SESSION['user_id']));
 			$updated=1;
 		}
 	} 
 }
-if ($updated==1)
+if($updated==1)
 {
 	$boxtitle="<i class='icon-lock blue bigger-120'></i> ".T_('Modification du mot de passe');
 	$boxtext= '<div class="alert alert-block alert-success"><center><i class="icon-ok green"></i>	'.T_('Votre mot de passe a été changé avec succès').'.</center></div>';

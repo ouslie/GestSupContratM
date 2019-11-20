@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 27/01/2014
-# @Update : 04/02/2019
-# @Version : 3.1.39
+# @Update : 11/09/2019
+# @Version : 3.1.44
 ################################################################################
 
 //locales
@@ -27,7 +27,8 @@ T_bind_textdomain_codeset($_GET['lang'], $encoding);
 T_textdomain($_GET['lang']);
 
 //initialize variables 
-if(!isset($_GET['token'])) $_GET['token'] = 'XXX'; 
+if(!isset($_GET['token'])) $_GET['token'] = ''; 
+if(!isset($_COOKIE['token'])) $_COOKIE['token'] = ''; 
 if(!isset($cnt_service)) $cnt_service=''; 
 
 //database connection
@@ -42,7 +43,7 @@ $db_criticality=strip_tags($_GET['criticality']);
 $db_category=strip_tags($_GET['category']);
 
 //secure connect from authenticated user
-if($_GET['token']==$_COOKIE['token']) 
+if($_GET['token']==$_COOKIE['token'] && $_GET['token']) 
 {
 	//get current date
 	$daydate=date('Y-m-d');
@@ -283,7 +284,7 @@ if($_GET['token']==$_COOKIE['token'])
 	}
 	$qry->closeCursor();
 } else {
-	echo '<br /><br /><center><span style="font-size: x-large; color: red;"><b>'.T_('Accès à cette page interdite, contactez votre administrateur').'.</b></span></center>';		
+	echo '<br /><br /><center><span style="font-size: x-large; color: red;"><b>'.T_("Erreur d'accès à la page, essayer de recharger la page statistique, si le problème persiste contacter votre administrateur").'.</b></span></center>';		
 }
 $db = null;
 ?>
