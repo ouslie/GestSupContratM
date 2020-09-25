@@ -5,14 +5,14 @@
 # @Call : admin.php
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 26/07/2019
-# @Version : 3.1.43
+# @Update : 11/06/2020
+# @Version : 3.2.2 p3
 ################################################################################
 
 //initialize variables 
 if(!isset($_SERVER['QUERY_URI'])) $_SERVER['QUERY_URI'] = '';
-if(!isset($_POST['Modifier'])) $_POST['Modifier'] = '';
-if(!isset($_POST['Ajouter'])) $_POST['Ajouter'] = '';
+if(!isset($_POST['modify'])) $_POST['modify'] = '';
+if(!isset($_POST['add'])) $_POST['add'] = '';
 if(!isset($_POST['cancel'])) $_POST['cancel'] = '';
 if(!isset($_POST['addview'])) $_POST['addview'] = '';
 if(!isset($_POST['profil'])) $_POST['profil'] = '';
@@ -32,29 +32,19 @@ if(!isset($_POST['firstname'])) $_POST['firstname'] = '';
 if(!isset($_POST['lastname'])) $_POST['lastname'] = '';
 if(!isset($_POST['viewname'])) $_POST['viewname'] = '';
 if(!isset($_POST['service'])) $_POST['service'] = '';
-if(!isset($_POST['service_1'])) $_POST['service_1'] = '';
-if(!isset($_POST['service_2'])) $_POST['service_2'] = '';
-if(!isset($_POST['service_3'])) $_POST['service_3'] = '';
-if(!isset($_POST['service_4'])) $_POST['service_4'] = '';
-if(!isset($_POST['service_5'])) $_POST['service_5'] = '';
 if(!isset($_POST['agency'])) $_POST['agency'] = '';
-if(!isset($_POST['agency_1'])) $_POST['agency_1'] = '';
-if(!isset($_POST['agency_2'])) $_POST['agency_2'] = '';
-if(!isset($_POST['agency_3'])) $_POST['agency_3'] = '';
-if(!isset($_POST['agency_4'])) $_POST['agency_4'] = '';
-if(!isset($_POST['agency_5'])) $_POST['agency_5'] = '';
 if(!isset($_POST['function'])) $_POST['function'] = '';
 if(!isset($_POST['limit_ticket_number'])) $_POST['limit_ticket_number'] = '';
 if(!isset($_POST['limit_ticket_days'])) $_POST['limit_ticket_days'] = '';
 if(!isset($_POST['limit_ticket_date_start'])) $_POST['limit_ticket_date_start'] = '';
 if(!isset($_POST['mail'])) $_POST['mail'] = '';
-if(!isset($_POST['useridfacture'])) $_POST['useridfacture'] = '';
 if(!isset($_POST['login'])) $_POST['login'] = '';
 if(!isset($_POST['phone'])) $_POST['phone'] = '';
 if(!isset($_POST['mobile'])) $_POST['mobile'] = '';
 if(!isset($_POST['fax'])) $_POST['fax'] = '';
 if(!isset($_POST['default_ticket_state'])) $_POST['default_ticket_state'] = '';
 if(!isset($_POST['dashboard_ticket_order'])) $_POST['dashboard_ticket_order'] = '';
+if(!isset($_POST['disable_user'])) $_POST['disable_user'] = '';
 if(!isset($user1['company'])) $user1['company'] = '';
 if(!isset($password)) $password = '';
 if(!isset($password2)) $password2 = '';
@@ -62,27 +52,14 @@ if(!isset($addeview)) $addview = '';
 if(!isset($category)) $category = '%';
 if(!isset($maxline)) $maxline = '';
 if(!isset($_POST['chgpwd'])) $_POST['chgpwd'] = '';
-if(!isset($_GET['userid'])) $_GET['userid'] = '';
-if(!isset($_GET['deleteview'])) $_GET['deleteview'] = '';
-if(!isset($_GET['action'])) $_GET['action'] = '';
-if(!isset($_GET['ldap'])) $_GET['ldap'] = '';
-if(!isset($_GET['attachmentdelete'])) $_GET['attachmentdelete'] = '';
-if(!isset($_GET['disable'])) $_GET['disable'] = '';
-if(!isset($_GET['cursor'])) $_GET['cursor'] = '';
-if(!isset($_GET['order'])) $_GET['order'] = '';
-if(!isset($_GET['way'])) $_GET['way'] = '';
-if(!isset($_GET['tab'])) $_GET['tab'] = '';
-if(!isset($_GET['delete_assoc_service'])) $_GET['delete_assoc_service'] = '';
-if(!isset($_GET['delete_assoc_agency'])) $_GET['delete_assoc_agency'] = '';
-if(!isset($_GET['profileid'])) $_GET['profileid'] = '';
 
 //defaults values
 if(!$_GET['tab']) $_GET['tab'] = 'infos';
 if($_GET['disable']=='') $_GET['disable'] = '0';
 if($_GET['cursor']=='') $_GET['cursor'] = '0';
-if($_GET['order']=='') $_GET['order'] = 'lastname,firstname';
+if($_GET['order']=='') $_GET['order'] = 'lastname';
 if($_GET['way']=='') $_GET['way'] = 'ASC';
-if($maxline=='') $maxline = 15;
+if($maxline=='') $maxline = $rparameters['maxline'];
 if($_POST['userkeywords']=='') $userkeywords='%'; else $userkeywords=$_POST['userkeywords'];
 
 $_GET['delete_assoc_service']=strip_tags($_GET['delete_assoc_service']);
@@ -106,7 +83,6 @@ $_POST['lastname']=strip_tags($_POST['lastname']);
 $_POST['address1']=strip_tags($_POST['address1']);
 $_POST['address2']=strip_tags($_POST['address2']);
 $_POST['login']=strip_tags($_POST['login']);
-$_POST['useridfacture']=strip_tags($_POST['useridfacture']);
 $_POST['mail']=strip_tags($_POST['mail']);
 $_POST['phone']=strip_tags($_POST['phone']);
 $_POST['mobile']=strip_tags($_POST['mobile']);
@@ -117,26 +93,24 @@ $_POST['custom1']=strip_tags($_POST['custom1']);
 $_POST['custom2']=strip_tags($_POST['custom2']);
 $_POST['function']=strip_tags($_POST['function']);
 
+if($_POST['disable_user'] && !$rright['admin']) {$_POST['disable_user']=0;}
+
 //delete association user > service
-if ($_GET['delete_assoc_service'] && $rright['admin']!=0)
+if($_GET['delete_assoc_service'] && $rright['admin'])
 {
 	$qry=$db->prepare("DELETE FROM `tusers_services` WHERE id=:id");
-	$qry->execute(array(
-		'id' => $_GET['delete_assoc_service']
-		));
+	$qry->execute(array('id' => $_GET['delete_assoc_service']));
 }
 
 //delete assoc user > agency
-if ($_GET['delete_assoc_agency'] && $rright['admin']!=0)
+if($_GET['delete_assoc_agency'] && $rright['admin'])
 {
 	$qry=$db->prepare("DELETE FROM `tusers_agencies` WHERE id=:id");
-	$qry->execute(array(
-		'id' => $_GET['delete_assoc_agency']
-		));
+	$qry->execute(array('id' => $_GET['delete_assoc_agency']));
 }
 
 //modify case
-if($_POST['Modifier'])
+if($_POST['modify'])
 {
 	//case user sync from AD without pwd and not already connected
 	if($rparameters['ldap']==1 && $rparameters['ldap_auth']==1 && $_POST['password']=='')
@@ -147,7 +121,7 @@ if($_POST['Modifier'])
 		$qry->closeCursor();
 		if($row['password']=='')
 		{
-			$pwd = substr(md5(uniqid(rand(), true)), 0, 5); //generate a random paswword
+			$pwd = substr(md5(uniqid(rand(), true)), 0, 5); //generate a random password
 			$hash = password_hash($pwd, PASSWORD_DEFAULT);
 			//update pwd
 			$qry=$db->prepare("UPDATE `tusers` SET `password`=:password WHERE `id`=:id");
@@ -158,7 +132,7 @@ if($_POST['Modifier'])
 	$error=0;
 	if($_POST['mail']) //mail control
 	{
-		if(!filter_var($_POST['mail'], FILTER_VALIDATE_EMAIL)) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("L'adresse mail est incorrecte").' </div>';}
+		if(!filter_var($_POST['mail'], FILTER_VALIDATE_EMAIL)) {$error=T_("L'adresse mail est incorrecte");}
 	}
 	if($_POST['login']) //existing account control
 	{
@@ -166,25 +140,25 @@ if($_POST['Modifier'])
 		$qry->execute(array('login' => $_POST['login'],'id' => $_GET['userid']));
 		$row=$qry->fetch();
 		$qry->closeCursor();
-		if($row) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Un autre compte utilise déjà cet identifiant ('.$row['lastname'].' '.$row['firstname'].')').' </div>';}
+		if($row) {$error=T_('Un autre compte utilise déjà cet identifiant ('.$row['lastname'].' '.$row['firstname'].')');}
 	}
-	if($_POST['password']!=$_POST['password2']) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Les mots de passes ne sont pas identique').' </div>';}
+	if($_POST['password']!=$_POST['password2']) {$error=T_('Les mots de passes ne sont pas identiques');}
 	//password policy
 	if($rparameters['user_password_policy'] && $_POST['password'])
 	{
 		if(strlen($_POST['password'])<$rparameters['user_password_policy_min_lenght'])
 		{
-			$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit faire').' '.$rparameters['user_password_policy_min_lenght'].' '.T_('caractères minimum').'</div>';
+			$error=T_('Le mot de passe doit faire').' '.$rparameters['user_password_policy_min_lenght'].' '.T_('caractères minimum');
 		}elseif($rparameters['user_password_policy_special_char'] && !preg_match('/[^a-zA-Z\d]/', $_POST['password']))
 		{
-			$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit contenir un caractère spécial').'</div>';
+			$error=T_('Le mot de passe doit contenir un caractère spécial');
 		}elseif($rparameters['user_password_policy_min_maj'] && (!preg_match('/[A-Z]/', $_POST['password']) || !preg_match('/[a-z]/', $_POST['password'])))
 		{
-			$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit au moins une lettre majuscule et une minuscule').'</div>';
+			$error=T_('Le mot de passe doit posséder au moins une lettre majuscule et une minuscule');
 		}
 	}
 	
-	if (!$error)
+	if(!$error)
 	{
 		if($_POST['password'])
 		{
@@ -195,39 +169,41 @@ if($_POST['Modifier'])
 			$qry->execute(array('id' => $_GET['userid']));
 			$row=$qry->fetch();
 			$qry->closeCursor();
+			if(empty($row['password'])) {$row['password']='';}
+			if(empty($row['last_pwd_chg'])) {$row['last_pwd_chg']='';}
 			$hash=$row['password'];
 			$last_pwd_chg=$row['last_pwd_chg'];
 		}
 		 
 		$qry=$db->prepare("
 		UPDATE tusers SET
-		firstname=:firstname,
-		lastname=:lastname,
-		password=:password,
-		mail=:mail,
-		phone=:phone,
-		mobile=:mobile,
-		login=:login,
-		fax=:fax,
-		function=:function,
-		company=:company,
-		address1=:address1,
-		address2=:address2,
-		zip=:zip,
-		city=:city,
-		custom1=:custom1,
-		custom2=:custom2,
-		limit_ticket_number=:limit_ticket_number,
-		limit_ticket_days=:limit_ticket_days,
-		limit_ticket_date_start=:limit_ticket_date_start,
-		skin=:skin,
-		dashboard_ticket_order=:dashboard_ticket_order,
-		default_ticket_state=:default_ticket_state,
-		chgpwd=:chgpwd,
-		last_pwd_chg=:last_pwd_chg,
-		language=:language,
-		useridfacture=:useridfacture
-		WHERE id=:id
+		`firstname`=:firstname,
+		`lastname`=:lastname,
+		`password`=:password,
+		`mail`=:mail,
+		`phone`=:phone,
+		`mobile`=:mobile,
+		`login`=:login,
+		`fax`=:fax,
+		`function`=:function,
+		`company`=:company,
+		`address1`=:address1,
+		`address2`=:address2,
+		`zip`=:zip,
+		`city`=:city,
+		`custom1`=:custom1,
+		`custom2`=:custom2,
+		`limit_ticket_number`=:limit_ticket_number,
+		`limit_ticket_days`=:limit_ticket_days,
+		`limit_ticket_date_start`=:limit_ticket_date_start,
+		`skin`=:skin,
+		`dashboard_ticket_order`=:dashboard_ticket_order,
+		`default_ticket_state`=:default_ticket_state,
+		`chgpwd`=:chgpwd,
+		`last_pwd_chg`=:last_pwd_chg,
+		`language`=:language,
+		`disable`=:disable
+		WHERE `id`=:id
 		");
 		$qry->execute(array(
 			'firstname' => $_POST['firstname'],
@@ -255,10 +231,29 @@ if($_POST['Modifier'])
 			'chgpwd' => $_POST['chgpwd'],
 			'last_pwd_chg' => $last_pwd_chg,
 			'language' => $_POST['language'],
-			'useridfacture' => $_POST['useridfacture'],
+			'disable' => $_POST['disable_user'],
 			'id' => $_GET['userid']
 			));
 		$qry->closeCursor();
+		
+		//log
+		if($rparameters['log'])
+		{
+			require_once('core/functions.php');
+			if($_POST['profile']==4)
+			{
+				if($_POST['password']){logit('security', 'Password change for and admin account '.$_POST['login'],$_SESSION['user_id']);}
+				
+				//get current profil of updated user
+				$qry=$db->prepare("SELECT `profile` FROM `tusers` WHERE id=:id");
+				$qry->execute(array('id' => $_GET['userid']));
+				$user_profile=$qry->fetch();
+				$qry->closeCursor();
+				
+				if($user_profile['profile']!=4){logit('security', 'Profile change to admin for account '.$_POST['login'],$_SESSION['user_id']);}
+			}
+			if($_POST['disable_user']){logit('security', 'User '.$_POST['login'].' disabled',$_SESSION['user_id']);}
+		}
 		
 		//special case profil update check admin right
 		if($rright['admin']!=0)
@@ -268,109 +263,17 @@ if($_POST['Modifier'])
 			$qry->closeCursor();
 		}
 		
-		//multi service update association
-		if ($_POST['service_1']) {
-			$qry = $db->prepare("SELECT `service_id` FROM `tusers_services` WHERE `user_id`=:user_id AND `service_id`=:service_id");
-			$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_1']));
-			$row=$qry->fetch();
-			$qry->closeCursor();
-			if (!$row) {
-				$qry=$db->prepare("INSERT INTO `tusers_services` (`user_id`,`service_id`) VALUES (:user_id,:service_id)");
-				$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_1']));
-			} 	
+		//add service association to this user
+		if($_POST['service']) {
+			$qry=$db->prepare("INSERT INTO `tusers_services` (`user_id`,`service_id`) VALUES (:user_id,:service_id)");
+			$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service']));
 		}
-		if ($_POST['service_2']) {
-			$qry = $db->prepare("SELECT `service_id` FROM `tusers_services` WHERE `user_id`=:user_id AND `service_id`=:service_id");
-			$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_2']));
-			$row=$qry->fetch();
-			$qry->closeCursor();
-			if (!$row) {
-				$qry=$db->prepare("INSERT INTO `tusers_services` (`user_id`,`service_id`) VALUES (:user_id,:service_id)");
-				$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_2']));
-			} 	
-		}
-		if ($_POST['service_3']) {
-			$qry = $db->prepare("SELECT `service_id` FROM `tusers_services` WHERE `user_id`=:user_id AND `service_id`=:service_id");
-			$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_3']));
-			$row=$qry->fetch();
-			$qry->closeCursor();
-			if (!$row) {
-				$qry=$db->prepare("INSERT INTO `tusers_services` (`user_id`,`service_id`) VALUES (:user_id,:service_id)");
-				$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_3']));
-			} 	
-		}
-		if ($_POST['service_4']) {
-			$qry = $db->prepare("SELECT `service_id` FROM `tusers_services` WHERE `user_id`=:user_id AND `service_id`=:service_id");
-			$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_4']));
-			$row=$qry->fetch();
-			$qry->closeCursor();
-			if (!$row) {
-				$qry=$db->prepare("INSERT INTO `tusers_services` (`user_id`,`service_id`) VALUES (:user_id,:service_id)");
-				$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_4']));
-			} 	
-		}
-		if ($_POST['service_5']) {
-			$qry = $db->prepare("SELECT `service_id` FROM `tusers_services` WHERE `user_id`=:user_id AND `service_id`=:service_id");
-			$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_5']));
-			$row=$qry->fetch();
-			$qry->closeCursor();
-			if (!$row) {
-				$qry=$db->prepare("INSERT INTO `tusers_services` (`user_id`,`service_id`) VALUES (:user_id,:service_id)");
-				$qry->execute(array('user_id' => $_GET['userid'],'service_id' => $_POST['service_5']));
-			} 	
-		}
-		if ($rparameters['user_agency'])
+		//add agency association to this user
+		if($rparameters['user_agency'])
 		{
-			//multi agency update association
-			if ($_POST['agency_1']) {
-				$qry = $db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE `user_id`=:user_id AND `agency_id`=:agency_id");
-				$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_1']));
-				$row=$qry->fetch();
-				$qry->closeCursor();
-				if (!$row) {
-					$qry=$db->prepare("INSERT INTO `tusers_agencies` (`user_id`,`agency_id`) VALUES (:user_id,:agency_id)");
-					$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_1']));
-				} 	
-			}
-			if ($_POST['agency_2']) {
-				$qry = $db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE `user_id`=:user_id AND `agency_id`=:agency_id");
-				$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_2']));
-				$row=$qry->fetch();
-				$qry->closeCursor();
-				if (!$row) {
-					$qry=$db->prepare("INSERT INTO `tusers_agencies` (`user_id`,`agency_id`) VALUES (:user_id,:agency_id)");
-					$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_2']));
-				} 	
-			}
-			if ($_POST['agency_3']) {
-				$qry = $db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE `user_id`=:user_id AND `agency_id`=:agency_id");
-				$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_3']));
-				$row=$qry->fetch();
-				$qry->closeCursor();
-				if (!$row) {
-					$qry=$db->prepare("INSERT INTO `tusers_agencies` (`user_id`,`agency_id`) VALUES (:user_id,:agency_id)");
-					$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_3']));
-				} 	
-			}
-			if ($_POST['agency_4']) {
-				$qry = $db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE `user_id`=:user_id AND `agency_id`=:agency_id");
-				$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_4']));
-				$row=$qry->fetch();
-				$qry->closeCursor();
-				if (!$row) {
-					$qry=$db->prepare("INSERT INTO `tusers_agencies` (`user_id`,`agency_id`) VALUES (:user_id,:agency_id)");
-					$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_4']));
-				} 	
-			}
-			if ($_POST['agency_5']) {
-				$qry = $db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE `user_id`=:user_id AND `agency_id`=:agency_id");
-				$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_5']));
-				$row=$qry->fetch();
-				$qry->closeCursor();
-				if (!$row) {
-					$qry=$db->prepare("INSERT INTO `tusers_agencies` (`user_id`,`agency_id`) VALUES (:user_id,:agency_id)");
-					$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency_5']));
-				} 	
+			if($_POST['agency']) {
+				$qry=$db->prepare("INSERT INTO `tusers_agencies` (`user_id`,`agency_id`) VALUES (:user_id,:agency_id)");
+				$qry->execute(array('user_id' => $_GET['userid'],'agency_id' => $_POST['agency']));
 			}
 		}
 		if($_POST['viewname'])
@@ -390,8 +293,18 @@ if($_POST['Modifier'])
 	$url=preg_replace('/%/','%25',$url);
 	if($error)
 	{
+		echo '
+			<div role="alert" class="alert alert-lg bgc-danger-l3 border-0 border-l-4 brc-danger-m1 mt-4 mb-3 pr-3 d-flex">
+				<div class="flex-grow-1">
+					<i class="fas fa-times mr-1 text-120 text-danger-m1"></i>
+					<strong class="text-danger">'.T_('Erreur').' : '.$error.'.</strong>
+				</div>
+				<button type="button" class="close align-self-start" data-dismiss="alert" aria-label="Close">
+					<span aria-hidden="true"><i class="fa fa-times text-80"></i></span>
+				</button>
+			</div>
+		';
 		echo "
-		$error
 		<SCRIPT LANGUAGE='JavaScript'>
 			<!--
 			function redirect()
@@ -410,45 +323,46 @@ if($_POST['Modifier'])
 	}
 }
 
-if($_POST['Ajouter'] && $rright['admin']!=0)
+if($_POST['add'] && $rright['admin'])
 {
 	$error=0;
-	if(!$_POST['password']) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Vous devez spécifier un mot de passe').' </div>';}
-	if($_POST['password']!=$_POST['password2']) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Les mots de passe ne sont pas identique').' </div>';}
+	if(!$_POST['password']) {$error=T_('Vous devez spécifier un mot de passe');}
+	if(!$_POST['login']) {$error=T_('Vous devez spécifier un identifiant');}
+	if($_POST['password']!=$_POST['password2']) {$error=T_('Les mots de passe ne sont pas identiques');}
 	if($_POST['mail'])
 	{
 		//email check
 		if($_POST['mail'])
 		{
-			if(!strpos($_POST['mail'],'.')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("l'adresse mail doit posséder un point.").' </div>';}
+			if(!strpos($_POST['mail'],'.')) {$error=T_("l'adresse mail doit posséder un point");}
 			if(strpos($_POST['mail'],'@'))
 			{
 				$mail_domain=explode('@',$_POST['mail']);
-				if(!strpos($mail_domain[1],'.')) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("Le domaine de l'adresse mail doit posséder un point.").' </div>';}
-			} else {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_("l'adresse mail doit posséder un arobase.").' </div>';}
+				if(!strpos($mail_domain[1],'.')) {$error=T_("Le domaine de l'adresse mail doit posséder un point");}
+			} else {$error=T_("l'adresse mail doit posséder un arobase");}
 		}
 	}
 	if($_POST['login'])
 	{
-		$qry=$db->prepare("SELECT `id` FROM `tusers` WHERE login=:login AND disable=:disable");
-		$qry->execute(array('login' => $_POST['login'],'disable' => 0));
+		$qry=$db->prepare("SELECT `id` FROM `tusers` WHERE login=:login AND disable='0'");
+		$qry->execute(array('login' => $_POST['login']));
 		$row=$qry->fetch();
 		$qry->closeCursor();
 		
-		if($row) {$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Un autre compte utilise déjà cet identifiant').' </div>';}
+		if($row) {$error=T_('Un autre compte utilise déjà cet identifiant');}
 	}
 	//password policy
 	if($rparameters['user_password_policy'] && $_POST['password'])
 	{
 		if(strlen($_POST['password'])<$rparameters['user_password_policy_min_lenght'])
 		{
-			$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit faire').' '.$rparameters['user_password_policy_min_lenght'].' '.T_('caractères minimum').'</div>';
+			$error=T_('Le mot de passe doit faire').' '.$rparameters['user_password_policy_min_lenght'].' '.T_('caractères minimum');
 		}elseif($rparameters['user_password_policy_special_char'] && !preg_match('/[^a-zA-Z\d]/', $_POST['password']))
 		{
-			$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit contenir un caractère spécial').'</div>';
+			$error=T_('Le mot de passe doit contenir un caractère spécial');
 		}elseif($rparameters['user_password_policy_min_maj'] && (!preg_match('/[A-Z]/', $_POST['password']) || !preg_match('/[a-z]/', $_POST['password'])))
 		{
-			$error='<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').' :</strong> '.T_('Le mot de passe doit au moins une lettre majuscule et une minuscule').'</div>';
+			$error=T_('Le mot de passe doit au moins une lettre majuscule et une minuscule');
 		}
 	}
 	
@@ -459,26 +373,26 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 		
 		$qry=$db->prepare("
 		INSERT INTO tusers (
-		firstname,
-		lastname,
-		password,
-		mail,
-		phone,
-		mobile,
-		fax,
-		company,
-		address1,
-		address2,
-		zip,
-		city,
-		custom1,
-		custom2,
-		profile,
-		login,
-		chgpwd,
-		last_pwd_chg,
-		skin,
-		function
+		`firstname`,
+		`lastname`,
+		`password`,
+		`mail`,
+		`phone`,
+		`mobile`,
+		`fax`,
+		`company`,
+		`address1`,
+		`address2`,
+		`zip`,
+		`city`,
+		`custom1`,
+		`custom2`,
+		`profile`,
+		`login`,
+		`chgpwd`,
+		`last_pwd_chg`,
+		`skin`,
+		`function`
 		) VALUES (
 		:firstname,
 		:lastname,
@@ -525,18 +439,23 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 			));
 		$last_user_id=$db->lastInsertId();
 		//if post service insert new assoc
-		if ($_POST['service'])
+		if($_POST['service'])
 		{
 			$qry=$db->prepare("INSERT INTO `tusers_services` (`user_id`,`service_id`) VALUES (:user_id,:service_id)");
 			$qry->execute(array('user_id' => $last_user_id,'service_id' => $_POST['service']));
 		}
 		if($rparameters['user_agency'])
 		{
-			if ($_POST['agency']) //if post agency insert new assoc
+			if($_POST['agency']) //if post agency insert new assoc
 			{
 				$qry=$db->prepare("INSERT INTO `tusers_agencies` (`user_id`,`agency_id`) VALUES (:user_id,:agency_id)");
 				$qry->execute(array('user_id' => $last_user_id,'agency_id' => $_POST['agency']));
 			}
+		}
+		if($rparameters['log'] && $_POST['profile']==4)
+		{
+			require_once('core/functions.php');
+			logit('security', 'Admin account has been added '.$_POST['login'],$_SESSION['user_id']);
 		}
 		//redirect
 		$www = "./index.php?page=admin&subpage=user";
@@ -545,7 +464,19 @@ if($_POST['Ajouter'] && $rright['admin']!=0)
 		document.location.replace("'.$www.'");
 		// -->
 		</script>';
-	} else {echo $error;}
+	} else {
+		echo '
+			<div role="alert" class="alert alert-lg bgc-danger-l3 border-0 border-l-4 brc-danger-m1 mt-4 mb-3 pr-3 d-flex">
+				<div class="flex-grow-1">
+					<i class="fas fa-times mr-1 text-120 text-danger-m1"></i>
+					<strong class="text-danger">'.T_('Erreur').' : '.$error.'.</strong>
+				</div>
+				<button type="button" class="close align-self-start" data-dismiss="alert" aria-label="Close">
+					<span aria-hidden="true"><i class="fa fa-times text-80"></i></span>
+				</button>
+			</div>
+		';
+	}
 }
 //cancel
 if($_POST['cancel'])
@@ -564,7 +495,7 @@ if($_POST['cancel'])
 	</script>';
 }
 //view Part
-if ($_GET['deleteview']=="1" && $rright['side_view']!=0)
+if($_GET['deleteview']=="1" && $rright['side_view']!=0)
 {
 	$qry=$db->prepare("DELETE FROM `tviews` WHERE id=:id");
 	$qry->execute(array('id' => $_GET['viewid']));
@@ -584,7 +515,7 @@ if($_GET['attachmentdelete'] && ($_SESSION['profile_id']==0 || $_SESSION['profil
 	$qry->execute(array('id' => $_GET['attachmentdelete']));
 }
 //display head page
-if ($rright['admin_user_profile']!='0')
+if($rright['admin_user_profile']!='0')
 {
 	if(!$_GET['ldap'])
 	{
@@ -601,18 +532,18 @@ if ($rright['admin_user_profile']!='0')
 		
 		echo '
 		<div class="page-header position-relative">
-			<h1>
-				<i class="icon-user"></i>  '.T_('Gestion des utilisateurs').'
-				<small>
-					<i class="icon-double-angle-right"></i>
-					&nbsp;'.T_('Nombre').': '.$r1[0].' '.T_('Activés et').' '.$r2[0].' '.T_('Désactivés').'
+			<h1 class="page-title text-primary-m2" >
+				<i class="fa fa-user"></i>  '.T_('Gestion des utilisateurs').'
+				<small class="page-info text-secondary-d2">
+					<i class="fa fa-angle-double-right"></i>
+					&nbsp;'.T_('Nombre').' : '.$r1[0].' '.T_('Activés et').' '.$r2[0].' '.T_('Désactivés').'
 				</small>
 			</h1>
 		</div>';
 	}
 }
 /////////////////////////////////////////////////// display edit user page  /////////////////////////////////////////////////////////////
-if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_SESSION['profile_id']==0 || $_SESSION['profile_id']==4))) 
+if(($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_SESSION['profile_id']==0 || $_SESSION['profile_id']==4))) 
 {
 	//get user data
 	$qry = $db->prepare("SELECT * FROM `tusers` WHERE id=:id");
@@ -622,57 +553,58 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 	
 	//display edit form.
 	echo '
-		<div class="col-sm-12">
-			<div class="widget-box">
-				<div class="widget-header">
-					<h4>'.T_('Fiche utilisateur').': '.$user1['firstname'].' '.$user1['lastname'].'</h4>
-					<span class="widget-toolbar">
-						<button value="Modifier" id="Modifier" name="Modifier" type="submit" form="1" class="btn btn-minier btn-success">
-							<i title="'.T_('Enregistrer').'" class="icon-save bigger-140"></i>
+		<div class="col-12 cards-container">
+			<div class="card">
+				<div class="card-header">
+					<h5 class="card-title">'.T_('Fiche utilisateur').' : '.$user1['firstname'].' '.$user1['lastname'].'</h5>
+					<span class="card-toolbar">
+						<button value="modify" id="modify" name="modify" type="submit" form="1" class="btn btn-xs btn-success ml-1">
+							<i title="'.T_('Enregistrer').'" class="fa fa-save text-110"></i>
 						</button>
 					</span>
 				</div>
-				<div class="widget-body">
-					<div class="widget-main no-padding">
+				<div class="card-body">
+					<div class="card-main no-padding">
 						<form id="1" name="form" method="POST" action="" class="form-horizontal">
                                 <fieldset>
                                 <div class="col-sm-12">
-                            		<div class="tabbable">
-                            			<ul class="nav nav-tabs" id="myTab">';
-                            				if($_GET['tab']=='infos') {echo '<li class="active" >';} else {echo '<li>';} echo '
-                            					<a href="./index.php?page=admin/user&subpage=user&action=edit&userid='.$_GET['userid'].'&tab=infos">
-                            						<i class="icon-info bigger-110 blue"></i>
+                            		<div class="tabs-above">
+                            			<ul class="nav nav-tabs nav-justified" id="myTab">
+                            				<li class="nav-item mr-1px">
+                            					<a class="nav-link '; if($_GET['tab']=='infos') {echo 'active';} echo '" href="./index.php?page=admin/user&subpage=user&action=edit&userid='.$_GET['userid'].'&tab=infos">
+                            						<i class="fa fa-info-circle text-primary-m2"></i>
                             						'.T_('Informations').'
                             					</a>
-                            				</li>';
-                            				if($_GET['tab']=='parameters') {echo '<li class="active" >';} else {echo '<li>';} echo '
-                            					<a href="./index.php?page=admin/user&subpage=user&action=edit&userid='.$_GET['userid'].'&tab=parameters">
-                            						<i class="icon-cog bigger-110 orange"></i>
+                            				</li>
+                            				<li class="nav-item mr-1px">
+                            					<a class="nav-link '; if($_GET['tab']=='parameters') {echo 'active';} echo '"" href="./index.php?page=admin/user&subpage=user&action=edit&userid='.$_GET['userid'].'&tab=parameters">
+                            						<i class="fa fa-cog text-warning"></i>
                             						'.T_('Paramètres').'
                             					</a>
                             				</li>';
                                             //display attachment tab if it's not a technician or admin
-                            				if ((($user1['profile']==0) || ($user1['profile']==4)) && ($_SESSION['profile_id']!=1) && ($_SESSION['profile_id']!=2) && ($_SESSION['profile_id']!=3))
+                            				if((($user1['profile']==0) || ($user1['profile']==4)) && ($_SESSION['profile_id']!=1) && ($_SESSION['profile_id']!=2) && ($_SESSION['profile_id']!=3))
                             				{
-                                				if($_GET['tab']=='attachment') {echo '<li class="active" >';} else {echo '<li>';} echo '
-                                					<a href="./index.php?page=admin/user&subpage=user&action=edit&userid='.$_GET['userid'].'&tab=attachment">
-                                						<i class="icon-user bigger-110 green"></i>
+												echo '
+												<li class="nav-item mr-1px">
+                                					<a class="nav-link '; if($_GET['tab']=='attachment') {echo 'active';} echo '" href="./index.php?page=admin/user&subpage=user&action=edit&userid='.$_GET['userid'].'&tab=attachment">
+                                						<i class="fa fa-user text-success"></i>
                                 						'.T_('Rattachement à des utilisateurs').'
-                                						<i title="'.T_('Permet d\'attribuer automatiquement un technicien lors de la création de ticket par un utilisateur').'" class="icon-question-sign blue bigger-110"></i>
+                                						<i title="'.T_("Permet d'attribuer automatiquement un technicien lors de la création de ticket par un utilisateur").'" class="fa fa-question-circle text-primary-m2"></i>
                                 					</a>
                                 				</li>';
                             				}
                             				echo'
                             			</ul>
                             			<div class="tab-content">
-                            			    <div id="attachment" class="tab-pane'; if ($_GET['tab']=='attachment' || $_GET['tab']=='') echo 'active'; echo '">
-                                                <label class="control-label bolder blue" for="attachment">'.T_('Associer des utilisateurs à ce technicien').' :</label>
+                            			    <div id="attachment" class="tab-pane'; if($_GET['tab']=='attachment' || $_GET['tab']=='') echo 'active'; echo '">
+                                                <label class="control-label bolder text-primary-m2" for="attachment">'.T_('Associer des utilisateurs à ce technicien').' :</label>
                                                 <div class="space-4"></div>
-                                                <select name="attachment">
+                                                <select style="width:auto;" class="form-control form-control-sm d-inline-block" name="attachment">
                                                     ';
                                                     //display list of user for attachment
-													$qry = $db->prepare("SELECT tusers.* FROM `tusers` WHERE tusers.profile!=0 AND tusers.profile!=:profile AND tusers.disable=:disable AND tusers.id NOT IN (SELECT user FROM tusers_tech) ORDER BY tusers.lastname");
-													$qry->execute(array('profile' => 4,'disable' => 0));
+													$qry = $db->prepare("SELECT tusers.* FROM `tusers` WHERE tusers.profile!=0 AND tusers.profile!='4' AND tusers.disable='0' AND tusers.id NOT IN (SELECT user FROM tusers_tech) ORDER BY tusers.lastname");
+													$qry->execute();
 													while ($row = $qry->fetch())
                                                     {
                                                         echo '<option value="'.$row['id'].'">'.$row['lastname'].' '.$row['firstname'].'</option>';
@@ -682,7 +614,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                                                     <option selected></option>
                                                 </select>
                                                 <hr />
-                                                <label class="control-label bolder blue" for="skin">'.T_('Liste des utilisateurs associés à ce technicien').' :</label>
+                                                <label class="control-label bolder text-primary-m2" for="skin">'.T_('Liste des utilisateurs associés à ce technicien').' :</label>
                                                 <div class="space-4"></div>
                                                 ';
 													$qry = $db->prepare("SELECT `id`,`user` FROM `tusers_tech` WHERE tech=:tech");
@@ -694,110 +626,122 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 														$qry2->execute(array('id' => $row['user']));
 														$row2=$qry2->fetch();
 														$qry2->closeCursor();
-                                                    	echo'<i class="icon-caret-right blue"></i> '.$row2['lastname'].' '.$row2['firstname'].'';
-                                                    	echo '<a title="Supprimer" href="./index.php?page=admin/user&subpage=user&action=edit&userid='.$_GET['userid'].'&tab=attachment&attachmentdelete='.$row['id'].'"> <i class="icon-trash red bigger-120"></i></a>';
+                                                    	echo'<i class="fa fa-caret-right text-primary-m2"></i> '.$row2['lastname'].' '.$row2['firstname'].'';
+                                                    	echo '<a title="Supprimer" href="./index.php?page=admin/user&subpage=user&action=edit&userid='.$_GET['userid'].'&tab=attachment&attachmentdelete='.$row['id'].'"> <i class="fa fa-trash text-danger"></i></a>';
                                                         echo '<br />';
                                                     }
 													$qry->closeCursor();
                                                     echo '
                             			    </div>
-                                            <div id="parameters" class="tab-pane'; if ($_GET['tab']=='parameters' || $_GET['tab']=='') echo 'active'; echo '">
-													<label class="control-label bolder blue" for="language">'.T_('Langue').' :</label>
+                                            <div id="parameters" class="tab-pane'; if($_GET['tab']=='parameters' || $_GET['tab']=='') echo 'active'; echo '">
+													<label class="control-label bolder text-primary-m2" for="language">'.T_('Langue').' :</label>
                                                     <div class="space-4"></div>
-                    								<select name="language">
-                    									<option '; if ($user1['language']=='fr_FR'){echo "selected";} echo ' value="fr_FR">'.T_('Français (France)').'</option>
-                    									<option '; if ($user1['language']=='en_US'){echo "selected";} echo ' value="en_US">'.T_('Anglais (États Unis)').'</option>
-                    									<option '; if ($user1['language']=='de_DE'){echo "selected";} echo ' value="de_DE">'.T_('Allemand (Allemagne)').'</option>
-                    									<option '; if ($user1['language']=='es_ES'){echo "selected";} echo ' value="es_ES">'.T_('Espagnol (Espagne)').'</option>
+                    								<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="language">
+                    									<option '; if($user1['language']=='fr_FR'){echo "selected";} echo ' value="fr_FR">'.T_('Français (France)').'</option>
+                    									<option '; if($user1['language']=='en_US'){echo "selected";} echo ' value="en_US">'.T_('Anglais (États Unis)').'</option>
+                    									<option '; if($user1['language']=='de_DE'){echo "selected";} echo ' value="de_DE">'.T_('Allemand (Allemagne)').'</option>
+                    									<option '; if($user1['language']=='es_ES'){echo "selected";} echo ' value="es_ES">'.T_('Espagnol (Espagne)').'</option>
                     								</select>
                     								<hr />
-                                                    <label class="control-label bolder blue" for="skin">'.T_('Thème').' :</label>
+                                                    <label class="control-label bolder text-primary-m2" for="skin">'.T_('Thème').' :</label>
                                                     <div class="space-4"></div>
-                    								<select name="skin">
-                    									<option style="background-color:#438EB9;" '; if ($user1['skin']==''){echo "selected";} echo ' value="">'.T_('Bleu (Défaut)').'</option>
-                    									<option style="background-color:#222A2D;" '; if ($user1['skin']=='skin-1'){echo "selected";} echo ' value="skin-1">'.T_('Noir').'</option>
-                    									<option style="background-color:#C6487E;" '; if ($user1['skin']=='skin-2'){echo "selected";} echo ' value="skin-2">'.T_('Rose').'</option>
-                    									<option style="background-color:#D0D0D0;" '; if ($user1['skin']=='skin-3'){echo "selected";} echo ' value="skin-3">'.T_('Gris').'</option>
-                    									<option style="background-color:#4A4F56;" '; if ($user1['skin']=='skin-4'){echo "selected";} echo ' value="skin-4">'.T_('Sombre').'</option>
+                    								<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="skin">
+                    									<option '; if($user1['skin']==''){echo "selected";} echo ' value="">'.T_('Bleu (Défaut)').'</option>
+														<option '; if($user1['skin']=='skin-3'){echo "selected";} echo ' value="skin-3">'.T_('Gris').'</option>
+                    									<option '; if($user1['skin']=='skin-1'){echo "selected";} echo ' value="skin-1">'.T_('Noir').'</option>
+                    									<option '; if($user1['skin']=='skin-2'){echo "selected";} echo ' value="skin-2">'.T_('Violet').'</option>
+                    									<option '; if($user1['skin']=='skin-5'){echo "selected";} echo ' value="skin-5">'.T_('Vert').'</option>
+														<option '; if($user1['skin']=='skin-7'){echo "selected";} echo ' value="skin-7">'.T_('Vert et violet').'</option>
+                    									<option '; if($user1['skin']=='skin-6'){echo "selected";} echo ' value="skin-6">'.T_('Orange').'</option>
+														<option '; if($user1['skin']=='skin-8'){echo "selected";} echo ' value="skin-8">'.T_('Orange et violet').'</option>
+														<option '; if($user1['skin']=='skin-4'){echo "selected";} echo ' value="skin-4">'.T_('Sombre').'</option>
                     								</select>
                     								';
                     								//display group attachment if exist
-													$qry = $db->prepare("SELECT count(*) FROM `tgroups`, `tgroups_assoc` WHERE tgroups.id=tgroups_assoc.group AND tgroups_assoc.user=:user AND tgroups.disable=:disable");
-													$qry->execute(array('user' => $_GET['userid'],'disable' => 0));
+													$qry = $db->prepare("SELECT count(*) FROM `tgroups`, `tgroups_assoc` WHERE tgroups.id=tgroups_assoc.group AND tgroups_assoc.user=:user AND tgroups.disable='0'");
+													$qry->execute(array('user' => $_GET['userid']));
 													$row=$qry->fetch();
 													$qry->closeCursor();
-                    								if ($row[0]!=0)
+                    								if($row[0]!=0)
                     								{
                     									echo '<hr />';
-                    									echo '<label class="control-label bolder blue" for="group">'.T_('Membre des groupes').' :</label>';
-														$qry = $db->prepare("SELECT tgroups.id AS id, tgroups.name AS name FROM tgroups, tgroups_assoc WHERE tgroups.id=tgroups_assoc.group AND tgroups_assoc.user=:user AND tgroups.disable=:disable");
-														$qry->execute(array('user' => $_GET['userid'],'disable' => 0));
+                    									echo '<label class="control-label bolder text-primary-m2" for="group">'.T_('Membre des groupes').' :</label>';
+														$qry = $db->prepare("SELECT tgroups.id AS id, tgroups.name AS name FROM tgroups, tgroups_assoc WHERE tgroups.id=tgroups_assoc.group AND tgroups_assoc.user=:user AND tgroups.disable='0'");
+														$qry->execute(array('user' => $_GET['userid']));
                     									while ($row = $qry->fetch())
                     									{
-                    										echo "<div class=\"space-4\"></div><i class=\"icon-caret-right blue\"></i> <a href=\"./index.php?page=admin&subpage=group&action=edit&id=$row[id]\"> $row[name]</a>";
+                    										echo "<div class=\"space-4\"></div><i class=\"fa fa-caret-right text-primary-m2\"></i> <a href=\"./index.php?page=admin&subpage=group&action=edit&id=$row[id]\"> $row[name]</a>";
                     									}
 														$qry->closeCursor();														
                     								}
                     								// Display profile list
-                    								if ($rright['admin_user_profile']!='0')
+                    								if($rright['admin_user_profile']!='0')
                     								{
                     									echo '
                     									<hr />
-                    									<label class="control-label bolder blue" for="profile">'.T_('Profil').' :</label>
+                    									<label class="control-label bolder text-primary-m2" for="profile">'.T_('Profil').' :</label>
                     									<div class="controls">
                     										<div class="radio">
                     											<label>
-                    												<input type="radio" class="ace" name="profile" value="4" '; if ($user1['profile']=='4')echo "checked"; echo '> <span class="lbl"> '.T_('Administrateur').' </span>
+                    												<input type="radio" class="ace" name="profile" value="4" '; if($user1['profile']=='4')echo "checked"; echo '> <span class="lbl"> '.T_('Administrateur').' </span>
                     											</label>
                     										</div>
                     										<div class="radio">
                     											<label>
-                    												<input type="radio" class="ace" name="profile" value="0" '; if ($user1['profile']=='0')echo "checked"; echo '> <span class="lbl"> '.T_('Technicien').' </span>
+                    												<input type="radio" class="ace" name="profile" value="0" '; if($user1['profile']=='0')echo "checked"; echo '> <span class="lbl"> '.T_('Technicien').' </span>
                     											</label>
                     										</div>
                     										<div class="radio">
                     											<label>
-                    												<input type="radio" class="ace" name="profile" value="3" '; if ($user1['profile']=='3')echo "checked"; echo '> <span class="lbl"> '.T_('Superviseur').' </span>
+                    												<input type="radio" class="ace" name="profile" value="3" '; if($user1['profile']=='3')echo "checked"; echo '> <span class="lbl"> '.T_('Superviseur').' </span>
                     											</label>
                     										</div>
                     										<div class="radio">
                     											<label>
-                    												<input type="radio" class="ace" name="profile" value="1" '; if ($user1['profile']=='1')echo "checked"; echo '> <span class="lbl"> '.T_('Utilisateur avec pouvoir').' </span>
+                    												<input type="radio" class="ace" name="profile" value="1" '; if($user1['profile']=='1')echo "checked"; echo '> <span class="lbl"> '.T_('Utilisateur avec pouvoir').' </span>
                     											</label>
                     										</div>
                     										<div class="radio">
                     											<label>
-                    												<input type="radio" class="ace" name="profile" value="2" '; if ($user1['profile']=='2')echo "checked"; echo '> <span class="lbl"> '.T_('Utilisateur').' </span>
+                    												<input type="radio" class="ace" name="profile" value="2" '; if($user1['profile']=='2')echo "checked"; echo '> <span class="lbl"> '.T_('Utilisateur').' </span>
                     											</label>
                     										</div>
                     									</div>
                     									<hr />
-                    									<label class="control-label bolder blue" for="chgpwd">'.T_('Forcer le changement du mot de passe').' :</label>
+                    									<label class="control-label bolder text-primary-m2" for="chgpwd">'.T_('Forcer le changement du mot de passe').' :</label>
                     									<br />
                     									<label>
-                    											<input type="radio" class="ace" disable="disable" name="chgpwd" value="1" '; if ($user1['chgpwd']=='1')echo "checked"; echo '> <span class="lbl"> '.T_('Oui').' </span>
-                    											<input type="radio" class="ace" name="chgpwd" value="0" '; if ($user1['chgpwd']=='0')echo "checked"; echo '> <span class="lbl"> '.T_('Non').' </span>
+                    											<input type="radio" class="ace" disable="disable" name="chgpwd" value="1" '; if($user1['chgpwd']=='1')echo "checked"; echo '> <span class="lbl"> '.T_('Oui').' </span>
+                    											<input type="radio" class="ace" name="chgpwd" value="0" '; if($user1['chgpwd']=='0')echo "checked"; echo '> <span class="lbl"> '.T_('Non').' </span>
+                    									</label>
+														<hr />
+                    									<label class="control-label bolder text-primary-m2" for="disable_user">'.T_('Utilisateur désactivé').' :</label>
+                    									<br />
+                    									<label>
+                    											<input type="radio" class="ace" name="disable_user" value="1" '; if($user1['disable']=='1')echo "checked"; echo '> <span class="lbl"> '.T_('Oui').' </span>
+                    											<input type="radio" class="ace" name="disable_user" value="0" '; if($user1['disable']=='0')echo "checked"; echo '> <span class="lbl"> '.T_('Non').' </span>
                     									</label>
                     									';
                     								}
                     								else
                     								{
-                    									echo '<input type="hidden" name="profile" value="'.$user1['profile'].'" '; if ($user1['profile']=='2')echo "checked"; echo '>';
+                    									echo '<input type="hidden" name="profile" value="'.$user1['profile'].'" '; if($user1['profile']=='2')echo "checked"; echo '>';
                     								}
                     								//display personal view
-                    								if ($rright['admin_user_view']!='0')
+                    								if($rright['admin_user_view']!='0')
                     								{
                     									echo '
                     										<hr />
-                    										<label class="control-label bolder blue" for="view">'.T_('Vues personnelles').' : </label>
-                        									<i title="'.T_('associe des catégories à l\'utilisateur').'" class="icon-question-sign blue bigger-110"></i>
+                    										<label class="control-label bolder text-primary-m2" for="view">'.T_('Vues personnelles').' : </label>
+                        									<i title="'.T_("associe des catégories à l'utilisateur").'" class="fa fa-question-circle text-primary-m2"></i>
                     										<div class="space-4"></div>';
                     											//check if selected user have view
 																$qry = $db->prepare("SELECT `id` FROM `tviews` WHERE uid=:uid");
 																$qry->execute(array('uid' => $_GET['userid']));
 																$row=$qry->fetch();
 																$qry->closeCursor();
-                    											if ($row[0]!='')
+																if(empty($row['id'])) {$row['id']='';}
+                    											if($row['id'])
                     											{
                     												//display active views
 																	$qry = $db->prepare("SELECT * FROM `tviews` WHERE uid=:uid ORDER BY uid");
@@ -810,15 +754,15 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 																		$cname=$qry2->fetch();
 																		$qry2->closeCursor();
 																		
-                    													if ($row['subcat']!='')
+                    													if($row['subcat']!='')
                     													{
 																			$qry2 = $db->prepare("SELECT `name` FROM `tsubcat` WHERE id=:id");
 																			$qry2->execute(array('id' => $row['subcat']));
 																			$sname=$qry2->fetch();
 																			$qry2->closeCursor();
                     													} else {$sname='';}
-                    													echo '<i class="icon-caret-right blue"></i> '.$row['name'].': ('.$cname['name'].' > '.$sname[0].') 
-                    													<a title="'.T_('Supprimer cette vue').'" href="index.php?page=admin/user&subpage=user&action=edit&userid='.$_GET['userid'].'&viewid='.$row['id'].'&deleteview=1"><i class="icon-trash red bigger-120"></i></a>
+                    													echo '<i class="fa fa-caret-right text-primary-m2"></i> '.$row['name'].': ('.$cname['name'].' > '.$sname[0].') 
+                    													<a title="'.T_('Supprimer cette vue').'" href="index.php?page=admin/user&subpage=user&action=edit&userid='.$_GET['userid'].'&viewid='.$row['id'].'&deleteview=1"><i class="fa fa-trash text-danger"></i></a>
                     													<br />';
                     												}
 																	$qry->closeCursor();
@@ -826,11 +770,11 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                     											}
                     											//display add view form
                     											echo '
-                    												'.T_('Catégorie').':
-                    												<select name="category" onchange="submit()" style="width:100px" >
+                    												'.T_('Catégorie').' :
+                    												<select style="width:auto;" class="form-control form-control-sm d-inline-block mt-2" name="category" onchange="submit()" style="width:100px" >
                     													<option value="%"></option>';
 																		//case to limit service parameters is enable
-																		if ($rparameters['user_limit_service']==1 && $rright['admin']==0)
+																		if($rparameters['user_limit_service']==1 && $rright['admin']==0)
 																		{
 																			$qry = $db->prepare("SELECT `id`,`name` FROM `tcategory` WHERE `service` IN (SELECT `service_id` FROM `tusers_services` WHERE `user_id`=:user_id) ORDER BY `name`");
 																			$qry->execute(array('user_id' => $_SESSION['user_id']));
@@ -841,25 +785,25 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                     													while ($row=$qry->fetch())
                     													{
                     														echo "<option value=\"$row[id]\">$row[name]</option>";
-                    														if ($_POST['category']==$row['id']) echo "<option selected value=\"$row[id]\">$row[name]</option>";
+                    														if($_POST['category']==$row['id']) echo "<option selected value=\"$row[id]\">$row[name]</option>";
                     													} 
 																		$qry->closeCursor();
                     													echo '
                     												</select>
-                    												<div class="space-4"></div>
 																	';
 																	if($_POST['category']!='%')
 																	{
 																		echo '
-																		'.T_('Sous-catégorie').':
-																		<select name="subcat" onchange="submit()" style="width:90px">
+																		<div class="m-2"></div>
+																		'.T_('Sous-catégorie').' :
+																		<select style="width:auto;" class="form-control form-control-sm d-inline-block mt-2" name="subcat" onchange="submit()" style="width:90px">
 																			<option value="%"></option>';
 																			$qry = $db->prepare("SELECT `id`,`name` FROM `tsubcat` WHERE `cat`=:cat ORDER BY `name`");
 																			$qry->execute(array('cat' => $_POST['category']));
 																			while ($row = $qry->fetch())
 																			{
 																				echo "<option value=\"$row[id]\">$row[name]</option>";
-																				if ($_POST['subcat']==$row['id']) echo "<option selected value=\"$row[id]\">$row[name]</option>";
+																				if($_POST['subcat']==$row['id']) echo "<option selected value=\"$row[id]\">$row[name]</option>";
 																			} 
 																			$qry->closeCursor();
 																			echo '
@@ -867,57 +811,57 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 																	}
 																	echo '
                     												<div class="space-4"></div>
-                    												Nom: <input autocomplete="off" name="viewname" type="" value="'.$_POST['name'].'" size="20" />';
+                    												Nom : <input style="width:auto;" class="form-control form-control-sm d-inline-block mt-2" autocomplete="off" name="viewname" type="" value="'.$_POST['name'].'" size="20" />';
                     											
                     											//display default ticket state
                     										    echo '
                         										    <hr />
-                        										    <label class="control-label bolder blue" for="default_ticket_state">'.T_('État par défaut à la connexion').' :</label>
-                        										    <i title="'.T_("État qui est directement affiché, lors de la connexion à l'application, si ce paramètre n'est pas renseigné, alors l'état par défaut est celui définit par l'administrateur").'." class="icon-question-sign blue bigger-110"></i>
+                        										    <label class="control-label bolder text-primary-m2" for="default_ticket_state">'.T_('État par défaut à la connexion').' :</label>
+                        										    <i title="'.T_("État qui est directement affiché, lors de la connexion à l'application, si ce paramètre n'est pas renseigné, alors l'état par défaut est celui définit par l'administrateur").'." class="fa fa-question-circle text-primary-m2"></i>
                         										    <div class="space-4"></div>
-                        										    <select name="default_ticket_state">
-                                    									<option '; if ($user1['default_ticket_state']==''){echo "selected";} echo ' value="">'.T_('Aucun (Géré par l\'administrateur)').'</option>';
+                        										    <select style="width:auto;" class="form-control form-control-sm d-inline-block" name="default_ticket_state">
+                                    									<option '; if($user1['default_ticket_state']==''){echo "selected";} echo ' value="">'.T_("Aucun (Géré par l'administrateur)").'</option>';
 																		if($rparameters['meta_state']==1) 
 																		{
-																			echo '<option '; if ($user1['default_ticket_state']=='meta'){echo "selected";} echo ' value="meta">'.T_('Vos tickets à traiter').'</option>';
-																			echo '<option '; if ($user1['default_ticket_state']=='meta_all'){echo 'selected';} echo ' value="meta_all">'.T_('Tous les tickets à traiter').'</option>';
+																			echo '<option '; if($user1['default_ticket_state']=='meta'){echo "selected";} echo ' value="meta">'.T_('Vos tickets à traiter').'</option>';
+																			echo '<option '; if($user1['default_ticket_state']=='meta_all'){echo 'selected';} echo ' value="meta_all">'.T_('Tous les tickets à traiter').'</option>';
 																		}
                                                                         $qry = $db->prepare("SELECT `id`,`name` FROM `tstates` ORDER BY `number`");
 																		$qry->execute();
                     													while ($row = $qry->fetch())
                     													{
-                    														if ($user1['default_ticket_state']==$row['id']) {echo '<option selected value="'.$row['id'].'">'.T_('Vos tickets').' '.$row['name'].'</option>';} else {echo '<option value="'.$row['id'].'">'.T_('Vos tickets').' '.$row['name'].'</option>';}
+                    														if($user1['default_ticket_state']==$row['id']) {echo '<option selected value="'.$row['id'].'">'.T_('Vos tickets').' '.$row['name'].'</option>';} else {echo '<option value="'.$row['id'].'">'.T_('Vos tickets').' '.$row['name'].'</option>';}
                     													}
 																		$qry->closeCursor();
                     													echo '
-																		<option '; if ($user1['default_ticket_state']=='all'){echo 'selected';} echo ' value="all">'.T_('Tous les tickets').'</option>
+																		<option '; if($user1['default_ticket_state']=='all'){echo 'selected';} echo ' value="all">'.T_('Tous les tickets').'</option>
                                     								</select>
                     										    ';
                     										    //display default ticket order
                     										    echo '
                         										    <hr />
-                        										    <label class="control-label bolder blue" for="dashboard_ticket_order">'.T_('Ordre de trie personnel par défaut').' :</label>
-                        										    <i title="'.T_('Modifie l\'ordre de trie des tickets dans la liste des tickets, si ce paramètre n\'est pas renseigné, c\'est le réglage par défaut dans la section administration qui est prit en compte').'." class="icon-question-sign blue bigger-110"></i>
+                        										    <label class="control-label bolder text-primary-m2" for="dashboard_ticket_order">'.T_('Ordre de trie personnel par défaut').' :</label>
+                        										    <i title="'.T_("Modifie l'ordre de trie des tickets dans la liste des tickets, si ce paramètre n'est pas renseigné, c'est le réglage par défaut dans la section administration qui est prit en compte").'." class="fa fa-question-circle text-primary-m2"></i>
                         										    <div class="space-4"></div>
-                        										    <select name="dashboard_ticket_order">
-                        										        <option '; if ($user1['default_ticket_state']==''){echo "selected";} echo ' value="">'.T_('Aucun (Géré par l\'administrateur)').'</option>
-                                    									<option '; if ($user1['dashboard_ticket_order']=='tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_create'){echo "selected";} echo ' value="tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_create">'.T_('État  > Priorité > Criticité > Date de création').'</option>
-                                    									<option '; if ($user1['dashboard_ticket_order']=='tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_hope'){echo "selected";} echo ' value="tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_hope">'.T_('État > Priorité > Criticité > Date de résolution estimée').'</option>
-                                    									<option '; if ($user1['dashboard_ticket_order']=='tincidents.date_hope'){echo "selected";} echo ' value="tincidents.date_hope"> '.T_('Date de résolution estimée').'</option>
-                                    									<option '; if ($user1['dashboard_ticket_order']=='tincidents.priority'){echo "selected";} echo ' value="tincidents.priority"> '.T_('Priorité').'</option>
-                                    									<option '; if ($user1['dashboard_ticket_order']=='tincidents.criticality'){echo "selected";} echo ' value="tincidents.criticality"> '.T_('Criticité').'</option>
-                                    									<option '; if ($user1['dashboard_ticket_order']=='id'){echo "selected";} echo ' value="id">'.T_('Numéro de ticket').'</option>
+                        										    <select style="width:auto;" class="form-control form-control-sm d-inline-block" name="dashboard_ticket_order">
+                        										        <option '; if($user1['default_ticket_state']==''){echo "selected";} echo ' value="">'.T_("Aucun (Géré par l'administrateur)").'</option>
+                                    									<option '; if($user1['dashboard_ticket_order']=='tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_create'){echo "selected";} echo ' value="tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_create">'.T_('État  > Priorité > Criticité > Date de création').'</option>
+                                    									<option '; if($user1['dashboard_ticket_order']=='tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_hope'){echo "selected";} echo ' value="tstates.number, tincidents.priority, tincidents.criticality, tincidents.date_hope">'.T_('État > Priorité > Criticité > Date de résolution estimée').'</option>
+                                    									<option '; if($user1['dashboard_ticket_order']=='tincidents.date_hope'){echo "selected";} echo ' value="tincidents.date_hope"> '.T_('Date de résolution estimée').'</option>
+                                    									<option '; if($user1['dashboard_ticket_order']=='tincidents.priority'){echo "selected";} echo ' value="tincidents.priority"> '.T_('Priorité').'</option>
+                                    									<option '; if($user1['dashboard_ticket_order']=='tincidents.criticality'){echo "selected";} echo ' value="tincidents.criticality"> '.T_('Criticité').'</option>
+                                    									<option '; if($user1['dashboard_ticket_order']=='id'){echo "selected";} echo ' value="id">'.T_('Numéro de ticket').'</option>
                                     								</select>
                     										    ';	
                     								    }
 														//display ticket limit parameters
-														if ($rparameters['user_limit_ticket']==1 )
+														if($rparameters['user_limit_ticket']==1 )
 														{
 															if($_SESSION['profile_id']==1 || $_SESSION['profile_id']==2) $readonly='readonly'; else $readonly='';
 															echo '
 																<hr />
-																<label class="control-label bolder blue" for="limit_ticket_number">'.T_('Limite de tickets').' :</label>
-																<i title="'.T_('Permet de limiter un utilisateur a un nombre de ticket définit, passer la limite l\'ouverture de nouveau ticket n\'est plus possible').'." class="icon-question-sign blue bigger-110"></i>
+																<label class="control-label bolder text-primary-m2" for="limit_ticket_number">'.T_('Limite de tickets').' :</label>
+																<i title="'.T_("Permet de limiter un utilisateur a un nombre de ticket définit, passer la limite l'ouverture de nouveau ticket n'est plus possible").'." class="fa fa-question-circle text-primary-m2"></i>
 																<div class="space-4"></div>
 																<label for="limit_ticket_number">'.T_('Nombre limite de ticket').' :</label>
 																<input '.$readonly.' size="3" name="limit_ticket_number" type="text" value="'; if($user1['limit_ticket_number']) echo "$user1[limit_ticket_number]"; else echo ""; echo'" />
@@ -931,181 +875,172 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 														}
                     								echo'
                                             </div>
-											<div id="infos" class="tab-pane'; if ($_GET['tab']=='infos' || $_GET['tab']=='') echo 'active'; echo '">
-												<label for="useridfacture">'.T_('useridfacture').':</label>
-												<input name="useridfacture" type="text" value="'; if($user1['useridfacture']) echo "$user1[useridfacture]"; else echo ""; echo'" />
-												<div class="space-4"></div>	
+                                            <div id="infos" class="tab-pane'; if($_GET['tab']=='infos' || $_GET['tab']=='') echo 'active'; echo '">
                                     			<label for="firstname">'.T_('Prénom').' :</label>
-                								<input name="firstname" type="text" value="'.$user1['firstname'].'" />
+                								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="firstname" type="text" value="'.$user1['firstname'].'" />
                 								<div class="space-4"></div>
                 								<label for="lastname">'.T_('Nom').' :</label>
 												';if($mobile==1) {echo '<br />';} echo '
-                								<input name="lastname" type="text" value="'.$user1['lastname'].'" />
+                								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="lastname" type="text" value="'.$user1['lastname'].'" />
                 								<div class="space-4"></div>';
                 								//not display login field for users for security
-                								if ($_SESSION['profile_id']==0 || $_SESSION['profile_id']==4) {$hide='';} else {$hide='hidden';}
+                								if($_SESSION['profile_id']==0 || $_SESSION['profile_id']==4) {$label_hide='';$input_type='type="text"';} else {$label_hide='hidden';$input_type='type="hidden"';}
                                                 echo '
-                								<label '.$hide.' for="login">'.T_('Identifiant').' :</label>
-                								<input autocomplete="off" '.$hide.' name="login" type="text" value="'.$user1['login'].'"  />
+                								<label '.$label_hide.' for="login">'.T_('Identifiant').' :</label>
+                								<input style="width:auto;" class="form-control form-control-sm d-inline-block" autocomplete="off"  name="login" '.$input_type.' value="'.$user1['login'].'"  />
                 								<div class="space-4"></div>
                 								<label for="password">'.T_('Mot de passe').' :</label>
-                								<input autocomplete="new-password" name="password" type="password" value="" />
+                								<input style="width:auto;" class="form-control form-control-sm d-inline-block" autocomplete="new-password" name="password" type="password" value="" />
 												<div class="space-4"></div>
                 								<label for="password2">'.T_('Confirmation mot de passe').' :</label>
-                								<input autocomplete="new-password" name="password2" type="password" value="" />
+                								<input style="width:auto;" class="form-control form-control-sm d-inline-block" autocomplete="new-password" name="password2" type="password" value="" />
                 								<div class="space-4"></div>
                 								<label for="mail">'.T_('Adresse mail').' :</label>
-                								<input name="mail" type="text" value="'.$user1['mail'].'" />
+                								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="mail" type="text" value="'.$user1['mail'].'" />
                 								<div class="space-4"></div>
                 								<label for="phone">'.T_('Téléphone fixe').' :</label>
-                								<input name="phone" type="text" value="'.$user1['phone'].'" />
+                								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="phone" type="text" value="'.$user1['phone'].'" />
                 								<div class="space-4"></div>
 												<label for="mobile">'.T_('Téléphone portable').' :</label>
-                								<input name="mobile" type="text" value="'.$user1['mobile'].'" />
+                								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="mobile" type="text" value="'.$user1['mobile'].'" />
                 								<div class="space-4"></div>
                 								<label for="fax">'.T_('Fax').' :</label>
 												';if($mobile==1) {echo '<br />';} echo '
-                								<input name="fax" type="text" value="'.$user1['fax'].'" />
+                								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="fax" type="text" value="'.$user1['fax'].'" />
                 								<div class="space-4"></div>
-                								<label for="service_1">'.T_('Service').' :</label>
+                								<label for="service">'.T_('Service').' :</label>
 												';
 												if($mobile==1) {echo '<br />';} 
-												//service part
-												$cnt=0;
-												$qry = $db->prepare("SELECT `id`,`service_id` FROM `tusers_services` WHERE `user_id`=:user_id ");
-												$qry->execute(array('user_id' => $user1['id']));
-												while ($row=$qry->fetch())
+												//service add field
+												if($rright['user_profil_service'])
 												{
-													$cnt++;
-													echo'
-													<select name="service_'.$cnt.'" '; if ($rright['user_profil_service']==0) {echo 'disabled="disabled"';} echo ' >
-														<option value=""></option>';
-														$qry2 = $db->prepare("SELECT `id`,`name` FROM `tservices` WHERE disable=:disable ORDER BY `name`");
-														$qry2->execute(array('disable' => 0));
-														while ($row2 = $qry2->fetch())
+													echo '<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="service">';
+													echo '<option value=""></option>';
+														$qry = $db->prepare("SELECT `id`,`name` FROM `tservices` WHERE `id`!=0 AND `id` NOT IN (SELECT DISTINCT(`service_id`) FROM `tusers_services` WHERE `user_id`=:user_id)");
+														$qry->execute(array('user_id' => $_GET['userid']));
+														while ($service=$qry->fetch())
 														{
-															if ($row2['id']==$row['service_id'] ) echo "<option selected value=\"$row2[id]\">$row2[name]</option>"; else echo "<option value=\"$row2[id]\">$row2[name]</option>";
-														} 
-														$qry2->closeCursor();
-														echo '
-													</select>
-													';
-													if ($rright['user_profil_service']!=0) {echo '<a href="./index.php?page=admin&subpage=user&action=edit&userid='.$_GET['userid'].'&tab=infos&delete_assoc_service='.$row['id'].'"><i title="'.T_("Supprimer l'association de ce service avec cet utilisateur").'" class="icon-trash red bigger-130"></i></a>';}
-													
+															echo '<option value="'.$service['id'].'">'.$service['name'].'</option>';
+														}
+													echo '</select>';
 												}
+												
+												//display current service associations
+												$qry=$db->prepare("SELECT COUNT(`id`) FROM `tusers_services` WHERE user_id=:user_id");
+												$qry->execute(array('user_id' => $_GET['userid']));
+												$assoc=$qry->fetch();
 												$qry->closeCursor();
-												if($cnt==0) //case no service associated
+												if($assoc[0]>0)
 												{
 													echo '
-													<select name="service_1" '; if ($rright['user_profil_service']==0) {echo 'disabled="disabled"';} echo ' >
-														<option value=""></option>';
-														$qry = $db->prepare("SELECT `id`,`name` FROM `tservices` WHERE `disable`=:disable ORDER BY name");
-														$qry->execute(array('disable' => 0));
-														while ($row = $qry->fetch())
+													<ul>
+													';
+														$qry = $db->prepare("SELECT `tservices`.`id`,`tservices`.`name`, `tusers_services`.`id` AS assoc_id  FROM `tservices`,`tusers_services` WHERE `tservices`.`id`=`tusers_services`.`service_id` AND `tusers_services`.`user_id`=:user_id");
+														$qry->execute(array('user_id' => $_GET['userid']));
+														while ($service=$qry->fetch())
 														{
-															echo "<option value=\"$row[id]\">$row[name]</option>";
-														} 
-														$qry->closeCursor();
+															echo '<li>';
+															echo $service['name'];
+															if($rright['user_profil_service']) {echo '&nbsp;<a href="./index.php?page=admin&subpage=user&action=edit&userid='.$_GET['userid'].'&tab=infos&delete_assoc_service='.$service['assoc_id'].'" onClick="javascript: return confirm(\''.T_('Êtes-vous sur de vouloir supprimer cette association ?').'\');"><i title="'.T_("Supprimer l'association de ce service avec cet utilisateur").'" class="fa fa-trash text-danger"></i></a>';}
+															echo '</li>';
+														}
 														echo '
-													</select>
+													</ul>
 													';
 												}
-												//agency part
+												
+												//agency field
 												if($rparameters['user_agency'])
 												{
 													echo '<div class="space-4"></div>
-													<label for="agency_1">'.T_('Agence').' :</label>
+													<label for="agency">'.T_('Agence').' :</label>
 													';
-													$cnt=0;
-													$qry = $db->prepare("SELECT `id`,`agency_id` FROM `tusers_agencies` WHERE `user_id`=:user_id");
-													$qry->execute(array('user_id' => $user1['id']));
-													while ($row=$qry->fetch())
+													//agency add field
+													if($rright['user_profil_agency'])
 													{
-														$cnt++;
-														echo'
-														<select name="agency_'.$cnt.'" '; if ($rright['user_profil_agency']==0) {echo 'disabled="disabled"';} echo ' >
-															<option value=""></option>';
-															$qry2 = $db->prepare("SELECT `id`,`name` FROM `tagencies` ORDER BY `name`");
-															$qry2->execute();
-															while ($row2 = $qry2->fetch())
+														echo '<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="agency">';
+														echo '<option value=""></option>';
+															$qry = $db->prepare("SELECT `id`,`name` FROM `tagencies` WHERE `id`!=0 AND `id` NOT IN (SELECT DISTINCT(`agency_id`) FROM `tusers_agencies` WHERE `user_id`=:user_id)");
+															$qry->execute(array('user_id' => $_GET['userid']));
+															while ($agency=$qry->fetch())
 															{
-																if ($row2['id']==$row['agency_id'] ) echo "<option selected value=\"$row2[id]\">$row2[name]</option>"; else echo "<option value=\"$row2[id]\">$row2[name]</option>";
-															} 
-															$qry2->closeCursor();
-															echo '
-														</select>
-														';
-														if ($rright['user_profil_agency']!=0) { echo'<a href="./index.php?page=admin&subpage=user&action=edit&userid='.$_GET['userid'].'&tab=infos&delete_assoc_agency='.$row['id'].'"><i title="'.T_("Supprimer l'association de cette agence avec cet utilisateur").'" class="icon-trash red bigger-130"></i></a>';}
-														
+																echo '<option value="'.$agency['id'].'">'.$agency['name'].'</option>';
+															}
+														echo '</select>';
 													}
+													//current agency associations
+													$qry=$db->prepare("SELECT COUNT(`id`) FROM `tusers_agencies` WHERE user_id=:user_id");
+													$qry->execute(array('user_id' => $_GET['userid']));
+													$assoc=$qry->fetch();
 													$qry->closeCursor();
-													if($cnt==0) //case no service associated
+													if($assoc[0]>0)
 													{
 														echo '
-														<select name="agency_1" '; if ($rright['user_profil_agency']==0) {echo 'disabled="disabled"';} echo ' >
-															<option value=""></option>';
-															$qry = $db->prepare("SELECT `id`,`name` FROM `tagencies` WHERE disable=:disable ORDER BY `name`");
-															$qry->execute(array('disable' => 0));
-															while ($row = $qry->fetch())
-															{
-																echo "<option value=\"$row[id]\">$row[name]</option>";
-															} 
-															$qry->closeCursor();
-															echo '
-														</select>
+															<ul>
+															';
+																$qry = $db->prepare("SELECT `tagencies`.`id`,`tagencies`.`name`, `tusers_agencies`.`id` AS assoc_id  FROM `tagencies`,`tusers_agencies` WHERE `tagencies`.`id`=`tusers_agencies`.`agency_id` AND `tusers_agencies`.`user_id`=:user_id");
+																$qry->execute(array('user_id' => $_GET['userid']));
+																while ($agency=$qry->fetch())
+																{
+																	echo '<li>';
+																	echo $agency['name'];
+																	if($rright['user_profil_agency']) {echo '&nbsp;<a href="./index.php?page=admin&subpage=user&action=edit&userid='.$_GET['userid'].'&tab=infos&delete_assoc_agency='.$agency['assoc_id'].'" onClick="javascript: return confirm(\''.T_('Êtes-vous sur de vouloir supprimer cette association ?').'\');"><i title="'.T_("Supprimer l'association de cette agence avec cet utilisateur").'" class="fa fa-trash text-danger"></i></a>';}
+																	echo '</li>';
+																}
+																echo '
+															</ul>
 														';
 													}
 												}
-												
 												echo '
                 								<div class="space-4"></div>
                 								<label for="function">'.T_('Fonction').' :</label>
-                								<input name="function" size="25" type="text" value="'.$user1['function'].'" />
+                								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="function" size="25" type="text" value="'.$user1['function'].'" />
                 								';
                 								//display advanced user informations
-                								if ($rparameters['user_advanced']!='0')
+                								if($rparameters['user_advanced']!='0')
                 								{
                 								echo '
                 									<div class="space-4"></div>
                 									<label for="company">'.T_('Société').' :</label>
 													';if($mobile==1) {echo '<br />';} echo '
-                									<select name="company" '; if ($rright['user_profil_company']==0) {echo 'disabled="disabled"';} echo '>
+                									<select style="width:150px;" class="chosen-select" name="company" '; if($rright['user_profil_company']==0) {echo 'disabled="disabled"';} echo '>
                     									';
 														$qry = $db->prepare("SELECT `id`,`name` FROM `tcompany` ORDER BY `name`");
 														$qry->execute();
                     									while ($row = $qry->fetch())
                     									{
-                    										if ($user1['company']==$row['id']) {echo '<option selected value="'.$row['id'].'">'.$row['name'].'</option>';} else {echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';}
+                    										if($user1['company']==$row['id']) {echo '<option selected value="'.$row['id'].'">'.$row['name'].'</option>';} else {echo '<option value="'.$row['id'].'">'.$row['name'].'</option>';}
                     									} 
 														$qry->closeCursor();
                     									echo '
                 							    	</select>
 													';
 													//send company value in disabled state
-													if ($rright['user_profil_company']==0)
+													if($rright['user_profil_company']==0)
 													{
 														echo '<input type="hidden" name="company" value="'.$user1['company'].'" />';
 													}
 													echo '
-                									<div class="space-4"></div>
+                									<div class="space-4 pt-1"></div>
                 									<label for="address1">'.T_('Adresse').' 1 :</label>
-                									<input name="address1" type="text" value="'; if($user1['address1']) echo "$user1[address1]"; else echo ""; echo'" />
+                									<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="address1" type="text" value="'; if($user1['address1']) echo "$user1[address1]"; else echo ""; echo'" />
                 									<div class="space-4"></div>
                 									<label  for="address2">'.T_('Adresse').' 2 :</label>
-                									<input name="address2" type="text" value="'; if($user1['address2']) echo "$user1[address2]"; else echo ""; echo'" />
+                									<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="address2" type="text" value="'; if($user1['address2']) echo "$user1[address2]"; else echo ""; echo'" />
                 									<div class="space-4"></div>
                 									<label  for="city">'.T_('Ville').' :</label>
 													';if($mobile==1) {echo '<br />';} echo '
-                									<input name="city" type="text" value="'; if($user1['city']) echo "$user1[city]"; else echo ""; echo'" />
+                									<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="city" type="text" value="'; if($user1['city']) echo "$user1[city]"; else echo ""; echo'" />
                 									<div class="space-4"></div>
                 									<label for="zip">'.T_('Code Postal').' :</label>
-                									<input name="zip" type="text" value="'; if($user1['zip']) echo "$user1[zip]"; else echo ""; echo'" />
+                									<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="zip" type="text" value="'; if($user1['zip']) echo "$user1[zip]"; else echo ""; echo'" />
 													<div class="space-4"></div>
                 									<label for="custom1">'.T_('Champ personnalisé').' 1 :</label>
-                									<input name="custom1" type="text" value="'; if($user1['custom1']) echo "$user1[custom1]"; else echo ""; echo'" />
+                									<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="custom1" type="text" value="'; if($user1['custom1']) echo "$user1[custom1]"; else echo ""; echo'" />
                 									<div class="space-4"></div>
                 									<label for="custom2">'.T_('Champ personnalisé').' 2 :</label>
-                									<input name="custom2" type="text" value="'; if($user1['custom2']) echo "$user1[custom2]"; else echo ""; echo'" />
+                									<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="custom2" type="text" value="'; if($user1['custom2']) echo "$user1[custom2]"; else echo ""; echo'" />
                 									<div class="space-4"></div>
                 								';
                 								}
@@ -1115,14 +1050,14 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
                             		</div>
                             	</div>
 							</fieldset>
-							<div class="form-actions center">
-								<button value="Modifier" id="Modifier" name="Modifier" type="submit"  class="btn btn-sm btn-success">
-									<i class="icon-ok-sign bigger-120"></i>
+							<div class="border-t-1 brc-secondary-l1 bgc-secondary-l3 py-3 text-center mt-5">
+								<button value="modify" id="modify" name="modify" type="submit" class="btn btn-success">
+									<i class="fa fa-check"></i>
 									'.T_('Modifier').'
 								</button>
 								&nbsp;&nbsp;&nbsp;&nbsp;
-								<button name="cancel" value="cancel" type="submit" class="btn btn-sm btn-danger" >
-									<i class="icon-reply bigger-120"></i>
+								<button name="cancel" value="cancel" type="submit" class="btn btn-danger" >
+									<i class="fa fa-reply"></i>
 									'.T_('Retour').'
 								</button>
 							</div>
@@ -1133,7 +1068,7 @@ if (($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_
 		</div>
 	';
 }
-else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || ($_SESSION['profile_id']==0 || $_SESSION['profile_id']==4)))
+else if($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || ($_SESSION['profile_id']==0 || $_SESSION['profile_id']==4)))
 {
 	//remove '' to display
 	$_POST['firstname']=str_replace("'","",$_POST['firstname']);
@@ -1148,49 +1083,49 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 	
 	/////////////////////////////////////////////////////////////////////display add form///////////////////////////////////////////////////
 	echo '
-		<div class="col-sm-5">
-			<div class="widget-box">
-				<div class="widget-header">
-					<h4>'.T_('Ajout d\'un utilisateur').':</h4>
-					<span class="widget-toolbar">
-						<button title="'.T_('Ajouter un utilisateur').'" value="Ajouter" id="Ajouter" name="Ajouter" type="submit" form="1" class="btn btn-minier btn-success">
-							<i class="icon-save bigger-140"></i>
+		<div class="col-12 cards-container">
+			<div class="card">
+				<div class="card-header">
+					<h5 class="card-title">'.T_("Nouvel utilisateur").' :</h5>
+					<span class="card-toolbar">
+						<button title="'.T_('Ajouter un utilisateur').'" value="add" id="add" name="add" type="submit" form="1" class="btn btn-xs btn-success ml-1">
+							<i class="fa fa-save text-110"></i>
 						</button>
 					</span>
 				</div>
-				<div class="widget-body">
-					<div class="widget-main no-padding">
+				<div class="card-body">
+					<div class="card-main no-padding">
 						<form id="1" name="form" method="POST"  action="">
 							<fieldset>
 								<label for="firstname">'.T_('Prénom').' :</label>
-								<input name="firstname" type="text" value="'.$_POST['firstname'].'" />
+								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="firstname" type="text" value="'.$_POST['firstname'].'" />
 								<div class="space-4"></div>
 								<label  for="lastname">'.T_('Nom').' :</label>
-								<input name="lastname" type="text" value="'.$_POST['lastname'].'" />
+								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="lastname" type="text" value="'.$_POST['lastname'].'" />
 								<div class="space-4"></div>
 								<label for="login">'.T_('Identifiant').' :</label>
-								<input autocomplete="off" name="login" type="text" value="'.$_POST['login'].'" />
+								<input style="width:auto;" class="form-control form-control-sm d-inline-block" autocomplete="off" name="login" type="text" value="'.$_POST['login'].'" />
 								<div class="space-4"></div>
 								<label  for="password">'.T_('Mot de passe').' :</label>
-								<input autocomplete="new-password" name="password" type="password" value="'.$_POST['password'].'" />
+								<input style="width:auto;" class="form-control form-control-sm d-inline-block" autocomplete="new-password" name="password" type="password" value="'.$_POST['password'].'" />
 								<div class="space-4"></div>
 								<label  for="password2">'.T_('Confirmation mot de passe').' :</label>
-								<input autocomplete="new-password" name="password2" type="password" value="'.$_POST['password2'].'" />
+								<input style="width:auto;" class="form-control form-control-sm d-inline-block" autocomplete="new-password" name="password2" type="password" value="'.$_POST['password2'].'" />
 								<div class="space-4"></div>
 								<label for="mail">'.T_('Adresse mail').' :</label>
-								<input name="mail" type="text" value="'.$_POST['mail'].'" />
+								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="mail" type="text" value="'.$_POST['mail'].'" />
 								<div class="space-4"></div>
 								<label  for="phone">'.T_('Téléphone fixe').' :</label>
-								<input name="phone" type="text" value="'.$_POST['phone'].'" />
+								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="phone" type="text" value="'.$_POST['phone'].'" />
 								<div class="space-4"></div>
 								<label  for="mobile">'.T_('Téléphone portable').' :</label>
-								<input name="mobile" type="text" value="'.$_POST['mobile'].'" />
+								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="mobile" type="text" value="'.$_POST['mobile'].'" />
 								<div class="space-4"></div>
 								<label  for="fax">'.T_('Fax').' :</label>
-								<input name="fax" type="text" value="'.$_POST['fax'].'" />
+								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="fax" type="text" value="'.$_POST['fax'].'" />
 								<div class="space-4"></div>
 								<label for="service">'.T_('Service').' :</label>
-								<select  name="service" '; if ($rright['user_profil_service']==0) {echo 'disabled="disabled"';} echo '>
+								<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="service" '; if($rright['user_profil_service']==0) {echo 'disabled="disabled"';} echo '>
 									<option value=""></option>';
 									$qry = $db->prepare("SELECT `id`,`name` FROM `tservices` ORDER BY `name`");
 									$qry->execute();
@@ -1207,7 +1142,7 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 									echo '
 									<div class="space-4"></div>
 									<label for="agency">'.T_('Agence').' :</label>
-									<select  name="agency" '; if ($rright['user_profil_agency']==0) {echo 'disabled="disabled"';} echo '>
+									<select  name="agency" '; if($rright['user_profil_agency']==0) {echo 'disabled="disabled"';} echo '>
 										<option value=""></option>';
 										$qry = $db->prepare("SELECT `id`,`name` FROM `tagencies` ORDER BY `name`");
 										$qry->execute();
@@ -1223,51 +1158,51 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 								echo '
 								<div class="space-4"></div>
 								<label for="function">'.T_('Fonction').' :</label>
-								<input name="function" type="text" value="'.$_POST['function'].'" />
+								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="function" type="text" value="'.$_POST['function'].'" />
 								';
 								//display advanced user informations
-								if ($rparameters['user_advanced']!='0')
+								if($rparameters['user_advanced']!='0')
 								{
 								echo '
 									<div class="space-4"></div>
 									<label  for="company">'.T_('Société').' :</label>
-									<select name="company" '; if ($rright['user_profil_company']==0) {echo 'disabled="disabled"';} echo '>
+									<select style="width:150px;" class="chosen-select" data-placeholder=" " name="company" '; if($rright['user_profil_company']==0) {echo 'disabled="disabled"';} echo '>
     									<option value=""></option>';
 										$qry = $db->prepare("SELECT `id`,`name` FROM `tcompany` ORDER BY `name`");
 										$qry->execute();
     									while ($row = $qry->fetch()) 
     									{
-    										if ($user1['company']==$row['id']) echo "<option selected value=\"$row[id]\">$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
+    										if($user1['company']==$row['id']) echo "<option selected value=\"$row[id]\">$row[name]</option>"; else echo "<option value=\"$row[id]\">$row[name]</option>";
     									} 
 										$qry->closeCursor(); 
     									echo '
 							    	</select>
 									
-									<div class="space-4"></div>
+									<div class="space-4 pt-1"></div>
 									<label for="address1">'.T_('Adresse').' 1 :</label>
-									<input name="address1" type="text" value="" />
+									<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="address1" type="text" value="" />
 									<div class="space-4"></div>
 									<label for="address2">'.T_('Adresse').' 2 :</label>
-									<input name="address2" type="text" value="" />
+									<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="address2" type="text" value="" />
 									<div class="space-4"></div>
 									<label for="city">'.T_('Ville').' :</label>
-									<input name="city" type="text" value="" />
+									<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="city" type="text" value="" />
 									<div class="space-4"></div>
 									<label for="zip">'.T_('Code Postal').' :</label>
-									<input name="zip" type="text" value="" />
+									<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="zip" type="text" value="" />
 									<div class="space-4"></div>
 									<label for="custom1">'.T_('Champ personnalisé').' 1 :</label>
-									<input name="custom1" type="text" value="" />
+									<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="custom1" type="text" value="" />
 									<div class="space-4"></div>
 									<label for="custom2">'.T_('Champ personnalisé').' 2 :</label>
-									<input name="custom2" type="text" value="" />
+									<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="custom2" type="text" value="" />
 								';
 								}
 								//display theme selection
 								echo '
 								<hr />
-								<label class="control-label bolder blue" for="skin">'.T_('Thème').' :</label>
-								<select name="skin">
+								<label class="control-label bolder text-primary-m2" for="skin">'.T_('Thème').' :</label>
+								<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="skin">
 									<option style="background-color:#438EB9;" value="">'.T_('Bleu (Défaut)').'</option>
 									<option style="background-color:#222A2D;" value="skin-1">'.T_('Noir').'</option>
 									<option style="background-color:#C6487E;" value="skin-2">'.T_('Rose').'</option>
@@ -1275,11 +1210,11 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 								</select>
 								';
 								// Display profile list
-								if ($rright['admin_user_profile']!='0')
+								if($rright['admin_user_profile']!='0')
 								{
 									echo '
 									<hr />
-									<label class="control-label bolder blue" for="profile">'.T_('Profil').' :</label>
+									<label class="control-label bolder text-primary-m2" for="profile">'.T_('Profil').' :</label>
 									<div class="controls">
 										<div class="radio">
 											<label>
@@ -1308,11 +1243,11 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 										</div>
 									</div>
 									<hr />
-									<label class="control-label bolder blue" for="chgpwd">'.T_('Forcer le changement du mot de passe').' :</label>
+									<label class="control-label bolder text-primary-m2" for="chgpwd">'.T_('Forcer le changement du mot de passe').' :</label>
 									<div class="controls">
 										<label>
-											<input type="radio" class="ace" disable="disable" name="chgpwd" value="1"> <span class="lbl"> '.T_('Oui').' </span>
-											<input type="radio" class="ace" name="chgpwd" checked value="0"> <span class="lbl"> '.T_('Non').' </span>
+											<input type="radio" class="ace" disable="disable" name="chgpwd" checked value="1"> <span class="lbl"> '.T_('Oui').' </span>
+											<input type="radio" class="ace" name="chgpwd" value="0"> <span class="lbl"> '.T_('Non').' </span>
 										</label>
 									</div>
 									';
@@ -1322,11 +1257,11 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 									echo '<input type="hidden" name="profile" value="">';
 								}
 								//display personal view
-								if ($rright['admin_user_view']!='0')
+								if($rright['admin_user_view']!='0')
 								{
 									echo '
 										<hr />
-										<label class="control-label bolder blue" for="view">'.T_('Vues personnelles').' :<i> ('.T_('associe des catégories à l\'utilisateur').')</i></label>
+										<label class="control-label text-primary-m2" for="view">'.T_('Vues personnelles').' : <i class="fa fa-question-circle text-primary-m2" title="'.T_("associe des catégories à l'utilisateur").'"></i></label>
 										<div class="controls">
 											';
 											//check if connected user have view
@@ -1334,7 +1269,7 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 											$qry->execute(array('uid' => $_GET['userid']));
 											$row=$qry->fetch();
 											$qry->closeCursor(); 
-											if ($row[0]!='')
+											if(!empty($row[0]))
 											{
 												//display actives views
 												$qry = $db->prepare("SELECT * FROM `tviews` WHERE uid=:uid ORDER BY uid");
@@ -1346,7 +1281,7 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 													$cname=$qry2->fetch();
 													$qry2->closeCursor(); 
 													
-													if ($row['subcat']!=0)
+													if($row['subcat']!=0)
 													{
 														$qry2 = $db->prepare("SELECT `name` FROM `tsubcat` WHERE id=:id");
 														$qry2->execute(array('id' => $row['subcat']));
@@ -1363,21 +1298,21 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 											//display add view form
 											echo '
 												'.T_('Catégorie').':
-												<select name="category" onchange="submit()" style="width:100px" >
+												<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="category" onchange="submit()" style="width:100px" >
 													<option value="%"></option>';
 													$qry = $db->prepare("SELECT `id`,`name` FROM `tcategory` ORDER BY name");
 													$qry->execute();
 													while ($row = $qry->fetch()) 
 													{
 														echo "<option value=\"$row[id]\">$row[name]</option>";
-														if ($_POST['category']==$row['id']) echo "<option selected value=\"$row[id]\">$row[name]</option>";
+														if($_POST['category']==$row['id']) echo "<option selected value=\"$row[id]\">$row[name]</option>";
 													} 
 													$qry->closeCursor();
 													echo '
 												</select>
 												<br />
 												'.T_('Sous-catégorie').':
-												<select name="subcat" onchange="submit()" style="width:90px">
+												<select style="width:auto;" class="form-control form-control-sm d-inline-block mt-2" name="subcat" onchange="submit()" style="width:90px">
 													<option value="%"></option>';
 													if($_POST['category']!='%')
 													{
@@ -1392,25 +1327,24 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 													while ($row = $qry->fetch())
 													{
 														echo "<option value=\"$row[id]\">$row[name]</option>";
-														if ($_POST['subcat']==$row['id']) echo "<option selected value=\"$row[id]\">$row[name]</option>";
+														if($_POST['subcat']==$row['id']) echo "<option selected value=\"$row[id]\">$row[name]</option>";
 													} 
 													$qry->closeCursor();
 													echo '
 												</select>
 												<br />
-												'.T_('Nom').': <input autocomplete="off" name="viewname" type="" value="'.$_POST['name'].'" size="20" />
+												'.T_('Nom').': <input style="width:auto;" class="form-control form-control-sm d-inline-block mt-2" autocomplete="off" name="viewname" type="" value="'.$_POST['name'].'" size="20" />
 										</div>';
 								}
 								echo'
 							</fieldset>
-							<div class="form-actions center">
-								<button value="Ajouter" id="Ajouter" name="Ajouter" type="submit" class="btn btn-sm btn-success">
-									<i class="icon-ok-sign bigger-120"></i>
+							<div class="border-t-1 brc-secondary-l1 bgc-secondary-l3 py-3 text-center mt-5">
+								<button value="add" id="add" name="add" type="submit" class="btn btn-success mr-2">
+									<i class="fa fa-check"></i>
 									'.T_('Ajouter').'
 								</button>
-								&nbsp;&nbsp;&nbsp;&nbsp;
-								<button name="cancel" value="cancel" type="submit" class="btn btn-sm btn-danger" >
-									<i class="icon-reply bigger-120"></i>
+								<button name="cancel" value="cancel" type="submit" class="btn btn-danger" >
+									<i class="fa fa-reply"></i>
 									'.T_('Retour').'
 								</button>
 							</div>
@@ -1421,10 +1355,91 @@ else if ($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || (
 		</div>
 	';
 }
-elseif ($_GET['action']=="delete" && $rright['admin']!='0')
+elseif($_GET['action']=="disable" && $rright['admin'])
 {
-	$qry=$db->prepare("UPDATE `tusers` SET `disable`=:disable WHERE `id`=:id");
-	$qry->execute(array('disable' => 1,'id' => $_GET['userid']));
+	$qry=$db->prepare("UPDATE `tusers` SET `disable`='1' WHERE `id`=:id");
+	$qry->execute(array('id' => $_GET['userid']));
+	
+	if($rparameters['log'])
+	{
+		if(is_numeric($_GET['userid']))
+		{
+			$qry=$db->prepare("SELECT `login` FROM `tusers` WHERE id=:id");
+			$qry->execute(array('id' => $_GET['userid']));
+			$row=$qry->fetch();
+			$qry->closeCursor();
+			
+			require_once('core/functions.php');
+			logit('security', 'User '.$row['login'].' disabled',$_SESSION['user_id']);
+		}
+	}
+	
+	//home page redirection
+	$www = "./index.php?page=admin&subpage=user";
+			echo '<script language="Javascript">
+			<!--
+			document.location.replace("'.$www.'");
+			// -->
+			</script>';
+}elseif($_GET['action']=="delete" && $rright['admin'] && $_GET['userid'])
+{
+	//get id of delete_user
+	$qry=$db->prepare("SELECT `id` FROM `tusers` WHERE login=:login");
+	$qry->execute(array('login' => 'delete_user_gs'));
+	$delete_user=$qry->fetch();
+	$qry->closeCursor();
+	$delete_user=$delete_user[0];
+
+
+	//update ticket
+	$qry=$db->prepare("UPDATE `tincidents` SET `user`=:delete_user WHERE `user`=:user");
+	$qry->execute(array('delete_user' => $delete_user,'user' => $_GET['userid']));
+	$qry=$db->prepare("UPDATE `tincidents` SET `technician`=:delete_user WHERE `technician`=:technician");
+	$qry->execute(array('delete_user' => $delete_user,'technician' => $_GET['userid']));
+	$qry=$db->prepare("UPDATE `tincidents` SET `creator`=:delete_user WHERE `creator`=:creator");
+	$qry->execute(array('delete_user' => $delete_user,'creator' => $_GET['userid']));
+	//update threads
+	$qry=$db->prepare("UPDATE `tthreads` SET `author`=:delete_user WHERE `author`=:author");
+	$qry->execute(array('delete_user' => $delete_user,'author' => $_GET['userid']));
+	$qry=$db->prepare("UPDATE `tthreads` SET `tech1`=:delete_user WHERE `tech1`=:tech1");
+	$qry->execute(array('delete_user' => $delete_user,'tech1' => $_GET['userid']));
+	$qry=$db->prepare("UPDATE `tthreads` SET `tech2`=:delete_user WHERE `tech2`=:tech2");
+	$qry->execute(array('delete_user' => $delete_user,'tech2' => $_GET['userid']));
+	$qry=$db->prepare("UPDATE `tthreads` SET `user`=:delete_user WHERE `user`=:user");
+	$qry->execute(array('delete_user' => $delete_user,'user' => $_GET['userid']));
+	//update asset
+	$qry=$db->prepare("UPDATE `tassets` SET `user`=:delete_user WHERE `user`=:user");
+	$qry->execute(array('delete_user' => $delete_user,'user' => $_GET['userid']));
+	$qry=$db->prepare("UPDATE `tassets` SET `technician`=:delete_user WHERE `technician`=:technician");
+	$qry->execute(array('delete_user' => $delete_user,'technician' => $_GET['userid']));
+	//remove calendar
+	$qry=$db->prepare("DELETE FROM `tevents` WHERE `technician`=:technician");
+	$qry->execute(array('technician' => $_GET['userid']));
+	//remove groups
+	$qry=$db->prepare("DELETE FROM `tgroups_assoc` WHERE `user`=:user");
+	$qry->execute(array('user' => $_GET['userid']));
+	//remove token
+	$qry=$db->prepare("DELETE FROM `ttoken` WHERE `user_id`=:user_id");
+	$qry->execute(array('user_id' => $_GET['userid']));
+	//remove agencies
+	$qry=$db->prepare("DELETE FROM `tusers_agencies` WHERE `user_id`=:user_id");
+	$qry->execute(array('user_id' => $_GET['userid']));
+	//remove services
+	$qry=$db->prepare("DELETE FROM `tusers_services` WHERE `user_id`=:user_id");
+	$qry->execute(array('user_id' => $_GET['userid']));
+	//remove tech assoc
+	$qry=$db->prepare("DELETE FROM `tusers_tech` WHERE `user`=:user");
+	$qry->execute(array('user' => $_GET['userid']));
+	$qry=$db->prepare("DELETE FROM `tusers_tech` WHERE `tech`=:tech");
+	$qry->execute(array('tech' => $_GET['userid']));
+	//remove view 
+	$qry=$db->prepare("DELETE FROM `tviews` WHERE `uid`=:uid");
+	$qry->execute(array('uid' => $_GET['userid']));
+	//remove user 
+	$qry=$db->prepare("DELETE FROM `tusers` WHERE `id`=:id");
+	$qry->execute(array('id' => $_GET['userid']));
+	
+	
 	//home page redirection
 	$www = "./index.php?page=admin&subpage=user";
 			echo '<script language="Javascript">
@@ -1433,13 +1448,10 @@ elseif ($_GET['action']=="delete" && $rright['admin']!='0')
 			// -->
 			</script>';
 }
-elseif ($_GET['action']=="disable" && $rright['admin']!='0')
+elseif($_GET['action']=="enable" && $rright['admin'])
 {
-	$qry=$db->prepare("UPDATE `tusers` SET `disable`=:disable WHERE `id`=:id");
-	$qry->execute(array(
-		'disable' => 1,
-		'id' => $_GET['userid']
-		));
+	$qry=$db->prepare("UPDATE `tusers` SET `disable`='0' WHERE `id`=:id");
+	$qry->execute(array('id' => $_GET['userid']));
 	//home page redirection
 	$www = "./index.php?page=admin&subpage=user";
 			echo '<script language="Javascript">
@@ -1448,37 +1460,45 @@ elseif ($_GET['action']=="disable" && $rright['admin']!='0')
 			// -->
 			</script>';
 }
-elseif ($_GET['action']=="enable" && $rright['admin']!='0')
-{
-	$qry=$db->prepare("UPDATE `tusers` SET `disable`=:disable WHERE `id`=:id");
-	$qry->execute(array('disable' => 0,'id' => $_GET['userid']));
-	//home page redirection
-	$www = "./index.php?page=admin&subpage=user";
-			echo '<script language="Javascript">
-			<!--
-			document.location.replace("'.$www.'");
-			// -->
-			</script>';
-}
-elseif ($_GET['ldap']=="1")
+elseif($_GET['ldap']=="1")
 {
 	include('./core/ldap.php');
-} elseif ($_GET['ldap']=="agencies")
+} elseif($_GET['ldap']=="agencies")
 {
 	include('./core/ldap_agencies.php');
-} elseif ($_GET['ldap']=="services")
+} elseif($_GET['ldap']=="services")
 {
 	include('./core/ldap_services.php');
 }
 //display security warning for user who want access to edit another user profile
-elseif (($_GET['action']=='edit') && ($_GET['userid']!='') && ($_SESSION['profile_id']!=0 || $_SESSION['profile_id']!=4) && ($_GET['userid']!=$_SESSION['user_id']))
+elseif(($_GET['action']=='edit') && ($_GET['userid']!='') && ($_SESSION['profile_id']!=0 || $_SESSION['profile_id']!=4) && ($_GET['userid']!=$_SESSION['user_id']))
 {
-   echo '<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_("Vous n'avez pas le droit d'accéder au profil d'un autre utilisateur").'.</div>';
+   echo '
+	<div role="alert" class="alert alert-lg bgc-danger-l3 border-0 border-l-4 brc-danger-m1 mt-4 mb-3 pr-3 d-flex">
+		<div class="flex-grow-1">
+			<i class="fas fa-times mr-1 text-120 text-danger-m1"></i>
+			<strong class="text-danger">'.T_('Erreur').' : '.T_("Vous n'avez pas le droit d'accéder au profil d'un autre utilisateur").'.</strong>
+		</div>
+		<button type="button" class="close align-self-start" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true"><i class="fa fa-times text-80"></i></span>
+		</button>
+	</div>
+';
 }
 //display security warning for user who want access to add another user profile
-elseif (($_GET['action']=='add') && ($_SESSION['profile_id']!=0 || $_SESSION['profile_id']!=4) && ($_GET['userid']!=$_SESSION['user_id']))
+elseif(($_GET['action']=='add') && ($_SESSION['profile_id']!=0 || $_SESSION['profile_id']!=4) && ($_GET['userid']!=$_SESSION['user_id']))
 {
-   echo '<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas le droit d\'ajouter des utilisateurs').'.</div>';
+	echo '
+	<div role="alert" class="alert alert-lg bgc-danger-l3 border-0 border-l-4 brc-danger-m1 mt-4 mb-3 pr-3 d-flex">
+		<div class="flex-grow-1">
+			<i class="fas fa-times mr-1 text-120 text-danger-m1"></i>
+			<strong class="text-danger">'.T_('Erreur').' : '.T_("Vous n'avez pas le droit d'ajouter des utilisateurs").'.</strong>
+		</div>
+		<button type="button" class="close align-self-start" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true"><i class="fa fa-times text-80"></i></span>
+		</button>
+	</div>
+	';
 }
 
 //else display users list
@@ -1488,21 +1508,21 @@ else
 	echo '
 		<div class="sidebar-shortcuts-large" id="sidebar-shortcuts-large">
 			<p>
-				<button onclick=\'window.location.href="index.php?page=admin&subpage=user&action=add";\' class="btn btn-sm btn-success">
-					<i class="icon-plus"></i> '.T_('Ajouter un utilisateur').'
+				<button onclick=\'window.location.href="index.php?page=admin&subpage=user&action=add";\' class="btn btn-success">
+					<i class="fa fa-plus"></i> '.T_('Ajouter un utilisateur').'
 				</button>
 				';
 				if($_GET['disable']==0)
 				{
 			    	echo '
-    				<button onclick=\'window.location.href="index.php?page=admin&subpage=user&disable=1";\' class="btn btn-sm btn-danger">
-    					<i class="icon-ban-circle"></i> '.T_('Afficher les utilisateurs désactivés').'
+    				<button onclick=\'window.location.href="index.php?page=admin&subpage=user&disable=1";\' class="btn btn-danger">
+    					<i class="fa fa-ban"></i> '.T_('Afficher les utilisateurs désactivés').'
     				</button>
 			    	';
 				} else {
 			    echo '
-    				<button onclick=\'window.location.href="index.php?page=admin&subpage=user&disable=0";\' class="btn btn-sm btn-success">
-    					<i class="icon-ok"></i> '.T_('Afficher les utilisateurs activés').'
+    				<button onclick=\'window.location.href="index.php?page=admin&subpage=user&disable=0";\' class="btn btn-success">
+    					<i class="fa fa-check"></i> '.T_('Afficher les utilisateurs activés').'
     				</button>
 			    	';  
 				}
@@ -1510,24 +1530,24 @@ else
 		if($rparameters['ldap']==1 && $rparameters['ldap_agency']==0)
 		{
 			echo '
-				<button onclick=\'window.location.href="index.php?page=admin&amp;subpage=user&amp;ldap=1";\' class="btn btn-sm btn-info">
-					<i class="icon-refresh"></i> '.T_('Synchronisation LDAP').'
+				<button onclick=\'window.location.href="index.php?page=admin&amp;subpage=user&amp;ldap=1";\' class="btn btn-info">
+					<i class="fa fa-sync"></i> '.T_('Synchronisation LDAP').'
 				</button>
 			';
 		}
 		if($rparameters['ldap']==1 && $rparameters['ldap_agency']==1)
 		{
 			echo '
-				<button onclick=\'window.location.href="index.php?page=admin&amp;subpage=user&amp;ldap=agencies";\' class="btn btn-sm btn-info">
-					<i class="icon-refresh"></i> '.T_('Synchronisation des agences LDAP').'
+				<button onclick=\'window.location.href="index.php?page=admin&amp;subpage=user&amp;ldap=agencies";\' class="btn btn-info">
+					<i class="fa fa-sync"></i> '.T_('Synchronisation des agences LDAP').'
 				</button>
 			';
 		}
 		if($rparameters['ldap']==1 && $rparameters['ldap_service']==1)
 		{
 			echo '
-				<button onclick=\'window.location.href="index.php?page=admin&amp;subpage=user&amp;ldap=services";\' class="btn btn-sm btn-info">
-					<i class="icon-refresh"></i> '.T_('Synchronisation des services LDAP').'
+				<button onclick=\'window.location.href="index.php?page=admin&amp;subpage=user&amp;ldap=services";\' class="btn  btn-info">
+					<i class="fa fa-sync"></i> '.T_('Synchronisation des services LDAP').'
 				</button>
 			';
 		}
@@ -1539,300 +1559,298 @@ else
 	//Display user table
 	if($_GET['way']=='DESC') $nextway='ASC'; else $nextway='DESC'; //find next way
 	echo '
-		<table id="sample-table-1" class="table table-striped table-bordered table-hover">
-			<thead>
-				<tr>
-					<th>
-					    <a href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=login&way='.$nextway.'">
-					        <i class="icon-user"></i> '.T_('Identifiant').'&nbsp;&nbsp;
-					        ';
-					            if($_GET['order']=='login')
-					            {
-								   if($_GET['way']=='ASC')  echo '<i class="icon-sort-up"></i>';
-								   if($_GET['way']=='DESC') echo '<i class="icon-sort-down"></i>';
-					            }
-					        echo '
-			            </a>
-					</th>
-					<th>
-					    <a href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=lastname,firstname&way='.$nextway.'">
-					        <i class="icon-male"></i> '.T_('Nom Prénom').'&nbsp;&nbsp;
-					        ';
-					            if($_GET['order']=='lastname,firstname')
-					            {
-								   if($_GET['way']=='ASC')  echo '<i class="icon-sort-up"></i>';
-								   if($_GET['way']=='DESC') echo '<i class="icon-sort-down"></i>';
-					            }
-					        echo '
-			            </a>
-					</th>
-					';
-					if ($rparameters['user_advanced']==1)
-					{
-						echo '
+		<div class="table-responsive">
+			<table id="sample-table-1" class="table table-striped table-bordered table-hover">
+				<thead>
+					<tr>
 						<th>
-							<a href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=company&way='.$nextway.'">
-								<i class="icon-building "></i> '.T_('Société').'&nbsp;&nbsp;
+							<a class="text-primary-m2" href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=login&way='.$nextway.'">
+								<i class="fa fa-user"></i> '.T_('Identifiant').'&nbsp;&nbsp;
 								';
-									if($_GET['order']=='company')
+									if($_GET['order']=='login')
 									{
-									   if($_GET['way']=='ASC')  echo '<i class="icon-sort-up"></i>';
-									   if($_GET['way']=='DESC') echo '<i class="icon-sort-down"></i>';
+									   if($_GET['way']=='ASC')  echo '<i class="fa fa-sort-up"></i>';
+									   if($_GET['way']=='DESC') echo '<i class="fa fa-sort-down"></i>';
+									}
+								echo '
+							</a>
+						</th>
+						<th>
+							<a class="text-primary-m2" href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=lastname&way='.$nextway.'">
+								<i class="fa fa-male"></i> '.T_('Nom Prénom').'&nbsp;&nbsp;
+								';
+									if($_GET['order']=='lastname')
+									{
+									   if($_GET['way']=='ASC')  echo '<i class="fa fa-sort-up"></i>';
+									   if($_GET['way']=='DESC') echo '<i class="fa fa-sort-down"></i>';
 									}
 								echo '
 							</a>
 						</th>
 						';
-					}
-					if ($rparameters['user_agency']==1)
-					{
-						echo '
-						<th>
-							<a href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=tagencies.name&way='.$nextway.'">
-								<i class="icon-globe "></i> '.T_('Agences').'&nbsp;&nbsp;
-								';
-									if($_GET['order']=='tagencies.name')
-									{
-									   if($_GET['way']=='ASC')  echo '<i class="icon-sort-up"></i>';
-									   if($_GET['way']=='DESC') echo '<i class="icon-sort-down"></i>';
-									}
-								echo '
-							</a>
-						</th>
-						';
-					}
-					echo '
-					<th>
-					    <a href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=tservices.name&way='.$nextway.'">
-					        <i class="icon-group"></i> '.T_('Services').'&nbsp;&nbsp;
-					        ';
-					            if($_GET['order']=='tservices.name')
-					            {
-								   if($_GET['way']=='ASC')  echo '<i class="icon-sort-up"></i>';
-								   if($_GET['way']=='DESC') echo '<i class="icon-sort-down"></i>';
-					            }
-					        echo '
-					</th>
-					<th>
-					    <a href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=tusers.mail&way='.$nextway.'">
-					        <i class="icon-envelope-alt"></i> '.T_('Adresse Mail').'&nbsp;&nbsp;
-					        ';
-					            if($_GET['order']=='mail')
-					            {
-								   if($_GET['way']=='ASC')  echo '<i class="icon-sort-up"></i>';
-								   if($_GET['way']=='DESC') echo '<i class="icon-sort-down"></i>';
-					            }
-					        echo '
-					</th>
-					<th>
-					    <a href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=phone&way='.$nextway.'">
-					        <i class="icon-phone"></i> '.T_('Téléphone').'&nbsp;&nbsp;
-					        ';
-					            if($_GET['order']=='phone')
-					            {
-								   if($_GET['way']=='ASC')  echo '<i class="icon-sort-up"></i>';
-								   if($_GET['way']=='DESC') echo '<i class="icon-sort-down"></i>';
-					            }
-					        echo '
-			            </a>
-					</th>
-						<th>
-					    <a href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=profile&way='.$nextway.'">
-					        <i class="icon-lock"></i> '.T_('Profil').'&nbsp;&nbsp;
-					        ';
-					            if($_GET['order']=='profile')
-					            {
-								   if($_GET['way']=='ASC')  echo '<i class="icon-sort-up"></i>';
-								   if($_GET['way']=='DESC') echo '<i class="icon-sort-down"></i>';
-					            }
-					        echo '
-			            </a>
-					</th>
-					<th>
-					    <a href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=last_login&way='.$nextway.'">
-					        <i class="icon-key"></i> '.T_('Dernière connexion').'&nbsp;&nbsp;
-					        ';
-					            if($_GET['order']=='last_login')
-					            {
-								   if($_GET['way']=='ASC')  echo '<i class="icon-sort-up"></i>';
-								   if($_GET['way']=='DESC') echo '<i class="icon-sort-down"></i>';
-					            }
-					        echo '
-			            </a>
-					</th>
-					<th>
-					    <a href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=lastname&way='.$nextway.'">
-					        <i class="icon-play"></i> '.T_('Actions').'&nbsp;&nbsp;
-			            </a>
-					</th>
-				</tr>
-			</thead>
-			<tbody>';
-				//build query
-				$from='tusers';
-				$where='';
-				if($rparameters['user_agency']) {
-					$join="LEFT OUTER JOIN tusers_agencies ON tusers_agencies.user_id=tusers.id LEFT OUTER JOIN tagencies ON tagencies.id=tusers_agencies.agency_id ";
-					
-				} else {$join="";}
-				$join.="LEFT OUTER JOIN tusers_services ON tusers_services.user_id=tusers.id LEFT OUTER JOIN tservices ON tservices.id=tusers_services.service_id ";
-				$where.="
-				profile LIKE :profile AND
-				tusers.id!=:id AND
-				tusers.disable=:disable AND
-				(
-				";
-				if($rparameters['user_agency']) {$where.="tagencies.name LIKE :agency_name OR";}
-				$where.="
-    				tusers.lastname LIKE :lastname OR
-    				tusers.firstname LIKE :firstname OR
-    				tusers.mail LIKE :mail OR
-    				tusers.phone LIKE :phone OR
-    				tusers.mobile LIKE :mobile OR
-    				tusers.login LIKE :login OR
-    				tservices.name LIKE :service_name
-				)
-				ORDER BY $db_order $db_way
-				LIMIT $db_cursor,$maxline ";
-				if ($rparameters['debug']==1) {
-					echo "
-					<b><u>DEBUG MODE:</u></b><br />
-					SELECT distinct tusers.* 
-					FROM $from
-					$join
-					WHERE $where
-					";
-				}
-				//build each line
-				$qry = $db->prepare("
-					SELECT distinct tusers.* 
-					FROM $from
-					$join
-					WHERE $where
-					");
-				
-				if($rparameters['user_agency']) //agency case add name in searchengine
-				{
-					$qry->execute(array(
-						'profile' => $_GET['profileid'],
-						'id' => 0,
-						'disable' => $_GET['disable'],
-						'agency_name' => "%$userkeywords%",
-						'lastname' => "%$userkeywords%",
-						'firstname' => "%$userkeywords%",
-						'mail' => "%$userkeywords%",
-						'phone' => "%$userkeywords%",
-						'mobile' => "%$userkeywords%",
-						'login' => "%$userkeywords%",
-						'service_name' => "%$userkeywords%",
-					));
-				} else {
-					$qry->execute(array(
-						'profile' => $_GET['profileid'],
-						'id' => 0,
-						'disable' => $_GET['disable'],
-						'lastname' => "%$userkeywords%",
-						'firstname' => "%$userkeywords%",
-						'mail' => "%$userkeywords%",
-						'phone' => "%$userkeywords%",
-						'mobile' => "%$userkeywords%",
-						'login' => "%$userkeywords%",
-						'service_name' => "%$userkeywords%",
-					));
-				}
-				
-				while ($row = $qry->fetch()) 
-				{
-					//find profile name
-					$qry2 = $db->prepare("SELECT `name` FROM `tprofiles` WHERE level=:level");
-					$qry2->execute(array('level' => $row['profile']));
-					$r=$qry2->fetch();
-					$qry2->closeCursor();
-					//display last login if exist
-					if($row['last_login']=='0000-00-00 00:00:00') $lastlogin=''; else $lastlogin=$row['last_login'];
-					//display line
-					echo '
-						<tr>
-							<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.$row['login'].'</td>
-							<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.$row['lastname'].' '.$row['firstname'].' </td>
-							';
-							if ($rparameters['user_advanced']==1) {
-								//get company name
-								$qry2 = $db->prepare("SELECT `name` FROM `tcompany` WHERE id=:id");
-								$qry2->execute(array('id' => $row['company']));
-								$row2=$qry2->fetch();
-								$qry2->closeCursor();
-								echo '<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.$row2['name'].'</td>';
-							}
-							if ($rparameters['user_agency']==1) {
-								//get agencies name
-								echo '<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >';
-								$qry2 = $db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE user_id=:user_id");
-								$qry2->execute(array('user_id' => $row['id']));
-								while ($row2=$qry2->fetch())
-								{
-									$qry3 = $db->prepare("SELECT `name` FROM `tagencies` WHERE id=:id");
-									$qry3->execute(array('id' => $row2['agency_id']));
-									$row3 = $qry3->fetch();
-									echo "$row3[name]<br />";
-									$qry3->closecursor();
-								}
-								$qry2->closecursor();
-								echo '</td>';
-							}
+						if($rparameters['user_advanced']==1)
+						{
 							echo '
-							<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >
+							<th style="min-width:100px;">
+								<a class="text-primary-m2" href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=company&way='.$nextway.'">
+									<i class="fa fa-building "></i> '.T_('Société').'&nbsp;&nbsp;
+									';
+										if($_GET['order']=='company')
+										{
+										   if($_GET['way']=='ASC')  echo '<i class="fa fa-sort-up"></i>';
+										   if($_GET['way']=='DESC') echo '<i class="fa fa-sort-down"></i>';
+										}
+									echo '
+								</a>
+							</th>
 							';
-								$qry2 = $db->prepare("SELECT `service_id` FROM `tusers_services` WHERE user_id=:user_id");
-								$qry2->execute(array('user_id' => $row['id']));
-								while ($row2=$qry2->fetch())
-								{
-									$qry3 = $db->prepare("SELECT `name` FROM `tservices` WHERE id=:id");
-									$qry3->execute(array('id' => $row2['service_id']));
-									$row3 = $qry3->fetch();
-									echo "$row3[name]<br />";
-									$qry3->closecursor();
+						}
+						if($rparameters['user_agency']==1)
+						{
+							echo '
+							<th style="min-width:110px;">
+								<a class="text-primary-m2" href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=tagencies.name&way='.$nextway.'">
+									<i class="fa fa-globe "></i> '.T_('Agences').'&nbsp;&nbsp;
+									';
+										if($_GET['order']=='tagencies.name')
+										{
+										   if($_GET['way']=='ASC')  echo '<i class="fa fa-sort-up"></i>';
+										   if($_GET['way']=='DESC') echo '<i class="fa fa-sort-down"></i>';
+										}
+									echo '
+								</a>
+							</th>
+							';
+						}
+						echo '
+						<th style="min-width:120px;">
+							<a class="text-primary-m2"href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=tservices.name&way='.$nextway.'">
+								<i class="fa fa-users"></i> '.T_('Services').'&nbsp;&nbsp;
+								';
+									if($_GET['order']=='tservices.name')
+									{
+									   if($_GET['way']=='ASC')  echo '<i class="fa fa-sort-up"></i>';
+									   if($_GET['way']=='DESC') echo '<i class="fa fa-sort-down"></i>';
+									}
+								echo '
+						</th>
+						<th>
+							<a class="text-primary-m2" href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=tusers.mail&way='.$nextway.'">
+								<i class="fa fa-envelope"></i> '.T_('Adresse Mail').'&nbsp;&nbsp;
+								';
+									if($_GET['order']=='mail')
+									{
+									   if($_GET['way']=='ASC')  echo '<i class="fa fa-sort-up"></i>';
+									   if($_GET['way']=='DESC') echo '<i class="fa fa-sort-down"></i>';
+									}
+								echo '
+						</th>
+						<th style="min-width:130px;">
+							<a class="text-primary-m2" href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=phone&way='.$nextway.'">
+								<i class="fa fa-phone"></i> '.T_('Téléphone').'&nbsp;&nbsp;
+								';
+									if($_GET['order']=='phone')
+									{
+									   if($_GET['way']=='ASC')  echo '<i class="fa fa-sort-up"></i>';
+									   if($_GET['way']=='DESC') echo '<i class="fa fa-sort-down"></i>';
+									}
+								echo '
+							</a>
+						</th>
+							<th>
+							<a class="text-primary-m2" href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=profile&way='.$nextway.'">
+								<i class="fa fa-lock"></i> '.T_('Profil').'&nbsp;&nbsp;
+								';
+									if($_GET['order']=='profile')
+									{
+									   if($_GET['way']=='ASC')  echo '<i class="fa fa-sort-up"></i>';
+									   if($_GET['way']=='DESC') echo '<i class="fa fa-sort-down"></i>';
+									}
+								echo '
+							</a>
+						</th>
+						<th style="min-width:200px;">
+							<a class="text-primary-m2" href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=last_login&way='.$nextway.'">
+								<i class="fa fa-key"></i> '.T_('Dernière connexion').'&nbsp;&nbsp;
+								';
+									if($_GET['order']=='last_login')
+									{
+									   if($_GET['way']=='ASC')  echo '<i class="fa fa-sort-up"></i>';
+									   if($_GET['way']=='DESC') echo '<i class="fa fa-sort-down"></i>';
+									}
+								echo '
+							</a>
+						</th>
+						<th style="min-width:110px;">
+							<a class="text-primary-m2" href="index.php?page=admin&subpage=user&disable='.$_GET['disable'].'&order=lastname&way='.$nextway.'">
+								<i class="fa fa-play"></i> '.T_('Actions').'&nbsp;&nbsp;
+							</a>
+						</th>
+					</tr>
+				</thead>
+				<tbody>';
+					//build query
+					$from='tusers';
+					$where='';
+					if($rparameters['user_agency']) {
+						$join="LEFT OUTER JOIN tusers_agencies ON tusers_agencies.user_id=tusers.id LEFT OUTER JOIN tagencies ON tagencies.id=tusers_agencies.agency_id ";
+						
+					} else {$join="";}
+					$join.="LEFT OUTER JOIN tusers_services ON tusers_services.user_id=tusers.id LEFT OUTER JOIN tservices ON tservices.id=tusers_services.service_id ";
+					$where.="
+					profile LIKE :profile AND
+					tusers.id!=:id AND
+					tusers.disable=:disable AND
+					tusers.login!='delete_user_gs' AND
+					(
+					";
+					if($rparameters['user_agency']) {$where.="tagencies.name LIKE :agency_name OR";}
+					$where.="
+						tusers.lastname LIKE :lastname OR
+						tusers.firstname LIKE :firstname OR
+						tusers.mail LIKE :mail OR
+						tusers.phone LIKE :phone OR
+						tusers.mobile LIKE :mobile OR
+						tusers.login LIKE :login OR
+						tservices.name LIKE :service_name
+					)
+					ORDER BY $db_order $db_way
+					LIMIT $db_cursor,$maxline ";
+					if($rparameters['debug']==1) {
+						echo "
+						<b><u>DEBUG MODE:</u></b><br />
+						SELECT distinct tusers.* 
+						FROM $from
+						$join
+						WHERE $where
+						";
+					}
+					//build each line
+					$qry = $db->prepare("
+						SELECT distinct tusers.* 
+						FROM $from
+						$join
+						WHERE $where
+						");
+					
+					if($rparameters['user_agency']) //agency case add name in searchengine
+					{
+						$qry->execute(array(
+							'profile' => $_GET['profileid'],
+							'id' => 0,
+							'disable' => $_GET['disable'],
+							'agency_name' => "%$userkeywords%",
+							'lastname' => "%$userkeywords%",
+							'firstname' => "%$userkeywords%",
+							'mail' => "%$userkeywords%",
+							'phone' => "%$userkeywords%",
+							'mobile' => "%$userkeywords%",
+							'login' => "%$userkeywords%",
+							'service_name' => "%$userkeywords%",
+						));
+					} else {
+						$qry->execute(array(
+							'profile' => $_GET['profileid'],
+							'id' => 0,
+							'disable' => $_GET['disable'],
+							'lastname' => "%$userkeywords%",
+							'firstname' => "%$userkeywords%",
+							'mail' => "%$userkeywords%",
+							'phone' => "%$userkeywords%",
+							'mobile' => "%$userkeywords%",
+							'login' => "%$userkeywords%",
+							'service_name' => "%$userkeywords%",
+						));
+					}
+					
+					while ($row = $qry->fetch()) 
+					{
+						//find profile name
+						$qry2 = $db->prepare("SELECT `name` FROM `tprofiles` WHERE level=:level");
+						$qry2->execute(array('level' => $row['profile']));
+						$r=$qry2->fetch();
+						$qry2->closeCursor();
+						//display last login if exist
+						if($row['last_login']=='0000-00-00 00:00:00') $lastlogin=''; else $lastlogin=$row['last_login'];
+						//display line
+						echo '
+							<tr>
+								<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.$row['login'].'</td>
+								<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.$row['lastname'].' '.$row['firstname'].' </td>
+								';
+								if($rparameters['user_advanced']==1) {
+									//get company name
+									$qry2 = $db->prepare("SELECT `name` FROM `tcompany` WHERE id=:id");
+									$qry2->execute(array('id' => $row['company']));
+									$row2=$qry2->fetch();
+									$qry2->closeCursor();
+									echo '<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.$row2['name'].'</td>';
 								}
-								$qry2->closecursor();
-							echo'
-							</td>
-							<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.$row['mail'].'</td>
-							<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.$row['phone'].' '.$row['mobile'].'</td>
-							<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.$r['name'].'</td>
-							<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.$lastlogin.'</td>
-							<td>
-							<div class="hidden-phone visible-desktop btn-group">';
-								if (($row['disable']!=1) && ($row['id']!=$_SESSION['user_id']))
-								{
-									echo '
-										<button title="'.T_('Désactiver l\'utilisateur').'" onclick=\'window.location.href="index.php?page=admin&amp;subpage=user&amp;userid='.$row['id'].'&amp;action=disable";\' class="btn btn-xs btn-danger">
-											<i class="icon-ban-circle bigger-120"></i>
-										</button>
-									';
-								} elseif ($row['id']!=$_SESSION['user_id'])
-								{
-									echo '
-									<button title="'.T_('Activer l\'utilisateur').'" onclick=\'window.location.href="index.php?page=admin&amp;subpage=user&amp;userid='.$row['id'].'&amp;action=enable";\' class="btn btn-xs btn-success">
-										<i class="icon-ok bigger-120"></i>
-									</button>
-									';
+								if($rparameters['user_agency']==1) {
+									//get agencies name
+									echo '<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >';
+									$qry2 = $db->prepare("SELECT `agency_id` FROM `tusers_agencies` WHERE user_id=:user_id");
+									$qry2->execute(array('user_id' => $row['id']));
+									while ($row2=$qry2->fetch())
+									{
+										$qry3 = $db->prepare("SELECT `name` FROM `tagencies` WHERE id=:id");
+										$qry3->execute(array('id' => $row2['agency_id']));
+										$row3 = $qry3->fetch();
+										echo "$row3[name]<br />";
+										$qry3->closecursor();
+									}
+									$qry2->closecursor();
+									echo '</td>';
 								}
 								echo '
-									<button title="'.T_('Éditer l\'utilisateur').'" onclick=\'window.location.href="index.php?page=admin&amp;subpage=user&amp;action=edit&amp;userid='.$row['id'].'&tab=infos";\' class="btn btn-xs btn-warning">
-										<i class="icon-pencil bigger-120"></i>
-									</button>
-							</div>
-							</td>
-						</tr>
-					';
-				}
-				$qry->closecursor();
-				echo '
-			</tbody>
-		</table>
+								<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >
+								';
+									$qry2 = $db->prepare("SELECT `service_id` FROM `tusers_services` WHERE user_id=:user_id");
+									$qry2->execute(array('user_id' => $row['id']));
+									while ($row2=$qry2->fetch())
+									{
+										$qry3 = $db->prepare("SELECT `name` FROM `tservices` WHERE id=:id");
+										$qry3->execute(array('id' => $row2['service_id']));
+										$row3 = $qry3->fetch();
+										if(empty($row3['name'])) {$row3['name']='';}
+										echo "$row3[name]<br />";
+										$qry3->closecursor();
+									}
+									$qry2->closecursor();
+								echo'
+								</td>
+								<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.$row['mail'].'</td>
+								<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.$row['phone'].' '.$row['mobile'].'</td>
+								<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.T_($r['name']).'</td>
+								<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.$lastlogin.'</td>
+								<td>
+								<div class="hidden-phone visible-desktop btn-group">
+									<a class="btn btn-xs btn-warning" href="index.php?page=admin&amp;subpage=user&amp;action=edit&amp;userid='.$row['id'].'&tab=infos"  title="'.T_("Éditer l'utilisateur").'" ><center><i class="fa fa-pencil-alt"></i></center></a>';
+									if(($row['disable']!=1) && ($row['id']!=$_SESSION['user_id']))
+									{
+										echo '<a class="btn btn-xs btn-danger" href="index.php?page=admin&amp;subpage=user&amp;userid='.$row['id'].'&amp;action=disable"  title="'.T_("Désactiver l'utilisateur").'" ><center><i class="fa fa-ban"></i></center></a>';
+									} elseif($row['id']!=$_SESSION['user_id'])
+									{
+										echo '<a class="btn btn-xs btn-success ml-1" href="index.php?page=admin&amp;subpage=user&amp;userid='.$row['id'].'&amp;action=enable"  title="'.T_("Activer l'utilisateur").'" ><center><i class="fa fa-check"></i></center></a>';
+									}
+									if($rright['admin'] && $row['disable']==1)
+									{
+										echo '<a class="btn btn-xs btn-danger ml-1" onClick="javascript: return confirm(\''.T_('Êtes-vous sur de vouloir supprimer définitivement cet utilisateur ? information également supprimée sur tous les tickets et dans tous le logiciel').'\');" href="index.php?page=admin&amp;subpage=user&amp;userid='.$row['id'].'&amp;action=delete"  title="'.T_("Supprimer l'utilisateur").'" ><center><i class="fa fa-trash"></i></center></a>';
+									}
+									echo '
+								</div>
+								</td>
+							</tr>
+						';
+					}
+					$qry->closecursor();
+					echo '
+				</tbody>
+			</table>
+		</div>
 	';
 	//multi-pages link
-	if (!$_GET['cursor'])
+	if(!$_GET['cursor'])
 	{
 		$qry = $db->prepare("
 			SELECT COUNT(DISTINCT tusers.id)
@@ -1883,29 +1901,63 @@ else
 	}
 				
     $resultcount = $qry->fetch();
-	if  ($resultcount[0]>$maxline)
+	//multi-pages link
+	if($resultcount[0]>$rparameters['maxline'])
 	{
 		//count number of page
-		$pagenum=ceil($resultcount[0]/$maxline);
+		$total_page=ceil($resultcount[0]/$rparameters['maxline']);
 		echo '
-		<center>
-			<ul class="pagination">';
-				for ($i = 1; $i <= $pagenum; $i++) {
-					if ($i==1) $cursor=0; 
-					$selectcursor=$maxline*($i-1);
-					if ($_GET['cursor']==$selectcursor)
+		<div class="row justify-content-center">
+			<nav aria-label="Page navigation">
+				<ul class="pagination nav-tabs-scroll is-scrollable">';
+					//display previous button if it's not the first page
+					if($_GET['cursor']!=0)
 					{
-						$active='class="active"';
-					} else	$active='';
-					if($_GET['searchengine']==1)
-					{echo "<li > <a href=\"./index.php?page=admin&subpage=user&amp;order=$_GET[order]&amp;way=$_GET[way]&amp;disable=$_GET[disable]&amp;cursor=$cursor\">&nbsp;$i&nbsp;</a></li> ";}
-					else
-					{echo "<li $active><a href=\"./index.php?page=admin&subpage=user&amp;order=$_GET[order]&amp;way=$_GET[way]&amp;disable=$_GET[disable]&amp;cursor=$cursor\">&nbsp;$i&nbsp;</a></li> ";}
-					$cursor=$i*$maxline;
-				}
-				echo '
-			</ul>
-		</center>
+						$cursor=$_GET['cursor']-$rparameters['maxline'];
+						echo '<li class="page-item"><a class="page-link" title="'.T_('Page précédente').'" href="./index.php?page=admin&subpage=user&amp;disable='.$_GET['disable'].'&amp;order='.$_GET['order'].'&amp;way='.$_GET['way'].'&amp;cursor='.$cursor.'"><i class="fa fa-arrow-left"></i></a></li>';
+					}
+					//display first page
+					if($_GET['cursor']==0){$active='active';} else {$active='';}
+					echo '<li class="page-item '.$active.'"><a class="page-link" title="'.T_('Première page').'" href="./index.php?page=admin&subpage=user&amp;disable='.$_GET['disable'].'&amp;order='.$_GET['order'].'&amp;way='.$_GET['way'].'&amp;cursor=0">&nbsp;1&nbsp;</a></li>';
+					//calculate current page
+					$current_page=($_GET['cursor']/$rparameters['maxline'])+1;
+					//calculate min and max page 
+					if(($current_page-3)<3) {$min_page=2;} else {$min_page=$current_page-3;}
+					if(($total_page-$current_page)>3) {$max_page=$current_page+4;} else {$max_page=$total_page;}
+					//display all pages links
+					for ($page = $min_page; $page <= $total_page; $page++) {
+						//display start "..." page link
+						if(($page==$min_page) && ($current_page>5)){echo '<li class="page-item"><a class="page-link" title="'.T_('Pages masqués').'" href="">&nbsp;...&nbsp;</a></li>';}
+						//init cursor
+						if($page==1) {$cursor=0;}
+						$selectcursor=$rparameters['maxline']*($page-1);
+						if($_GET['cursor']==$selectcursor){$active='active';} else	{$active='';}
+						$cursor=(-1+$page)*$rparameters['maxline'];
+						//display page link
+						if($page!=$max_page) echo '<li class="page-item '.$active.'"><a class="page-link" title="'.T_('Page').' '.$page.'" href="./index.php?page=admin&subpage=user&amp;disable='.$_GET['disable'].'&amp;order='.$_GET['order'].'&amp;way='.$_GET['way'].'&amp;cursor='.$cursor.'">&nbsp;'.$page.'&nbsp;</a></li>';
+						//display end "..." page link
+						if(($page==($max_page-1)) && ($page!=$total_page-1)) {
+							echo '<li class="page-item"><a class="page-link" title="'.T_('Pages masqués').'" href="">&nbsp;...&nbsp;</a></li>';
+						}
+						//cut if there are more than 3 pages
+						if($page==($current_page+4)) {
+							$page=$total_page;
+						} 
+					}
+					//display last page
+					$cursor=($total_page-1)*$rparameters['maxline'];
+					if($_GET['cursor']==$selectcursor){$active='active';} else	{$active='';}
+					echo '<li class="page-item '.$active.'"><a class="page-link" title="'.T_('Dernière page').'" href="./index.php?page=admin&subpage=user&amp;disable='.$_GET['disable'].'&amp;order='.$_GET['order'].'&amp;way='.$_GET['way'].'&amp;cursor='.$cursor.'">&nbsp;'.$total_page.'&nbsp;</a></li>';
+					//display next button if it's not the last page
+					if($_GET['cursor']<($resultcount[0]-$rparameters['maxline']))
+					{
+						$cursor=$_GET['cursor']+$rparameters['maxline'];
+						echo '<li class="page-item"><a class="page-link" title="'.T_('Page suivante').'" href="./index.php?page=admin&subpage=user&amp;disable='.$_GET['disable'].'&amp;order='.$_GET['order'].'&amp;way='.$_GET['way'].'&amp;cursor='.$cursor.'"><i class="fa fa-arrow-right"></i></a></li>';
+					}
+					echo '
+				</ul>
+			</nav>
+		</div>
 	';
 	}
 }

@@ -4,14 +4,13 @@
 # @Description : page to call php-gettext components and configure it
 # @call : /index.php
 # @Author : Flox
-# @Version : 3.1.33
+# @Version : 3.1.46
 # @Create : 12/12/2016
-# @Update : 07/06/2018
+# @Update : 07/11/2019
 ################################################################################
 
 //initialize variables
 if(!isset($_SESSION['user_id'])) $_SESSION['user_id'] = '';
-if(!isset($_GET['lang'])) $_GET['lang'] = '';
 if(!isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) $_SERVER['HTTP_ACCEPT_LANGUAGE'] = '';
 
 if($_SESSION['user_id'])

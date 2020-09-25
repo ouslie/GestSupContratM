@@ -6,142 +6,43 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 12/08/2013
-# @Update : 10/05/2019
-# @Version : 3.1.41 
+# @Update : 28/05/2020
+# @Version : 3.2.2
 ################################################################################
 
 //initialize variables 
-if(!isset($_GET['id'])) $_GET['id'] = '';
-if(!isset($number)) $number = '';
-if(!isset($_FILES['file1']['name'])) $_FILES['file1']['name'] = '';
-if(!isset($_FILES['file2']['name'])) $_FILES['file2']['name'] = '';
-if(!isset($_FILES['file3']['name'])) $_FILES['file3']['name'] = '';
-if(!isset($_FILES['file4']['name'])) $_FILES['file4']['name'] = '';
-if(!isset($_FILES['file5']['name'])) $_FILES['file5']['name'] = '';
-if(!isset($file1_rename)) $file1_rename = '';
-if(!isset($file2_rename)) $file2_rename = '';
-if(!isset($file3_rename)) $file3_rename = '';
-if(!isset($file4_rename)) $file4_rename = '';
-if(!isset($file5_rename)) $file5_rename = '';
+if(!isset($_FILES['file']['name'])) {$_FILES['file']['name']='';}
 
-//default value
-$blacklistedfile=0;
+//create ticket directory if not exist
+if(!is_dir("./upload/ticket"))  {mkdir('./upload/ticket', 0777, true);}
 
-//remove special char from file name
-$file1_rename =  preg_replace("/[^A-Za-z0-9\_\-\.]/", '', $_FILES['file1']['name']);
-$file2_rename =  preg_replace("/[^A-Za-z0-9\_\-\.]/", '', $_FILES['file2']['name']);
-$file3_rename =  preg_replace("/[^A-Za-z0-9\_\-\.]/", '', $_FILES['file3']['name']);
-$file4_rename =  preg_replace("/[^A-Za-z0-9\_\-\.]/", '', $_FILES['file4']['name']);
-$file5_rename =  preg_replace("/[^A-Za-z0-9\_\-\.]/", '', $_FILES['file5']['name']);
-
-//black list exclusion for extension
-$blacklist =  array('php', 'php1', 'php2','php3' ,'php4' ,'php5', 'php6', 'php7', 'php8', 'php9', 'php10', 'js', 'htm', 'html', 'phtml', 'exe', 'jsp' ,'pht', 'shtml', 'asa', 'cer', 'asax', 'swf', 'xap', 'phphp', 'inc', 'htaccess', 'sh', 'py', 'pl', 'jsp', 'asp', 'cgi', 'json', 'svn', 'git', 'lock', 'yaml', 'com', 'bat', 'ps1', 'cmd', 'vb', 'hta', 'reg', 'ade', 'adp', 'app', 'asp', 'bas', 'bat', 'cer', 'chm', 'cmd', 'com', 'cpl', 'crt', 'csh', 'der', 'exe', 'fxp', 'gadget', 'hlp', 'hta', 'inf', 'ins', 'isp', 'its', 'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt', 'mdw', 'mdz', 'msc', 'msh', 'msh1', 'msh2', 'mshxml', 'msh1xml', 'msh2xml', 'msi', 'msp', 'mst', 'ops', 'pcd', 'pif', 'plg', 'prf', 'prg', 'pst', 'reg', 'scf', 'scr', 'sct', 'shb', 'shs', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'tmp', 'url', 'vb', 'vbe', 'vbs', 'vsmacros', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xnk');
-
-//for new ticket	
-if ($_GET['id']=="") $_GET['id']=$number;
-
-$db_id=strip_tags($db->quote($_GET['id']));
-
-if($_FILES['file1']['name'])
+if($_FILES['file']['name'] && $_GET['id'])
 {
-	//if id directory not exist, create it
-	if(!is_dir("./upload/$_GET[id]")) {mkdir ("./upload/$_GET[id]/", 0777);}
-	$filename=$_FILES['file1']['name'];
-	//secure check for extension
-    $ext=explode('.',$filename);
-	foreach ($ext as &$value) {
-		$value=strtolower($value);
-		if(in_array($value,$blacklist)) {$blacklistedfile=1;} 
-	}
-    if($blacklistedfile==0) {
-        $destination_folder="./upload/$_GET[id]/";
-		if (move_uploaded_file($_FILES['file1']['tmp_name'], $destination_folder.$file1_rename)) 
+	$real_filename=preg_replace("/[^A-Za-z0-9\_\-\.\s+]/", '', $_FILES['file']['name']);
+	//$real_filename=$_FILES['file']['name'];
+    if(CheckFileExtension($real_filename)==true) {
+		//create upload folder if not exist
+        $target_folder='./upload/ticket/';
+		//generate storage filename
+		$storage_filename=$_GET['id'].'_'.md5(uniqid());
+		if(move_uploaded_file($_FILES['file']['tmp_name'], $target_folder.$storage_filename)) 
 		{
-			$qry=$db->prepare("UPDATE `tincidents` SET `img1`=:img1 WHERE `id`=:id");
-			$qry->execute(array('img1' => $file1_rename,'id' => $_GET['id']));
+			//content check
+			$file_content = file_get_contents($target_folder.$storage_filename, true);
+			if(preg_match('{\<\?php}',$file_content) || preg_match('/system\(/',$file_content)) {
+				unlink($target_folder.$storage_filename); //remove file
+				echo DisplayMessage('error',T_("Fichier interdit"));
+			} else {
+				$uid=md5(uniqid());
+				$qry=$db->prepare("INSERT INTO `tattachments` (`uid`,`ticket_id`,`storage_filename`,`real_filename`) VALUES (:uid,:ticket_id,:storage_filename,:real_filename)");
+				$qry->execute(array('uid' => $uid,'ticket_id' => $_GET['id'],'storage_filename' => $storage_filename,'real_filename' => $real_filename));
+			} 
 		} else {
-			echo T_('Erreur de transfert vérifier le chemin ').$destination_folder;
+			echo DisplayMessage('error',T_("Transfert impossible"));
 		}
-    } else {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').':</strong> '.T_('Fichier interdit').'.<br></div>';}
-} elseif($_FILES['file2']['name']) { 
-	//if id directory not exist, create it
-	if(!is_dir("./upload/$_GET[id]")) {mkdir ("./upload/$_GET[id]/", 0777);}
-	$filename=$_FILES['file2']['name'];
-	//secure check for extension
-    $ext=explode('.',$filename);
-	foreach ($ext as &$value) {
-		$value=strtolower($value);
-		if(in_array($value,$blacklist)) {$blacklistedfile=1;} 
+    } else {
+		echo DisplayMessage('error',T_("Fichier interdit"));
+		if($rparameters['log'] && is_numeric($_GET['id'])) {logit('security','Blacklisted file "'.$real_filename.'" blocked on ticket '.$_GET['id'],$_SESSION['user_id']);}
 	}
-    if($blacklistedfile==0) {
-       $destination_folder="./upload/$_GET[id]/";
-    	if (move_uploaded_file($_FILES['file2']['tmp_name'], $destination_folder.$file2_rename)) 
-		{
-			$qry=$db->prepare("UPDATE `tincidents` SET `img2`=:img2 WHERE `id`=:id");
-			$qry->execute(array('img2' => $file2_rename,'id' => $_GET['id']));
-		} else {
-			echo T_('Erreur de transfert vérifier le chemin ').$destination_folder;
-		}
-	} else {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').':</strong> '.T_('Fichier interdit').'.<br></div>';}
-} elseif($_FILES['file3']['name']) { 
-	//if id directory not exist, create it
-	if(!is_dir("./upload/$_GET[id]")) {mkdir ("./upload/$_GET[id]/", 0777);}
-	$filename=$_FILES['file3']['name'];
-	//secure check for extension
-    $ext=explode('.',$filename);
-	foreach ($ext as &$value) {
-		$value=strtolower($value);
-		if(in_array($value,$blacklist)) {$blacklistedfile=1;} 
-	}
-    if($blacklistedfile==0) {
-       $destination_folder="./upload/$_GET[id]/";
-    	if (move_uploaded_file($_FILES['file3']['tmp_name'], $destination_folder.$file3_rename)) 
-    	{
-			$qry=$db->prepare("UPDATE `tincidents` SET `img3`=:img3 WHERE `id`=:id");
-			$qry->execute(array('img3' => $file3_rename,'id' => $_GET['id']));
-    	} else {
-			echo T_('Erreur de transfert vérifier le chemin ').$destination_folder;
-    	}
-	} else {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').':</strong> '.T_('Fichier interdit').'.<br></div>';}
-} elseif($_FILES['file4']['name']) { 
-	//if id directory not exist, create it
-	if(!is_dir("./upload/$_GET[id]")) {mkdir ("./upload/$_GET[id]/", 0777);}
-	$filename=$_FILES['file4']['name'];
-	//secure check for extension
-    $ext=explode('.',$filename);
-	foreach ($ext as &$value) {
-		$value=strtolower($value);
-		if(in_array($value,$blacklist)) {$blacklistedfile=1;} 
-	}
-    if($blacklistedfile==0) {
-       	$destination_folder= dirname(__FILE__)."../../upload/$_GET[id]/";
-    	if (move_uploaded_file($_FILES['file4']['tmp_name'], $destination_folder.$file4_rename)) 
-    	{
-			$qry=$db->prepare("UPDATE `tincidents` SET `img4`=:img4 WHERE `id`=:id");
-			$qry->execute(array('img4' => $file4_rename,'id' => $_GET['id']));
-    	} else {
-			echo T_('Erreur de transfert vérifier le chemin ').$destination_folder;
-    	}
-	} else {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').':</strong> '.T_('Fichier interdit').'.<br></div>';}
-} elseif($_FILES['file5']['name']) { 
-	//if id directory not exist, create it
-	if(!is_dir("./upload/$_GET[id]")) {mkdir ("./upload/$_GET[id]/", 0777);}
-	$filename=$_FILES['file5']['name'];
-	//secure check for extension
-    $ext=explode('.',$filename);
-	foreach ($ext as &$value) {
-		$value=strtolower($value);
-		if(in_array($value,$blacklist)) {$blacklistedfile=1;} 
-	}
-    if($blacklistedfile==0) {
-      	$destination_folder= dirname(__FILE__)."../../upload/$_GET[id]/";
-    	if (move_uploaded_file($_FILES['file5']['tmp_name'], $destination_folder.$file5_rename)) 
-    	{
-			$qry=$db->prepare("UPDATE `tincidents` SET `img5`=:img5 WHERE `id`=:id");
-			$qry->execute(array('img5' => $file5_rename,'id' => $_GET['id']));
-    	} else {
-			echo T_('Erreur de transfert vérifier le chemin ').$destination_folder;
-    	}
-	} else {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Blocage de sécurité').':</strong> '.T_('Fichier interdit').'.<br></div>';}
-}
+} 
 ?>

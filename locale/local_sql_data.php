@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 06/12/2016
-# @Update : 06/08/2019
-# @Version : 3.1.44
+# @Update : 15/05/2020
+# @Version : 3.2.2
 ################################################################################
 
 //tickets states
@@ -156,7 +156,7 @@ echo T_("Affiche la colonne date de résolution dans la liste des tickets");
 echo T_("Affiche la colonne date de création dans la liste des tickets");
 echo T_("Affiche vos demande non attribué");
 echo T_("Modification du temps estimé passé par ticket");
-echo T_("Droit d\'ajouter des procédures");
+echo T_("Droit d'ajouter des procédures");
 echo T_("Droit de supprimer des procédures");
 echo T_("Affiche la colonne catégorie dans la liste des tickets");
 echo T_("Affiche la colonne sous-catégorie dans la liste des tickets");
@@ -237,6 +237,21 @@ echo T_("Affiche le bouton inserer image sur le champ description");
 echo T_("Affiche le bouton inserer image sur le champ résolution");
 echo T_("Affiche le menu projet");
 echo T_("Affiche menu sauvegarde");
+echo T_("Oblige la saisie du champ type dans le ticket");
+echo T_("Oblige la saisie du champ catégorie");
+echo T_("Affiche uniquement les priorités associées au service");
+echo T_("Affiche uniquement les criticités associées au service");
+echo T_("Affiche le champ type de réponse sur le ticket");
+echo T_("Autorise la suppression de pièce jointe sur un ticket");
+echo T_("utilisateur avec pouvoir");
+echo T_("utilisateur");
+echo T_("superviseur");
+echo T_("technicien");
+echo T_("administrateur");
+echo T_("Bloque la modification du champ technicien si la limite par service est activée et qu'il ouvre un ticket pour un autre service");
+echo T_("Affiche les administrateurs dans la liste des techniciens sur un ticket.");
+echo T_("Notification d'attente de retour ");
+echo T_("Affiche la colonne temps passé dans la liste des tickets");
 
 //Assets states
 echo T_("Stock");
@@ -249,4 +264,5 @@ echo T_("Équipement de coté");
 echo T_("Équipement recyclé, jeté");
 //mail
 echo T_("Bonjour, <br />Vous avez fait la demande suivante auprès du support:");
+echo T_("Bonjour, <br />Vous avez fait la demande suivante auprès du support :");
 ?>

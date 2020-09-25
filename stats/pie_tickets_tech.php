@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 15/02/2014
-# @Update : 13/03/2018
-# @Version : 3.1.31
+# @Update : 04/03/2020
+# @Version : 3.2.0
 ################################################################################
 
 $values = array();
@@ -16,7 +16,7 @@ $libchart=T_('Tickets par techniciens');
 $unit=T_('tickets');
 
 //total
-$query=$db->query("SELECT count(*) FROM tincidents WHERE disable='0'");
+$query=$db->query("SELECT COUNT(*) FROM tincidents WHERE disable='0'");
 $month1=$query->fetch();
 
 $query1 = "
@@ -24,10 +24,11 @@ SELECT CONCAT_WS('. ', left(tusers.firstname, 1),  tusers.lastname) as Technicie
 FROM tincidents 
 INNER JOIN tusers 
 ON (tincidents.technician=tusers.id ) 
-WHERE tusers.disable=0 AND
+WHERE
 tincidents.technician LIKE '$_POST[tech]' AND
 tincidents.type LIKE '$_POST[type]' AND
 tincidents.u_service LIKE '$_POST[service]' $where_service $where_agency AND
+$where_state AND
 criticality like '$_POST[criticality]' AND
 tincidents.category LIKE '$_POST[category]' AND
 tincidents.date_create LIKE '%-$_POST[month]-%' AND
@@ -45,6 +46,6 @@ while ($row = $query->fetch())
 } 	
 $container='container2';
 include('./stat_pie.php');
-echo "<div id=\"$container\"></div>";
+echo '<div class="card-body bgc-dark-l4 p-0 border-1 brc-default-l2 radius-2 px-1 mx-n2 mx-md-0 h-100 d-flex align-items-center" id="'.$container.'"></div>';
 if ($rparameters['debug']==1) echo $query1;
 ?>

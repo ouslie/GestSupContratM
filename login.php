@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 07/03/2010
-# @Update : 01/10/2019
-# @Version : 3.1.44
+# @Update : 11/06/2020
+# @Version : 3.2.2
 ################################################################################
 
 //initialize variables 
@@ -20,22 +20,16 @@ if(!isset($newpassword)) $newpassword = '';
 if(!isset($salt)) $salt= '';
 if(!isset($dcgen)) $dcgen= '';
 if(!isset($ldap_type)) $ldap_type= '';
-if(!isset($message)) $message= '';
-if(!isset($login_error)) $login_error= '';
+if(!isset($error)) $error= '';
 if(!isset($_SESSION['user_id'])) $_SESSION['user_id'] = '';
 if(!isset($_SESSION['login'])) $_SESSION['login'] = ''; 
-if(!isset($_GET['page'])) $_GET['page'] = ''; 
-if(!isset($_GET['state'])) $_GET['state'] = ''; 
-if(!isset($_GET['techread'])) $_GET['techread'] = ''; 
-if(!isset($_GET['userid'])) $_GET['userid'] = ''; 
-if(!isset($_GET['id'])) $_GET['id'] = '';
 
 if($_GET['state']=='') $_GET['state'] = '%';
 	//actions on submit
-	if (isset($_POST['submit']))
+	if(isset($_POST['submit']))
 	{
 		$login=(isset($_POST['login'])) ? $_POST['login'] : '';
-		$pass= (isset($_POST['pass'])) ? $_POST['pass']  : '';
+		$pass=(isset($_POST['pass'])) ? $_POST['pass']  : '';
 		
 		$qry=$db->prepare("SELECT `id`,`login`,`password`,`salt`,`profile`,`disable` FROM `tusers`");
 		$qry->execute();
@@ -81,16 +75,16 @@ if($_GET['state']=='') $_GET['state'] = '%';
 			$qry=$db->prepare("UPDATE `tusers` SET `last_login`=:last_login,`ip`=:ip WHERE `id`=:id");
 			$qry->execute(array('last_login' => $datetime,'ip' => $_SERVER['REMOTE_ADDR'],'id' => $user_id));
 			//display loading 
-			echo '<i class="icon-spinner icon-spin"></i>&nbsp;Chargement...';
+			echo '<i class="fa fa-spinner fa-spin text-info text-120"></i>&nbsp;Chargement...';
 			//user pref default redirection state
 			$qry = $db->prepare("SELECT * FROM `tusers` WHERE id=:id");
 			$qry->execute(array('id' => $_SESSION['user_id']));
 			$ruser=$qry->fetch();
 			$qry->closeCursor();
-			if($ruser['default_ticket_state']) $redirectstate=$ruser['default_ticket_state']; else $redirectstate=1;
+			if($ruser['default_ticket_state']) {$redirectstate=$ruser['default_ticket_state'];} else {$redirectstate=1;}
 			//select page to redirect for email link case
 			if($_GET['id']) {
-			    $www='./index.php?page=ticket&id='.$_GET['id'].'';
+			    $www='./index.php?page=ticket&id='.$_GET['id'];
 			} else {
 				if($redirectstate=='meta_all')
 				{
@@ -110,16 +104,16 @@ if($_GET['state']=='') $_GET['state'] = '%';
 						-->
 					</SCRIPT>";
 		}
-		elseif(($rparameters['ldap'])=='1' && ($rparameters['ldap_auth']=='1'))
+		elseif($rparameters['ldap'] && $rparameters['ldap_auth'])
 		{
-			/////////// if Gestsup user is not found and LDAP is enable search in LDAP///////////
+			/////////// if GestSup user is not found and LDAP is enable search in LDAP///////////
 			// LDAP connect
 			if($rparameters['ldap_port']==636) {$hostname='ldaps://'.$rparameters['ldap_server'];} else {$hostname=$rparameters['ldap_server'];}
 			$ldap=ldap_connect($hostname,$rparameters['ldap_port']) or die("Impossible de se connecter au serveur LDAP.");
 			ldap_set_option($ldap, LDAP_OPT_NETWORK_TIMEOUT, 1);
 			ldap_set_option($ldap, LDAP_OPT_PROTOCOL_VERSION, 3);
 			$domain=$rparameters['ldap_domain'];
-			if ($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) 
+			if($rparameters['ldap_type']==0 || $rparameters['ldap_type']==3) 
 			{
 				//if UPN not add domain suffix
 				if($rparameters['ldap_login_field']=='UserPrincipalName')
@@ -136,7 +130,6 @@ if($_GET['state']=='') $_GET['state'] = '%';
 					$dcgen="$dcgen,dc=$dcpart[$i]";
 					$i++;
 				}
-				require_once('./core/functions.php');
 				if(preg_match('/gs_en/',$rparameters['ldap_password'])) {$rparameters['ldap_password']=gs_crypt($rparameters['ldap_password'], 'd' , $rparameters['server_private_key']);}
 				$dn='cn='.$rparameters['ldap_user'].$dcgen;
 				$ldapbind_as_admin = @ldap_bind($ldap, $dn, $rparameters['ldap_password']);
@@ -150,36 +143,25 @@ if($_GET['state']=='') $_GET['state'] = '%';
 				}
 			}
 
-			if ($ldapbind && $pass!='') 
+			if($ldapbind && $pass!='') 
 			{
-				$_SESSION['login'] = "$login";
-				$qry = $db->prepare("SELECT `id`,`password` FROM `tusers` WHERE `login`=:login AND `disable`=:disable");
-				$qry->execute(array('login' => $login,'disable' => 0));
+				$_SESSION['login'] = $login;
+				$qry = $db->prepare("SELECT `id`,`password` FROM `tusers` WHERE `login`=:login AND `disable`='0'");
+				$qry->execute(array('login' => $login));
 				$r=$qry->fetch();
 				$qry->closeCursor();
 				$_SESSION['user_id'] = "$r[id]";
 				if($r['id']=='')
 				{
 					//if error with login or password 
-					$message= '<div class="alert alert-danger">
-						<button type="button" class="close" data-dismiss="alert">
-							<i class="icon-remove"></i>
-						</button>
-						<strong>
-							<i class="icon-remove"></i>
-							'.T_('Erreur').'
-						</strong>
-						'.T_('Votre compte est inexistant dans ce logiciel.').'
-						<br>
-					</div>';
-					$www = "./index.php";
+					$error=T_('Identifiant ou mot de passe invalide');
 					session_destroy();
 					//web redirection to login page
 					echo "<SCRIPT LANGUAGE='JavaScript'>
 							<!--
 							function redirect()
 							{
-							window.location='$www'
+							window.location='./index.php'
 							}
 							setTimeout('redirect()',$rparameters[time_display_msg]+1000);
 							-->
@@ -234,25 +216,14 @@ if($_GET['state']=='') $_GET['state'] = '%';
 				}
 			} else {
 				// if error with login or password 
-				$message= '<div class="alert alert-danger">
-						<button type="button" class="close" data-dismiss="alert">
-							<i class="icon-remove"></i>
-						</button>
-						<strong>
-							<i class="icon-remove"></i>
-							'.T_('Erreur').':
-						</strong>
-						'.T_('Votre nom d\'utilisateur ou mot de passe, n\'est pas correct.').'
-					</div>';
-				$login_error=1;	
-				$www = "./index.php";
+				$error=T_('Identifiant ou mot de passe invalide');
 				session_destroy();
 				//web redirection to login page
 				echo "<SCRIPT LANGUAGE='JavaScript'>
 						<!--
 						function redirect()
 						{
-						window.location='$www'
+						window.location='./index.php'
 						}
 						setTimeout('redirect()',$rparameters[time_display_msg]+1500);
 						-->
@@ -262,7 +233,7 @@ if($_GET['state']=='') $_GET['state'] = '%';
 		else
 		{
 			//secure check user attempt
-			if($rparameters['user_disable_attempt'])
+			if($rparameters['user_disable_attempt'] && $_POST['login'] && $_POST['pass'])
 			{
 				//check if user exist
 				$qry=$db->prepare("SELECT `id`,`auth_attempt`,`disable` FROM `tusers` WHERE login=:login");
@@ -286,34 +257,24 @@ if($_GET['state']=='') $_GET['state'] = '%';
 							$qry=$db->prepare("UPDATE `tusers` SET `disable`=1 WHERE `id`=:id");
 							$qry->execute(array('id' => $row['id']));
 							$attempt_remaing=T_('Votre compte a été désactivé, suite à').' '.$rparameters['user_disable_attempt_number'].' '.T_('tentatives de connexion infructueuses');
+							if($rparameters['log'])
+							{
+								logit('security', 'User '.$_POST['login'].' disable after authentication failures',$row['id']);
+							}
 						}
 					}
 				} else {$attempt_remaing='';}
 			} else {$attempt_remaing='';}
 			// if error with login or password 
-			$message= '
-			<div class="alert alert-danger">
-			<button type="button" class="close" data-dismiss="alert">
-				<i class="icon-remove"></i>
-			</button>
-			<strong>
-				<i class="icon-remove"></i>
-				'.T_('Erreur').' : '.T_('Identifiant ou mot de passe invalide').'
-			</strong>
-			';
-			if($attempt_remaing) {$message.='<br />'.$attempt_remaing;} else {$message.=T_("Votre nom d'utilisateur ou mot de passe, n'est pas correct.");}
-			echo '
-			<br>
-			</div>';
-			$www = "./index.php";
-			$login_error=1;
+			$error=T_('Identifiant ou mot de passe invalide');
+			if($attempt_remaing) {$error.='<br />'.$attempt_remaing;}
 			session_destroy();
 			//web redirection to login page
 			echo "<SCRIPT LANGUAGE='JavaScript'>
 						<!--
 						function redirect()
 						{
-						window.location='$www'
+						window.location='./index.php'
 						}
 						setTimeout('redirect()',$rparameters[time_display_msg]+1500);
 						-->
@@ -321,122 +282,124 @@ if($_GET['state']=='') $_GET['state'] = '%';
 		}
 	}; 
 	// if user isn't connected then display authentication else display dashboard
-	if ($_SESSION['login']=='') 
+	if($_SESSION['login']=='') 
 	{
-		if($rparameters['ldap_auth']==1) 
-		{
-			if ($rparameters['ldap_type']==0) {$ldap_type='Windows';} elseif($rparameters['ldap_type']==1) {$ldap_type='OpenLDAP';} elseif($rparameters['ldap_type']==3) {$ldap_type='Samba4';}
-			$info='<i title="'.T_('Vous pouvez utiliser votre identifiant et mot de passe').' '.$ldap_type.'" class="icon-question-sign smaller-80"></i>';
-		} else { $info='';}
 		echo '
-		<body class="login-layout">
-		<br />
-		<br />
-		<br />
-		<div class="main-container">
-			<div class="main-content" >
-				<div class="row"  >
-					<div class="col-sm-10 col-sm-offset-1" >
-						<div class="login-container">
-							<div class="center">
-								<h1>
-									<i class="icon-ticket green"></i>
-									<span class="white">GestSup</span>
+		<body>
+			<div class="body-container" style=" background-image: linear-gradient(#6baace, #264783); background-attachment: fixed; background-repeat: no-repeat;" >
+				<div class="main-container container">
+					<div role="main" class="main-content ">
+						<div class="justify-content-center pb-2">
+							';
+								if($error){echo DisplayMessage('error',$error);}
+								echo '
+							<div class="d-flex flex-column align-items-center justify-content-start">
+								<h1 class="mt-5"><i style="ms-transform:rotate(45deg); webkit-transform:rotate(45deg); transform:rotate(45deg);" class="fa fa-ticket-alt text-75 text-white" data-fa-transform="rotate-45"></i>
+									<span class="text-90 text-white">GestSup</span>
 								</h1>
-								<h4 class="blue">';if (isset($rparameters['company'])) echo $rparameters['company']; echo' </h4>
+							</div>
+							<div class="d-flex flex-column align-items-center justify-content-start">
+								
+								<h5 class="text-dark-lt3">
+									';if(isset($rparameters['company'])) echo $rparameters['company']; echo' 
+								</h5>
+							</div>
+							<div class="d-flex flex-column align-items-center justify-content-start">
 								';
 								//re-size logo if height superior 40px
-								if ($rparameters['logo']!='' && file_exists("./upload/logo/$rparameters[logo]")) 
+								$logo_width='';
+								if($rparameters['logo'] && file_exists('./upload/logo/'.$rparameters['logo'])) 
 								{
-									$size = getimagesize("./upload/logo/$rparameters[logo]");
-									$width=$size[0];
-									if ($width>300) {$logo_width='width="300"';} else {$logo_width='';}
-								} else {$logo_width=''; }
+									$size=getimagesize('./upload/logo/'.$rparameters['logo']);
+									if($size[0]>150) {$logo_width='width="150"';}
+								}
 								//display logo if image file exist
-								if (file_exists("./upload/logo/$rparameters[logo]"))
+								if(file_exists("./upload/logo/$rparameters[logo]"))
 								{
-									echo '<img style="border-style: none" alt="logo" '.$logo_width.' src="./upload/logo/'; if ($rparameters['logo']=='') echo 'logo.png'; else echo $rparameters['logo'];  echo '" />';
+									echo '<img style="border-style: none" alt="logo" '.$logo_width.' src="./upload/logo/'; if(!$rparameters['logo']) {echo 'logo.png';} else {echo $rparameters['logo'];}  echo '" />';
 								}
 								echo '
 							</div>
-							<br />
-							'.$message;
-							//display login if no error
-							if($login_error==0)
-							{
-								echo '
-								<div class="space-6"></div>
-								<div class="position-relative">
-									<div id="login-box" class="login-box visible widget-box no-border">
-										<div class="widget-body">
-											<div class="widget-main">
-												<h4 class="header blue lighter bigger">
-													<i class="icon-lock green"></i>
-													'.T_('Saisissez vos identifiants').'
-													'.$info.'
-												</h4>
-												
-												<div class="space-6"></div>
-												<form id="conn" method="post" action="">	
-													<fieldset>
-														<label class="block clearfix">
-															<span class="block input-icon input-icon-right">
-																<input class="form-control" type="text" id="login" name="login" class="span12" placeholder="'.T_('Nom d\'utilisateur').'" />
-																<i class="icon-user"></i>
-															</span>
-														</label>
-														<label class="block clearfix">
-															<span class="block input-icon input-icon-right">
-																<input class="form-control" type="password" id="pass" name="pass" class="span12" placeholder="'.T_('Mot de passe').'" />
-																<i class="icon-lock"></i>
-															</span>
-														</label>
-														<div class="space"></div>
-														<div class="clearfix">
-															<button onclick="submit()" type="submit" id="submit" name="submit" class="pull-right btn btn-sm btn-primary">
-																<i class="icon-ok"></i>
+						</div>
+						<div class="p-4 p-md-4 mh-2 ">
+							<div class="row justify-content-center ">
+								<div class="shadow radius-1 overflow-hidden bg-white col-12 col-lg-4 ">
+									<div class="row ">
+										<div class="col-12 bgc-white px-0 pt-5 pb-4">
+											<div class="" data-swipe="center">
+												<div class="active show px-3 px-lg-0 pb-0" id="id-tab-login">
+													<div class="d-lg-block col-md-8 offset-md-2 mt-lg-4 px-0">
+														<h4 class="text-dark-tp4 border-b-1 brc-grey-l1 pb-1 text-130">
+															<i class="fa fa-lock text-success-m2 mr-1"></i>
+															'.T_('Identification').'
+														</h4>
+													</div>
+													<form id="conn" method="post" action="" class="form-row mt-4"> 
+														<div class="form-group col-md-8 offset-md-2">
+															<div class="d-flex align-items-center input-floating-label text-blue-m1 brc-blue-m2">
+																<input type="text" class="form-control form-control-lg pr-4 shadow-none" id="login" name="login" autocomplete="off" />
+																<i class="fa fa-user text-grey-m2 ml-n4"></i>
+																<label class="floating-label text-grey-l1 text-100 ml-n3" for="login">'.T_("Nom d'utilisateur").'</label>
+															</div>
+														</div>
+														<div class="form-group col-md-8 offset-md-2 mt-2 mt-md-1">
+															<div class="d-flex align-items-center input-floating-label text-blue-m1 brc-blue-m2">
+																<input type="password" class="form-control form-control-lg pr-4 shadow-none" id="pass" name="pass" autocomplete="off" />
+																<i class="fa fa-key text-grey-m2 ml-n4"></i>
+																<label class="floating-label text-grey-l1 text-100 ml-n3" for="pass">'.T_('Mot de passe').'</label>
+															</div>
+														</div>
+														';
+														if($rparameters['user_forgot_pwd'] && !$rparameters['ldap'] && $rparameters['mail'])
+														{
+															echo '
+															<div class="form-group col-md-8 offset-md-2 mt-0 pt-0 text-right">
+																<a href="index.php?page=forgot_pwd" class="text-primary-m2 text-95">
+																	'.T_('Mot de passe oublié').' ?
+																</a>
+															</div>
+															';
+														}
+														echo '
+														
+														<div class="form-group col-md-6 offset-md-3">
+															<button type="submit" onclick="submit()" name="submit" class="btn btn-info btn-block btn-md btn-bold mt-2 mb-4">
+																<i class="fa fa-sign-in-alt"></i>
 																'.T_('Connexion').'
 															</button>
 														</div>
-														<div class="space-4"></div>
-													</fieldset>
-												</form>
-												<br />
-											</div><!--/widget-main-->
-											';
-											if ($rparameters['user_register']==1)
-											{
-												echo '
-												<div class="toolbar clearfix">
-												   
-													<div>
-														<a href="#" onclick="show_box(\'forgot-box\'); return false;" class="forgot-password-link">
-														
-														</a>
-													</div>
-													<div>
-														<a href="./register.php"  class="user-signup-link">
-															'.T_('S\'enregistrer').'
-															<i class="icon-arrow-right"></i>
-														</a>
-													</div>
-												</div';
-											}
-										echo '	
-										</div><!--/widget-body-->
-									</div><!--/login-box-->
-								</div><!--/position-relative-->
-								';
-							}
-							echo '
+													</form>
+													';
+													if($rparameters['user_register'])
+													{
+														echo '
+														<div class="form-row">
+															<div class="col-12 col-md-6 offset-md-3 d-flex flex-column align-items-center justify-content-center">
+																<hr class="brc-default-m4 mt-0 mb-2 w-100" />
+																<div class="p-0 px-md-2 text-dark-tp3 my-3">
+																	<a class="text-success-m2 text-600 mx-1" href="index.php?page=register">
+																		'.T_("S'enregistrer").'
+																	</a>
+																</div>
+															</div>
+														</div>
+														';
+													}
+													echo '
+												</div>
+											</div><!-- .tab-content -->
+										</div>
+									</div>
+								 </div>
+							</div>
 						</div>
-					</div><!--/.span-->
-				</div><!--/.row-fluid-->
-			</div>
-			<!-- DO NOT DELETE OR MODIFY THIS LINE THANKS -->
-				<span style="position: fixed; bottom: 0px; right: 0px;"><a title="'.T_('Ouvre un nouvel onglet vers le site gestsup.fr').'" target="_blank" href="https://gestsup.fr">GestSup.fr</a></span>
-			<!-- DO NOT DELETE OR MODIFY THIS LINE THANKS -->
-		</div><!--/.main-container-->
+					</div><!-- /main -->
+				</div><!-- /.main-container -->
+			</div><!-- /.body-container -->
+		</body>
+		<!-- DO NOT DELETE OR MODIFY THIS LINE THANKS -->
+			<span style="position: fixed; bottom: 0px; right: 0px;"><a title="'.T_('Ouvre un nouvel onglet vers le site gestsup.fr').'" target="_blank" href="https://gestsup.fr">GestSup.fr</a></span>
+		<!-- DO NOT DELETE OR MODIFY THIS LINE THANKS -->
 		<script type="text/JavaScript">
 			document.getElementById("login").focus();
 		</script>

@@ -4,19 +4,21 @@
 # @Description : page to print ticket
 # @Call : /ticket.php
 # @Author : Flox
-# @Version : 3.1.43
+# @Version : 3.2.2 p1
 # @Create : 09/02/2014
-# @Update : 31/07/2019
+# @Update : 28/05/2020
 ################################################################################
 
+require_once("core/init_get.php");
+require_once("core/functions.php");
+
 //initialize variables 
-if(!isset($_GET['token'])) $_GET['token'] = ''; 
 if(!isset($_COOKIE["token"])) $_COOKIE["token"] = ''; 
 if(!isset($resolution)) $resolution = '';
 //connexion script with database parameters
 require "connect.php";
 
-//switch SQL MODE to allow empty values with lastest version of MySQL
+//switch SQL MODE to allow empty values with latest version of MySQL
 $db->exec('SET sql_mode = ""');
 
 //get userid to find language
@@ -281,7 +283,7 @@ if($_GET['token'] && $_GET['token']==$_COOKIE["token"])
 
 	//dates conversions
 	$date_create = date_convert("$globalrow[date_create]");
-	$date_hope = date_convert("$globalrow[date_hope]");
+	$date_hope = date_cnv("$globalrow[date_hope]");
 	$date_res = date_convert("$globalrow[date_res]");
 	
 	
@@ -326,7 +328,7 @@ if($_GET['token'] && $_GET['token']==$_COOKIE["token"])
 								<td><font color="'.$rparameters['mail_color_text'].'"><b>'.T_('Date de la demande').':</b> '.$date_create.'</font></td>	
 							</tr>
 							'.$place;
-							//invert resolution and description part for antechono case
+							//invert resolution and description part for antechronological case
 							if($rparameters['mail_order']==1)
 							{
 								echo '
@@ -360,10 +362,7 @@ if($_GET['token'] && $_GET['token']==$_COOKIE["token"])
 		</body>
 	</html>';
 } else {
-	echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i>'.T_('Erreur').':</strong> '.T_('Vous n\'avez pas les droits d\'accès à cette page. Contacter votre administrateur').'.<br></div>';
+	echo DisplayMessage('error',T_("Vous n'avez pas les droits d'accès à cette page. Contacter votre administrateur"));
 }
-//function date conversion
-function date_convert ($date) 
-{return  substr($date,8,2) . '/' . substr($date,5,2) . '/' . substr($date,0,4) . ' '.T_('à').' ' . substr($date,11,2	) . 'h' . substr($date,14,2	);}
 $db = null;
 ?>

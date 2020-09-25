@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 07/04/2013
-# @Update : 23/09/2019
-# @Version : 3.1.44
+# @Update : 11/06/2020
+# @Version : 3.2.2 p6
 ################################################################################
 
 //initialize variables 
@@ -15,7 +15,7 @@ if(!isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) $_SERVER['HTTP_ACCEPT_LANGUAGE'] = 
 
 //locales
 $lang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
-if ($lang=='fr') {$_GET['lang'] = 'fr_FR';}
+if($lang=='fr') {$_GET['lang'] = 'fr_FR';}
 else {$_GET['lang'] = 'en_US';}
 
 define('PROJECT_DIR', realpath('./'));
@@ -34,125 +34,89 @@ header('Content-Type: text/html; charset=utf-8');
 
 //call phpimap component
 require_once('components/PhpImap/__autoload.php');
+use PhpImap\Exceptions\ConnectionException;
+use PhpImap\Mailbox;
 
 //functions
 require_once('core/functions.php');
 
+if(!is_dir(__DIR__."/upload/ticket"))  {mkdir(__DIR__.'/upload/ticket/', 0777, true);}
+
 //function to add attachment in image on ticket
 function func_attachement($c_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox,$count,$contentype)
 {
-	$c_name_dir_ticket = $c_name_dir_upload.$c_ticket_number; 
+	$c_name_dir_ticket = $c_name_dir_upload; 
+	
 	//move attachment to upload directory
 	$tabAttachments = $mail->getAttachments();
 	foreach ($tabAttachments as $tabAttachment){
-		if(!is_dir($c_name_dir_upload.$c_ticket_number))
-		{
-			$oldmask = umask(0);
-			@mkdir($c_name_dir_upload.$c_ticket_number,0777);
-			umask($oldmask);
-		}
 		//case image inside in mail
 		//if($tabAttachment->disposition=="inline" || $tabAttachment->disposition==null) #4015
 		if($tabAttachment->disposition=="inline" || $tabAttachment->disposition=="INLINE" || $tabAttachment->disposition==null) 
 		{
-			$c_name_file = basename($tabAttachment->filePath);
+			$c_name_file_original = basename($tabAttachment->filePath);
+			$c_name_file = $c_ticket_number.'_'.$c_name_file_original;
+			
 			echo '['.$mailbox.'] [mail '.$count.'] Image into body: <span style="color:green">'.$c_name_file.'</span><br />';
 			$dispo=$tabAttachment->disposition;
 			echo '['.$mailbox.'] [mail '.$count.'] Disposition: <span style="color:green">'.$dispo.'</span><br />';
 			//check if link are not present #4371 from apple mail
 			if($contentype=='textPlain')
 			{
-				//update freeslot
 				$c_name_file = $tabAttachment->name;
-				//black list exclusion for extension
-				$blacklistedfile=0;
-				$blacklist =  array('php', 'php1', 'php2','php3' ,'php4' ,'php5', 'php6', 'php7', 'php8', 'php9', 'php10', 'js', 'htm', 'html', 'phtml', 'exe', 'jsp' ,'pht', 'shtml', 'asa', 'cer', 'asax', 'swf', 'xap', 'phphp', 'inc', 'htaccess', 'sh', 'py', 'pl', 'jsp', 'asp', 'cgi', 'json', 'svn', 'git', 'lock', 'yaml', 'com', 'bat', 'ps1', 'cmd', 'vb', 'hta', 'reg', 'ade', 'adp', 'app', 'asp', 'bas', 'bat', 'cer', 'chm', 'cmd', 'com', 'cpl', 'crt', 'csh', 'der', 'exe', 'fxp', 'gadget', 'hlp', 'hta', 'inf', 'ins', 'isp', 'its', 'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt', 'mdw', 'mdz', 'msc', 'msh', 'msh1', 'msh2', 'mshxml', 'msh1xml', 'msh2xml', 'msi', 'msp', 'mst', 'ops', 'pcd', 'pif', 'plg', 'prf', 'prg', 'pst', 'reg', 'scf', 'scr', 'sct', 'shb', 'shs', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'tmp', 'url', 'vb', 'vbe', 'vbs', 'vsmacros', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xnk');
-				$ext=explode('.',$c_name_file);
-				foreach ($ext as &$value) {
-					$value=strtolower($value);
-					if(in_array($value,$blacklist)) {$blacklistedfile=1;} 
-				}
-				if(!$blacklistedfile)
+				if($c_name_file && $c_ticket_number)
 				{
-					$qry=$db->prepare("SELECT `img1`,`img2`,`img3`,`img4`,`img5` FROM `tincidents` WHERE id=:id");
-					$qry->execute(array('id' => $c_ticket_number));
-					$row=$qry->fetch();
-					$qry->closeCursor();
-					
-					//find the first free slot else not display attach input
-					if ($row['img1']=="") {$freeslot="img1";}
-					else if ($row['img2']=="") {$freeslot="img2";}
-					else if ($row['img3']=="") {$freeslot="img3";}
-					else if ($row['img4']=="") {$freeslot="img4";}
-					else if ($row['img5']=="") {$freeslot="img5";}
-
-					if(isset($freeslot)){
-						echo '['.$mailbox.'] [mail '.$count.'] Freeslot selected: <span style="color:green">'.$freeslot.'</span><br />';
-						$db_file_name=strip_tags($db->quote($c_name_file));
-						$db->query("UPDATE tincidents SET $freeslot=$db_file_name WHERE id='$c_ticket_number'");
+					$real_filename=preg_replace("/[^A-Za-z0-9\_\-\.]/", '', $c_name_file);
+					$real_filename=strip_tags($real_filename);
+					if(CheckFileExtension($real_filename)==true) {
+						$target_folder='./upload/ticket/';
+						//generate storage filename
+						$c_name_file=$c_ticket_number.'_'.md5(uniqid());
+						
+						echo '['.$mailbox.'] [mail '.$count.'] Attachment: <span style="color:green">'.$real_filename.'</span><br />';
+						$dispo=$tabAttachment->disposition;
+						echo '['.$mailbox.'] [mail '.$count.'] Disposition: <span style="color:green">'.$dispo.'</span><br />';
+						//db insert in attachment table
+						$uid=md5(uniqid());
+						$qry=$db->prepare("INSERT INTO `tattachments` (`uid`,`ticket_id`,`storage_filename`,`real_filename`) VALUES (:uid,:ticket_id,:storage_filename,:real_filename)");
+						$qry->execute(array('uid' => $uid,'ticket_id' => $c_ticket_number,'storage_filename' => $c_name_file,'real_filename' => $real_filename));
+						
 					} else {
-						echo '['.$mailbox.'] [mail '.$count.'] Freeslot selected: <span style="color:red">no free slot found</span><br />';
+						echo '['.$mailbox.'] [mail '.$count.'] Blacklisted file: <span style="color:red">'.$real_filename.'</span><br />';
+						logit('security', 'IMAP connector : blacklisted file blocked ('.$real_filename.')','0');
 					}
-				} else {
-					echo '['.$mailbox.'] [mail '.$count.'] Blacklisted file: <span style="color:red">'.$c_name_file.'</span><br />';
-				}
+				} 
 			}
-			
-			
 		} 
-		//case attachment in mail
-		else 
+		else  //case attachment in mail
 		{
 			$c_name_file = $tabAttachment->name;
-			//black list exclusion for extension
-			$blacklistedfile=0;
-			$blacklist =  array('php', 'php1', 'php2','php3' ,'php4' ,'php5', 'php6', 'php7', 'php8', 'php9', 'php10', 'js', 'htm', 'html', 'phtml', 'exe', 'jsp' ,'pht', 'shtml', 'asa', 'cer', 'asax', 'swf', 'xap', 'phphp', 'inc', 'htaccess', 'sh', 'py', 'pl', 'jsp', 'asp', 'cgi', 'json', 'svn', 'git', 'lock', 'yaml', 'com', 'bat', 'ps1', 'cmd', 'vb', 'hta', 'reg', 'ade', 'adp', 'app', 'asp', 'bas', 'bat', 'cer', 'chm', 'cmd', 'com', 'cpl', 'crt', 'csh', 'der', 'exe', 'fxp', 'gadget', 'hlp', 'hta', 'inf', 'ins', 'isp', 'its', 'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt', 'mdw', 'mdz', 'msc', 'msh', 'msh1', 'msh2', 'mshxml', 'msh1xml', 'msh2xml', 'msi', 'msp', 'mst', 'ops', 'pcd', 'pif', 'plg', 'prf', 'prg', 'pst', 'reg', 'scf', 'scr', 'sct', 'shb', 'shs', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'tmp', 'url', 'vb', 'vbe', 'vbs', 'vsmacros', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xnk');
-			$ext=explode('.',$c_name_file);
-			foreach ($ext as &$value) {
-				$value=strtolower($value);
-				if(in_array($value,$blacklist)) {$blacklistedfile=1;} 
-			}
-			if(!$blacklistedfile)
+			if($c_name_file && $c_ticket_number)
 			{
-				
-				echo '['.$mailbox.'] [mail '.$count.'] Attachment: <span style="color:green">'.$c_name_file.'</span><br />';
-				$dispo=$tabAttachment->disposition;
-				echo '['.$mailbox.'] [mail '.$count.'] Disposition: <span style="color:green">'.$dispo.'</span><br />';
-				
-				$qry=$db->prepare("SELECT `img1`,`img2`,`img3`,`img4`,`img5` FROM `tincidents` WHERE id=:id");
-				$qry->execute(array('id' => $c_ticket_number));
-				$row=$qry->fetch();
-				$qry->closeCursor();
-				
-				//find the first free slot else not display attach input
-				if ($row['img1']=="") {$freeslot="img1";}
-				else if ($row['img2']=="") {$freeslot="img2";}
-				else if ($row['img3']=="") {$freeslot="img3";}
-				else if ($row['img4']=="") {$freeslot="img4";}
-				else if ($row['img5']=="") {$freeslot="img5";}
-
-				if(isset($freeslot)){
-					echo '['.$mailbox.'] [mail '.$count.'] Freeslot selected: <span style="color:green">'.$freeslot.'</span><br />';
-					$db_file_name=strip_tags($db->quote($c_name_file));
-					$db->query("UPDATE tincidents SET $freeslot=$db_file_name WHERE id='$c_ticket_number'");
+				$real_filename=preg_replace("/[^A-Za-z0-9\_\-\.\s+]/", '', $c_name_file);
+				$real_filename=strip_tags($real_filename);
+				if(CheckFileExtension($real_filename)==true) {
+					$target_folder='./upload/ticket/';
+					//generate storage filename
+					$c_name_file=$c_ticket_number.'_'.md5(uniqid());
+					
+					echo '['.$mailbox.'] [mail '.$count.'] Attachment: <span style="color:green">'.$real_filename.'</span><br />';
+					$dispo=$tabAttachment->disposition;
+					echo '['.$mailbox.'] [mail '.$count.'] Disposition: <span style="color:green">'.$dispo.'</span><br />';
+					//db insert in attachment table
+					$uid=md5(uniqid());
+					$qry=$db->prepare("INSERT INTO `tattachments` (`uid`,`ticket_id`,`storage_filename`,`real_filename`) VALUES (:uid,:ticket_id,:storage_filename,:real_filename)");
+					$qry->execute(array('uid' => $uid,'ticket_id' => $c_ticket_number,'storage_filename' => $c_name_file,'real_filename' => $real_filename));
+					
 				} else {
-					echo '['.$mailbox.'] [mail '.$count.'] Freeslot selected: <span style="color:red">no free slot found</span><br />';
+					echo '['.$mailbox.'] [mail '.$count.'] Blacklisted file: <span style="color:red">'.$real_filename.'</span><br />';
+					logit('security', 'IMAP connector : blacklisted file "'.$real_filename.'" blocked, ticket '.$c_ticket_number,'0');
 				}
-			} else {
-				echo '['.$mailbox.'] [mail '.$count.'] Blacklisted file: <span style="color:red">'.$c_name_file.'</span><br />';
-			}
+			} 
 		}
-		/*
-		echo "DEBUG";
-		echo "tabAttachment->filePath";
-		echo $tabAttachment->filePath;
-		echo "<br>";
-		echo "c_name_dir_ticket=$c_name_dir_ticket c_name_file=$c_name_file<br />";
-		*/
 		rename($tabAttachment->filePath,$c_name_dir_ticket.'/'.$c_name_file); 
-		//echo $tabAttachment->filePath;
 	}
-	return $mail->replaceInternalLinks('upload/'.$c_ticket_number);
+	return $mail->replaceInternalLinks('upload/ticket');
 }
 
 //initialize counter
@@ -161,7 +125,7 @@ $count=0;
 //connexion script with database parameters
 require "connect.php";
 
-//switch SQL MODE to allow empty values with lastest version of MySQL
+//switch SQL MODE to allow empty values with latest version of MySQL
 $db->exec('SET sql_mode = ""');
 
 //load parameters table
@@ -170,8 +134,10 @@ $qry->execute();
 $rparameters=$qry->fetch();
 $qry->closeCursor();
 
+if(!$rparameters['imap']) {die();}
+
 //display error parameter
-if ($rparameters['debug']==1) {
+if($rparameters['debug']==1) {
 	ini_set('display_errors', 'On');
 	error_reporting(E_ALL);
 } else {
@@ -186,7 +152,7 @@ if($rparameters['imap_ssl_check']==0) {$ssl_check='/novalidate-cert';} else {$ss
 $hostname = '{'.$rparameters['imap_server'].':'.$rparameters['imap_port'].''.$ssl_check.'}'.$rparameters['imap_inbox'].'';
 
 //connect to in-box
-$c_name_dir_upload =  __DIR__.'/upload/';
+$c_name_dir_upload =  __DIR__.'/upload/ticket';
 
 if($rparameters['imap_server'])
 {
@@ -205,9 +171,9 @@ echo 'IMAP connection string : <span style="color:green">'.$hostname.'</span><br
 
 //define mailbox to check
 $mailboxes=array();
-if ($rparameters['imap_mailbox_service']==1)
+if($rparameters['imap_mailbox_service']==1)
 {
-	array_push($mailboxes, $rparameters['imap_user']);
+	if($rparameters['imap_user']) {array_push($mailboxes, $rparameters['imap_user']);}
 	$qry=$db->prepare("SELECT `id`,`mail`,`password`,`service_id` FROM `tparameters_imap_multi_mailbox`");
 	$qry->execute();
 	while($row=$qry->fetch()) 
@@ -225,13 +191,13 @@ if ($rparameters['imap_mailbox_service']==1)
 
 foreach ($mailboxes as $mailbox)
 {
-	if ($rparameters['imap_mailbox_service']==1) {
+	if($rparameters['imap_mailbox_service']==1) {
 		$qry=$db->prepare("SELECT `password` FROM `tparameters_imap_multi_mailbox` WHERE mail=:mail");
 		$qry->execute(array('mail' => $mailbox));
 		$row=$qry->fetch();
 		$qry->closeCursor();
 		
-		if (!$row['password']) {
+		if(!isset($row['password'])) {
 			if(preg_match('/gs_en/',$rparameters['imap_password'])) {$rparameters['imap_password']=gs_crypt($rparameters['imap_password'], 'd' , $rparameters['server_private_key']);}
 			$mailbox_password=$rparameters['imap_password'];
 		} else {
@@ -241,18 +207,22 @@ foreach ($mailboxes as $mailbox)
 	}
 	
 	//connect to mailbox
-	$con_mailbox = new PhpImap\Mailbox($hostname, $mailbox, $mailbox_password,$c_name_dir_upload) or die(T_('Impossible de se connecter au serveur de Messagerie: ') . imap_last_error());
-	if (!$con_mailbox || $rparameters['imap']==0) {
-		echo '['.$mailbox.'] Connection to mailbox : <span style="color:red">KO</span><br />';
+	$con_mailbox = new Mailbox($hostname, $mailbox, $mailbox_password,$c_name_dir_upload);
+	try {
+        $mailsIds = $con_mailbox->searchMailbox('ALL');
+    } catch (ConnectionException $ex) {
+		logit('error','IMAP connector : connection failed: '.$ex->getMessage(),'0');
+        die('IMAP connection failed: '.$ex->getMessage());
+    } catch (Exception $ex) {
+		logit('error','IMAP connector : An error occurred: '.$ex->getMessage(),'0');
+        die('An error occurred: '.$ex->getMessage());
+    }
+	
+	if(!$mailsIds) {
+		echo '['.$mailbox.'] Detect mail in mailbox : <span style="color:green">NO</span><br />';
 	} else {
-		//check mail in mailbox
-		$mailsIds = $con_mailbox ->searchMailBox('ALL');
-		if(!$mailsIds) {
-			echo '['.$mailbox.'] Detect mail in mailbox : <span style="color:orange">KO</span><br />';
-		} else {
-			echo '['.$mailbox.'] Detect mail in mailbox : <span style="color:green">OK</span><br />';
-		}
-		
+		echo '['.$mailbox.'] Detect mail in mailbox : <span style="color:green">YES</span><br />';
+	
 		//treatment for all mail inside mailbox
 		$seen=0;
 		$tab_MailsInfos =  $con_mailbox ->getMailsInfo($mailsIds);		
@@ -296,25 +266,28 @@ foreach ($mailboxes as $mailbox)
 					$subject = str_replace('_', ' ', $subject);
 
 					//find gestsup userid from mail address
-					$qry=$db->prepare("SELECT `id` FROM `tusers` WHERE mail=:mail AND disable=:disable");
-					$qry->execute(array('mail' => $from,'disable' => 0));
+					$qry=$db->prepare("SELECT `id` FROM `tusers` WHERE mail=:mail AND disable='0'");
+					$qry->execute(array('mail' => $from));
 					$row=$qry->fetch();
 					$qry->closeCursor();
-					if($row['id'])
+					if(isset($row['id']))
 					{
 						$user_id=$row['id'];
 						$c_FromMessage='';
 					} else {
 						$user_id='0';
-						$c_FromMessage='De '.$from.':<br />';
+						$c_FromMessage='';
 					}
+					
+					//get extra informations from message header
+					$head = $con_mailbox->getMailHeader($tab_MailsInfo->uid);
 					
 					//detect ticket number in subject to update an existing ticket
 					$c_reg = "/n°(.*?):/i"; //regex for extract ticket number
 					preg_match($c_reg, $subject, $matches); // extract ticket number
 					@$find_ticket_number = $matches[1];
 					$find_ticket_number=str_replace(' ','',$find_ticket_number);
-					if ($find_ticket_number!="")
+					if($find_ticket_number && $rparameters['imap_reply']) //update ticket
 					{
 						//get attachement and image 
 						if($contentype=='textHtml') { 
@@ -323,28 +296,42 @@ foreach ($mailboxes as $mailbox)
 							(isset($c_FromMessage)?$c_FromMessage:'').func_attachement($find_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox,$count,$contentype);
 						}
 						//delete ticket part from mail to keep only answer
-						$end_tag='---- '.T_('Repondre au dessus du ticket').' ----';
-						$start_tag='---- '.T_('Repondre au dessus de cette ligne').' ----';
+						if(strpos($message,'---- Repondre au dessus de cette ligne ----')) {$start_tag='---- Repondre au dessus de cette ligne ----';}
+						if(strpos($message,'---- Repondre au dessus du ticket ----')) {$end_tag='---- Repondre au dessus du ticket ----';}
+						if(strpos($message,'---- Answer above this line ----')) {$start_tag='---- Answer above this line ----';}
+						if(strpos($message,'---- Answer above the ticket ----')) {$end_tag='---- Answer above the ticket ----';}
+						if(strpos($message,'---- Responda por encima de esta línea ----')) {$start_tag='---- Responda por encima de esta línea ----';}
+						if(strpos($message,'---- Responda arriba del boleto ----')) {$end_tag='---- Responda arriba del boleto ----';}
+						if(strpos($message,'---- Antworte über diese Zeile ----')) {$start_tag='---- Antworte über diese Zeile ----';}
+						if(strpos($message,'---- Über dem Ticket antworten ----')) {$end_tag='---- Über dem Ticket antworten ----';}
+						
 						$end_mail=explode($end_tag,$message);
 						$end_mail=$end_mail[1];
 						$start_mail=explode($start_tag,$message);
 						$start_mail=$start_mail[0];
 						$message=$start_mail.$end_mail;	
 						
+						//update img link
+						$tabAttachments = $mail->getAttachments();
+						foreach ($tabAttachments as $tabAttachment){
+							if($tabAttachment->disposition=="inline" || $tabAttachment->disposition=="INLINE" || $tabAttachment->disposition==null)  //case image inside in mail
+							{
+								$c_name_file_original = basename($tabAttachment->filePath);
+								$c_name_file_rename = $find_ticket_number.'_'.$c_name_file_original;
+								$message=str_replace($c_name_file_original,$c_name_file_rename,$message);
+							}
+						}
+						
 						//sanitize HTML code
 						$message=str_replace('text-decoration:underline;','',$message);
 						$message=preg_replace('/(<(style)\b[^>]*>).*?(<\/\2>)/is', "$1$3", $message); //remove style in outlook client
 						$message=preg_replace('/(<(base)\b[^>]*>)/is', "", $message); //remove base link
-						if (!preg_match("/<HTML/i",$message)){$message=strip_tags($message,'<p><a><span><br><div>');}
+						$message=preg_replace('/(<(body)\b[^>]*>)/is', "<body>", $message); //remove body attribute such as background #4722
+						if(!preg_match("/<HTML/i",$message)){$message=strip_tags($message,'<p><a><span><br><div>');}
 						
 						//insert thread in ticket
 						$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`text`) VALUES (:ticket,:date,:author,:text)");
-						$qry->execute(array(
-							'ticket' => $find_ticket_number,
-							'date' => $datetime,
-							'author' => $user_id,
-							'text' => $message
-							));
+						$qry->execute(array('ticket' => $find_ticket_number,'date' => $datetime,'author' => $user_id,'text' => $message));
 						
 						echo '['.$mailbox.']  [mail '.$count.'] Import mail "'.$subject.'": <span style="color:green">OK</span><br />';
 						if($rparameters['debug']==1) 
@@ -353,35 +340,50 @@ foreach ($mailboxes as $mailbox)
 							echo '['.$mailbox.'] [mail '.$count.'] Content type detected: <span style="color:green">'.$contentype.'</span><br />';
 						}
 						//update unread state
-						$qry=$db->prepare("UPDATE `tincidents` SET `techread`=:techread WHERE `id`=:id");
-						$qry->execute(array(
-							'techread' => 0,
-							'id' => $find_ticket_number
-							));
+						$qry=$db->prepare("UPDATE `tincidents` SET `techread`='0' WHERE `id`=:id");
+						$qry->execute(array('id' => $find_ticket_number));
 						
-					} else {
-						//create ticket
+						//send mail to technician 
+						if($rparameters['mail_auto_tech_modify'])
+						{
+							echo '['.$mailbox.'] [mail '.$count.'] SEND Mail to technician: <span style="color:green">OK (mail_auto_tech_modify parameter enable)</span><br />';
+							//get tech mail 
+							$qry = $db->prepare("SELECT tusers.mail FROM tusers,tincidents WHERE tusers.id=tincidents.technician AND tincidents.id=:ticket_id");
+							$qry->execute(array('ticket_id' => $find_ticket_number));
+							$techmail=$qry->fetch();
+							$qry->closeCursor();
+							if(!empty($techmail))
+							{
+								if($rparameters['mail_from_adr']){$from=$rparameters['mail_from_adr'];}
+								$to=$techmail['mail'];
+								$object=T_('Le ticket').' n°'.$find_ticket_number.': '.T_(' a été modifié');
+								$message = '
+								'.T_('Le ticket').' n°'.$find_ticket_number.' '.T_('a été modifié').' <br />
+								<br />
+								'.T_('Pour consulter le ticket cliquer sur le lien suivant ').' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$find_ticket_number.'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$find_ticket_number.'</a>.
+								';
+								$mail_auto=true;
+								require('core/message.php');
+								//trace mail in thread
+								$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`text`,`type`,`dest_mail`) VALUES (:ticket,:date,:author,'','3',:dest_mail)");
+								$qry->execute(array('ticket' => $find_ticket_number,'date' => $datetime,'author' => 0,'dest_mail' => $techmail['mail']));								
+							}
+							
+						}
+					} else { //create ticket
 						$qry=$db->prepare("INSERT INTO `tincidents` (`user`,`technician`,`title`,`description`,`date_create`,`techread`,`state`,`criticality`,`disable`,`place`,`creator`) 
-						VALUES (:user,:technician,:title,:description,:date_create,:techread,:state,:criticality,:disable,:place,:creator)");
-						$qry->execute(array(
-							'user' => $user_id,
-							'technician' => 0,
-							'title' => $subject,
-							'description' => '',
-							'date_create' => $datetime,
-							'techread' => 0,
-							'state' => $rparameters['ticket_default_state'],
-							'criticality' => 4,
-							'disable' => 0,
-							'place' => 0,
-							'creator' => $user_id
-							));
+						VALUES (:user,'0',:title,'',:date_create,'0',:state,'4','0','0',:creator)");
+						$qry->execute(array('user' => $user_id,'title' => $subject,'date_create' => $datetime,'state' => $rparameters['ticket_default_state'],'creator' => $user_id));
 						
 						//get ticket number
 						$c_ticket_number = $db->lastInsertId();
 						
+						//insert threads
+						$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`type`) VALUES (:ticket,:date,'6')");
+						$qry->execute(array('ticket' => $c_ticket_number,'date' => $datetime));
+						
 						//check if current mailbox is attached with service
-						if ($rparameters['imap_mailbox_service']==1)
+						if($rparameters['imap_mailbox_service']==1)
 						{
 							//get service id for current mailbox
 							$qry=$db->prepare("SELECT `id`,`name` FROM `tservices` WHERE id IN (SELECT service_id FROM `tparameters_imap_multi_mailbox` WHERE mail=:mail)");
@@ -392,10 +394,7 @@ foreach ($mailboxes as $mailbox)
 							if($row['id']) {
 								echo '['.$mailbox.'] [mail '.$count.'] Service associate with this mailbox: <span style="color:green">'.$row['name'].' ('.$row['id'].')</span><br />';
 								$qry=$db->prepare("UPDATE `tincidents` SET `u_service`=:u_service WHERE `id`=:id");
-								$qry->execute(array(
-									'u_service' => $row['id'],
-									'id' => $c_ticket_number
-									));
+								$qry->execute(array('u_service' => $row['id'],'id' => $c_ticket_number));
 							} else {
 								echo '['.$mailbox.'] [mail '.$count.'] Service associate with this mailbox: <span style="color:red">None</span><br />';
 							}
@@ -410,26 +409,51 @@ foreach ($mailboxes as $mailbox)
 						//get attachement and images from mail
 						$message = (isset($c_FromMessage)?$c_FromMessage:'').func_attachement($c_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox,$count,$contentype);
 						
+						//add extra informations on ticket description
+						setlocale(LC_TIME, 'fr_FR.utf8','fra');
+						$date=strtotime($mail->date);
+						$date=strftime("%A %e %B %G à %H:%M",$date);
+						
+						$description_header=
+						'<b>'.T_('De').' :</b> '.$mail->fromAddress.'<br /> 
+						<b>'.T_('Envoyé le').' : </b> '.$date.'<br /> 
+						<b>'.T_('Destinataire(s)').' :</b> '.$head->toString.' <br />';
+						if(isset($head->headers->ccaddress)){$description_header.='<b>'.T_('Copie').' :</b> '.$head->headers->ccaddress.'<br />';}
+						$description_header.='
+						<b>'.T_('Objet').' :</b> '.$mail->subject.'<br /> 
+						<b>'.T_('Message').' :</b><br /> 
+						';
+						
 						if($contentype=='textPlain')
 						{
-							if(isset($c_FromMessage)) {$description=$c_FromMessage.$description;}
+							if(isset($c_FromMessage)) {$description=$description_header.$c_FromMessage.$description;}
 							$qry=$db->prepare("UPDATE `tincidents` SET `description`=:description WHERE `id`=:id");
-							$qry->execute(array(
-								'description' => $description,
-								'id' => $c_ticket_number
-								));
+							$qry->execute(array('description' => $description,'id' => $c_ticket_number));
 						}
 						else //html case
 						{
-							//remove outlook string to avoid underline application problem
+							//update img link
+							$tabAttachments = $mail->getAttachments();
+							foreach ($tabAttachments as $tabAttachment){
+								if($tabAttachment->disposition=="inline" || $tabAttachment->disposition=="INLINE" || $tabAttachment->disposition==null)  //case image inside in mail
+								{
+									$c_name_file_original = basename($tabAttachment->filePath);
+									$c_name_file_rename = $c_ticket_number.'_'.$c_name_file_original;
+									$message=str_replace($c_name_file_original,$c_name_file_rename,$message);
+								}
+							}
+							
+							//sanitize HTML
 							$message=str_replace("text-decoration:underline;", "", $message);
 							$message=preg_replace('/(<(base)\b[^>]*>)/is', "", $message); //remove base link
-							$qry=$db->prepare("UPDATE `tincidents` SET `description`=:description WHERE `id`=:id");
-							$qry->execute(array(
-								'description' => $message,
-								'id' => $c_ticket_number
-								));
+							$message=preg_replace('/(<(body)\b[^>]*>)/is', "<body>", $message); //remove body attribute such as background #4722
 							
+							//add header informations
+							$message=$description_header.$message;
+							
+							//update description
+							$qry=$db->prepare("UPDATE `tincidents` SET `description`=:description WHERE `id`=:id");
+							$qry->execute(array('description' => $message,'id' => $c_ticket_number));
 						}
 						
 						//send mail to user 
@@ -440,14 +464,40 @@ foreach ($mailboxes as $mailbox)
 							include('core/mail.php');
 							echo '['.$mailbox.'] [mail '.$count.'] SEND Mail to sender: <span style="color:green">OK (mail_auto_user_newticket parameter enable)</span><br />';
 						}
+						//send mail to admin 
+						if($rparameters['mail_newticket'] && $rparameters['mail_newticket_address'])
+						{
+							$qry = $db->prepare("SELECT tusers.firstname,tusers.lastname,tincidents.title,tincidents.description FROM tusers,tincidents WHERE tusers.id=tincidents.user AND tincidents.id=:ticket_id");
+							$qry->execute(array('ticket_id' => $c_ticket_number));
+							$ticket_data=$qry->fetch();
+							$qry->closeCursor();
+							
+							$from=$rparameters['mail_from_adr'];
+							$to=$rparameters['mail_newticket_address'];
+							$object=T_('Un nouveau ticket a été déclaré par ').$ticket_data['lastname'].' '.$ticket_data['firstname'].' : '.$ticket_data['title'];
+							$message = '
+							'.T_('Le ticket').' n°'.$c_ticket_number.' '.T_("a été déclaré par l'utilisateur").' '.$ticket_data['lastname'].' '.$ticket_data['firstname'].'.<br />
+							<br />
+							<u>'.T_('Objet').':</u><br />
+							'.$ticket_data['title'].'<br />		
+							<br />	
+							<u>'.T_('Description').':</u><br />
+							'.$ticket_data['description'].'<br />
+							<br />
+							'.T_("Pour plus d'informations vous pouvez consulter le ticket sur").' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$c_ticket_number.'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$c_ticket_number.'</a>.
+							';
+							$mail_auto=true;
+							require('core/message.php');
+							echo '['.$mailbox.'] [mail '.$count.'] Send mail to administrator: <span style="color:green">OK (mail_newticket parameter enable)</span><br />';
+						}
 					}
 					//post treatment actions
-					if ($rparameters['imap_post_treatment']=='move' && $rparameters['imap_post_treatment_folder']!='')
+					if($rparameters['imap_post_treatment']=='move' && $rparameters['imap_post_treatment_folder']!='')
 					{
 						//move mail
 						$con_mailbox->moveMail($tab_MailsInfo->uid,$rparameters['imap_post_treatment_folder']);
 						echo '['.$mailbox.'] [mail '.$count.'] Post-treatment action: <span style="color:green">MOVE ('.$rparameters['imap_post_treatment_folder'].' folder)</span><br />';
-					}elseif ($rparameters['imap_post_treatment']=='delete')
+					}elseif($rparameters['imap_post_treatment']=='delete')
 					{
 						//delete mail
 						imap_delete($con_mailbox->getImapStream(),$tab_MailsInfo->uid,FT_UID);
@@ -459,10 +509,9 @@ foreach ($mailboxes as $mailbox)
 				} //END for each no blacklist mail
 			} //END for each unread mail 
 		} //END for each mail
-		if($seen==0) {echo '['.$mailbox.'] Check new mail: <span style="color:green">No new mail detected</span><br />';}
-	} //END for each mailbox
-echo "<br />";
-sleep(1); //timeout 1 seconds to limit network trafic
+	}
+	echo "<br />";
+	sleep(1); //timeout 1 seconds to limit network trafic
 }
 echo "Total $count mail received</b><br />";
 ?>

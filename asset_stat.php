@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 25/01/2016
-# @Update : 27/02/2019
-# @Version : 3.1.39
+# @Update : 06/02/2020
+# @Version : 3.2.0
 ################################################################################
 
 //initialize variables 
@@ -15,9 +15,8 @@ if(!isset($_POST['model'])) $_POST['model']='';
 ?>
 
 <form method="post" action="" name="filter" >
-	<center>
-	<small><?php echo T_('Filtre global'); ?> :</small>
-	<select style="width:155px" name="tech" onchange=submit()>
+	<?php echo T_('Filtre'); ?> :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<select style="width:160px;" class="form-control form-control-sm d-inline-block" name="tech" onchange="submit()">
 		<?php
 		$qry=$db->prepare("SELECT `id`,`firstname`,`lastname` FROM `tusers` WHERE (profile=0 OR profile=4) and disable=0 ORDER BY lastname");
 		$qry->execute();
@@ -32,7 +31,7 @@ if(!isset($_POST['model'])) $_POST['model']='';
 		if ($find!="1") {echo '<option value="%" selected >'.T_('Tous les techniciens').'</option>';} else {echo '<option value="%" >'.('Tous les techniciens').'</option>';}											
 		?>
 	</select>
-	<select style="width:155px" name="service" onchange=submit()>
+	<select style="width:160px;" class="form-control form-control-sm d-inline-block" name="service" onchange="submit()">
 		<?php
 		$qry=$db->prepare("SELECT `id`,`name` FROM `tservices` WHERE disable=0 ORDER BY name");
 		$qry->execute();
@@ -50,7 +49,7 @@ if(!isset($_POST['model'])) $_POST['model']='';
 	if($company_filter==1)
 	{
 		echo '
-			<select style="width:155px" name="company" onchange=submit()>
+			<select style="width:160px;" class="form-control form-control-sm d-inline-block" name="company" onchange="submit()">
 				';
 				$qry=$db->prepare("SELECT `id`,`name` FROM `tcompany` WHERE disable='0' ORDER BY name");
 				$qry->execute();
@@ -66,7 +65,7 @@ if(!isset($_POST['model'])) $_POST['model']='';
 		';
 	}
 	?>
-	<select style="width:155px" name="type" onchange=submit()>
+	<select style="width:160px;" class="form-control form-control-sm d-inline-block" name="type" onchange="submit()">
 	<?php
 	$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_type` ORDER BY name");
 	$qry->execute();
@@ -81,7 +80,7 @@ if(!isset($_POST['model'])) $_POST['model']='';
 	echo '<option '; if ($_POST['type']=='%') echo 'selected'; echo' value="%" >'.T_('Tous les types').'</option>';										
 	?>
 	</select> 
-	<select style="width:155px" name="model" onchange=submit()>
+	<select style="width:160px;" class="form-control form-control-sm d-inline-block" name="model" onchange="submit()">
 	<?php
 	$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_model` ORDER BY type");
 	$qry->execute();
@@ -96,8 +95,9 @@ if(!isset($_POST['model'])) $_POST['model']='';
 	echo '<option '; if ($_POST['model']=='%') echo 'selected'; echo' value="%" >'.T_('Tous les modèles').'</option>';										
 	?>
 	</select> 
-	
-	<select style="width:155px" name="month" onchange=submit()>
+	<div class="pt-2"></div>
+	<?php echo T_('Période'); ?> :
+	<select style="width:160px;" class="form-control form-control-sm d-inline-block" name="month" onchange="submit()">
 		<option value="%" <?php if ($_POST['month'] == '%')echo "selected" ?>><?php echo T_('Tous les mois'); ?></option>
 		<option value="01" <?php if ($_POST['month'] == '1')echo "selected" ?>><?php echo T_('Janvier'); ?></option>
 		<option value="02" <?php if ($_POST['month'] == '2')echo "selected" ?>><?php echo T_('Février'); ?></option>
@@ -106,14 +106,13 @@ if(!isset($_POST['model'])) $_POST['model']='';
 		<option value="05" <?php if ($_POST['month'] == '5')echo "selected" ?>><?php echo T_('Mai'); ?></option>
 		<option value="06" <?php if ($_POST['month'] == '6')echo "selected" ?>><?php echo T_('Juin'); ?></option>
 		<option value="07" <?php if ($_POST['month'] == '7')echo "selected" ?>><?php echo T_('Juillet'); ?></option>
-		<option value="08" <?php if ($_POST['month'] == '8')echo "selected" ?>><?php echo T_('Aout'); ?></option>
+		<option value="08" <?php if ($_POST['month'] == '8')echo "selected" ?>><?php echo T_('Août'); ?></option>
 		<option value="09" <?php if ($_POST['month'] == '9')echo "selected" ?>><?php echo T_('Septembre'); ?></option>
 		<option value="10" <?php if ($_POST['month'] == '10')echo "selected" ?>><?php echo T_('Octobre'); ?></option>
 		<option value="11" <?php if ($_POST['month'] == '11')echo "selected" ?>><?php echo T_('Novembre'); ?></option>	
 		<option value="12" <?php if ($_POST['month'] == '12')echo "selected" ?>><?php echo T_('Décembre'); ?></option>	
 	</select>
-
-	<select style="width:155px" name="year" onchange=submit()>
+	<select style="width:160px;" class="form-control form-control-sm d-inline-block" name="year" onchange="submit()">
 		<?php
 		$qry=$db->prepare("SELECT distinct year(date_install) as year FROM `tassets` WHERE date_install not like '0000-00-00' ORDER BY year(date_install)");
 		$qry->execute(array('id' => $_GET['id']));
@@ -127,17 +126,13 @@ if(!isset($_POST['model'])) $_POST['model']='';
 		?>
 		<option value="%" <?php if ($_POST['year'] == '%')echo "selected" ?>><?php echo T_('Toutes les années'); ?></option>
 	</select>
-	</center>
 </form>
-
-<br /><br />	
+<div class="pt-2"></div>
 <?php
 	//call all graphics files from ./stats directory
 	require('./stats/line_assets.php');
 	echo "<br />";
-	echo "<hr />";
 	require('./stats/pie_assets_service.php');
 	echo "<br />";
-	echo "<hr />";
 	require('./stats/pie_assets_type.php');
 ?>

@@ -6,8 +6,8 @@
 # @parameters : keywords
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 25/09/2018
-# @Version : 3.1.36
+# @Update : 26/05/2020
+# @Version : 3.2.2
 ################################################################################
 
 //initialize session variables
@@ -27,7 +27,10 @@ $keyword=explode(" ",$keywords);
 $nbkeyword= sizeof($keyword);
 
 //case meta state detect
-if($_GET['state']=='meta'){$state="AND	(tincidents.state=1 OR tincidents.state=2 OR tincidents.state=6)";} else {$state='';}
+if($_GET['state']=='meta'){$state="AND (tincidents.state=1 OR tincidents.state=2 OR tincidents.state=6)";} else {$state='';}
+
+//case user company view
+if($_GET['companyview']){$where_company="AND tusers.company='$ruser[company]'";} else {$where_company='';}
 
 $select= "
 		DISTINCT 
@@ -44,6 +47,7 @@ $select= "
 		tincidents.date_create,
 		tincidents.date_hope,
 		tincidents.date_res,
+		tincidents.time,
 		tincidents.state,
 		tincidents.priority,
 		tincidents.criticality,
@@ -56,20 +60,19 @@ $select= "
 $join='';
 
 //special case limit service, with user agency and service
-if ($rparameters['user_limit_service']==1 && $rright['admin']==0 && $cnt_service!=0 && $cnt_agency!=0)
+if($rparameters['user_limit_service']==1 && $rright['admin']==0 && $cnt_service!=0 && $cnt_agency!=0)
 {
 	//modify QRY 
 	$where_service=preg_replace('/OR/', 'AND', $where_service, 1);
 	$where_agency=str_replace('AND (', '', $where_agency);
 	$where_service=str_replace('AND (',"AND ($where_agency OR ",$where_service);
-	//echo "where_service2=$where_service <br />";
-	//echo "where_agency=$where_agency ";
 }
 
-if ($nbkeyword==2)
+if($nbkeyword==2)
 {
-	$from = "tincidents, tstates, tthreads";
+	$from = "tincidents, tstates, tthreads, tusers";
 	$where="
+	tincidents.user=tusers.id AND
 	tincidents.state=tstates.id AND
 	tincidents.id=tthreads.ticket AND
 	(
@@ -100,15 +103,17 @@ if ($nbkeyword==2)
 		AND	tincidents.title LIKE '$_POST[title]'
 	)
 	$where_service
+	$where_company
 	$state
 	AND tincidents.disable='0'
 "; 
 }
-else if ($nbkeyword==3)
+else if($nbkeyword==3)
 {
-	$from = "tincidents, tstates, tthreads";
+	$from = "tincidents, tstates, tthreads, tusers";
 	$where="
 	tincidents.state=tstates.id AND
+	tincidents.user=tusers.id AND
 	tincidents.id=tthreads.ticket AND
 	(
 		tincidents.title LIKE '%$keyword[0]%' OR 
@@ -143,14 +148,16 @@ else if ($nbkeyword==3)
 		AND	tincidents.title LIKE '$_POST[title]'
 	)
 	$where_service
+	$where_company
 	$state
 	AND tincidents.disable='0'
 "; 
 } 
-else if ($nbkeyword==4)
+else if($nbkeyword==4)
 {
-	$from = "tincidents, tstates, tthreads";
+	$from = "tincidents, tstates, tthreads, tusers";
 	$where="
+	tincidents.user=tusers.id AND
 	tincidents.state=tstates.id AND
 	tincidents.id=tthreads.ticket AND
 	(
@@ -191,13 +198,15 @@ else if ($nbkeyword==4)
 		AND	tincidents.title LIKE '$_POST[title]'
 	)
 	$where_service
+	$where_company
 	$state
 	AND tincidents.disable='0'
 "; 
-} else if ($nbkeyword==5)
+} else if($nbkeyword==5)
 {
-	$from = "tincidents, tstates, tthreads";
+	$from = "tincidents, tstates, tthreads, tusers";
 	$where="
+	tincidents.user=tusers.id AND
 	tincidents.state=tstates.id AND
 	tincidents.id=tthreads.ticket AND
 	(
@@ -243,14 +252,16 @@ else if ($nbkeyword==4)
 		AND	tincidents.title LIKE '$_POST[title]'
 	)
 	$where_service
+	$where_company
 	$state
 	AND tincidents.disable='0'
 "; 
 }
 else
 {
-	$from = "tincidents, tstates, tthreads, tsubcat, tcategory, tassets";
+	$from = "tincidents, tstates, tthreads, tsubcat, tcategory, tassets, tusers";
 	$where="
+	tincidents.user=tusers.id AND
 	tincidents.state=tstates.id AND
 	tincidents.id=tthreads.ticket AND
 	tincidents.subcat=tsubcat.id AND
@@ -284,6 +295,7 @@ else
 	)
 	$where_service
 	$state
+	$where_company
 	AND tincidents.disable='0'
 	"; 
 }	

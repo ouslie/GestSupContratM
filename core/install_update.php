@@ -6,18 +6,31 @@
 # @Parameters : $dedicated $type $installfile
 # @Author : Flox
 # @Create : 06/11/2012
-# @Update : 22/03/2018
-# @Version : 3.1.32
+# @Update : 18/03/2020
+# @Version : 3.2.0
 ################################################################################
 
 //initialize variables 
 if(!isset($command)) $command= '';
+if(!isset($cmd_update)) $cmd_update= '';
 if(!isset($error)) $error= '';
 if(!isset($_POST['step'])) $_POST['step']= '';
+if(!isset($_POST['cancel'])) $_POST['cancel']= '';
 
 //defaults values
 if(!isset($step)) $step= '1';
 if($autoinstall==1) $step= '4';
+
+if($_POST['cancel'])
+{
+	//redirect
+	$www = ".index.php?page=admin&subpage=update";
+	echo '<script language="Javascript">
+	<!--
+	document.location.replace("'.$www.'");
+	// -->
+	</script>';
+}
 
 //update current step
 if($_POST['step']==1) $step=2;
@@ -32,74 +45,106 @@ if($_POST['step']==7) $step=8;
 $date = date("Y-m-d");
 
 //display backup warning
-if ($step==1 && ($autoinstall==0))
+if($step==1 && ($autoinstall==0))
 {
-	$boxtitle="<i class='icon-save red'></i>".T_('Réaliser une sauvegarde');
-	$boxtext='
-	<form name="form" method="POST" action="" id="form">
-		<input name="step" type="hidden" value="3">
-		<input name="install" type="hidden" value="1">
-		'.T_('Il est fortement recommandé de réaliser une sauvegarde avant lancer la mise à jour (base de donnée et fichiers)').'.
-		<br />
-		<br />
-		<a target="_blank" href="https://gestsup.fr/index.php?page=support&item1=backup#8">'.T_('Plus d\'informations').'</a>
-	</form>
+	echo '
+	<div class="modal fade" id="install_1" tabindex="-1" role="dialog" aria-labelledby="ModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="ModalLabel"><i class="fa fa-save text-danger pr-2"></i>'.T_("Réaliser une sauvegarde").'</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form name="form1" method="POST" action="" id="form1">
+						<input name="step" type="hidden" value="2">
+						<input name="install" type="hidden" value="1">
+							'.T_("Si l'opération n'a pas déja été faites, réaliser une sauvegarde de vos fichiers et de votre base de données").'.
+							<br />
+							<br />
+							<a target="_blank" href="https://gestsup.fr/index.php?page=support&item1=backup#8">'.T_("Plus d'informations").'</a>
+					</form>
+					<form name="form0" method="POST" action="" id="form0">
+						<input name="cancel" type="hidden" value="1">
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-success" onclick="$(\'form#form1\').submit();" ><i class="fa fa-check pr-2"></i>'.T_('Continuer').'</button>
+					<button type="button" class="btn btn-danger" onclick="$(\'form#form0\').submit();"><i class="fa fa-times pr-2"></i>'.T_('Annuler').'</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>$(document).ready(function(){$("#install_1").modal(\'show\');});</script>
 	';
-	$valid=T_('Continuer');
-	$action1="$('form#form').submit();";
-	$cancel=T_('Fermer');
-	$action2="$( this ).dialog( \"close\" ); ";
-	include "./modalbox.php"; 
 }
 //start display
-if ($step==3  && ($autoinstall==0))
+if($step==3  && ($autoinstall==0))
 {
-	$boxtitle="<i class='icon-bolt red'></i> ".T_('Lancement de l\'installation');
-	$boxtext='
-	<form name="form" method="POST" action="" id="form">
-		<input name="step" type="hidden" value="3">
-		<input name="install" type="hidden" value="1">
-		'.T_('Voulez-vous lancer l\'installation de ').$installfile.' ?
-	</form>
+	echo '
+	<div class="modal fade" id="install_3" tabindex="-1" role="dialog" aria-labelledby="ModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="ModalLabel"><i class="fa fa-bolt text-danger pr-2"></i>'.T_("Lancement de l'installation").'</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form name="form3" method="POST" action="" id="form3">
+						<input name="step" type="hidden" value="3">
+						<input name="install" type="hidden" value="1">
+						'.T_("Voulez-vous lancer l'installation du fichier ").$installfile.' ?
+					</form>
+					<form name="form0" method="POST" action="" id="form0">
+						<input name="cancel" type="hidden" value="1">
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-success" onclick="$(\'form#form3\').submit();" ><i class="fa fa-check pr-2"></i>'.T_('Continuer').'</button>
+					<button type="button" class="btn btn-danger" onclick="$(\'form#form0\').submit();"><i class="fa fa-times pr-2"></i>'.T_('Annuler').'</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>$(document).ready(function(){$("#install_3").modal(\'show\');});</script>
 	';
-	$valid=T_('Lancer');
-	$action1="$('form#form').submit();";
-	$cancel=T_('Fermer');
-	$action2="$( this ).dialog( \"close\" ); ";
-	include "./modalbox.php"; 
 }
 //extract last version or last patch
-if ($step==4)
+if($step==4)
 {	
 	//create temporary directory
 	if(file_exists(__DIR__ .'/../download/tmp')) {} else {mkdir(__DIR__ ."/../download/tmp");} 
 	//extract data into temporary directory
 	$zip = new ZipArchive;
     $res = $zip->open(__DIR__ .'/../download/'.$installfile.'');
-    if ($res === TRUE) {
+    if($res === TRUE) {
         $zip->extractTo(__DIR__ .'/../download/tmp/');
         $zip->close();
 	}
 	//check extract
 	if(file_exists(__DIR__ .'/../download/tmp/changelog.php'))
 	{
-		$result='- '.T_('Extraction des fichiers').': <i class="icon-ok-sign icon-large green"></i><br />';
+		$result='- '.T_('Extraction des fichiers').': <i class="fa fa-check-circle text-success"></i><br />';
 	    $step=5;
     } else {
-		$result='- '.T_('Extraction des fichiers').': <i class="icon-remove-sign icon-large red"></i> open='.$res.' <br />';
+		$result='- '.T_('Extraction des fichiers').': <i class="fa fa-times-circle text-danger"></i> open='.$res.' <br />';
 		$error=1;
 	}
 }
 //install SQL update
-if ($step==5)
+if($step==5)
 {
 	//case version update
-	if ($type=='version')
+	if($type=='version')
 	{
 		//find list of sql update
 		$matches = glob(__DIR__ ."/../download/tmp/_SQL/*.sql"); 
 		foreach ($matches as $filename) {
-			if ($rparameters['debug']==1) {echo "[EXECUTE SQL UPDATE]: $filename <br />";}
+			if($rparameters['debug']==1) {echo "[EXECUTE SQL UPDATE]: $filename <br />";}
 			//get only filename
 			$filename=explode (__DIR__ .'/../download/tmp/_SQL/',$filename);
 			$filename=$filename[1];
@@ -112,11 +157,11 @@ if ($step==5)
 			$dst=$dst[0];
 			//keep only superior patch
 			$subsrc=explode('.',$src);
-			if ($subsrc[0]>=$current_version2[0])
+			if($subsrc[0]>=$current_version2[0])
 			{
-				if ($subsrc[1]>=$current_version2[1]) 
+				if($subsrc[1]>=$current_version2[1]) 
 				{
-					if ($subsrc[2]>=$current_version2[2]) 
+					if($subsrc[2]>=$current_version2[2]) 
 					{
 						//import script
 						$sql_file=file_get_contents(__DIR__ .'/../download/tmp/_SQL/'.$filename.'');
@@ -135,18 +180,18 @@ if ($step==5)
 		$qry->closeCursor();
 		
 		$vactu="$rvactu[version]";
-		if ($vactu==$last_ftp_version) {
-			$result=$result.'- '.T_('Modification base de données').': <i class="icon-ok-sign icon-large green"></i><br />';
+		if($vactu==$last_ftp_version) {
+			$result=$result.'- '.T_('Modification base de données').': <i class="fa fa-check-circle text-success"></i><br />';
 			$step=6;
 		} else {
-			$result=$result.'- '.T_('Modification base de données').': <i class="icon-remove-sign icon-large red"></i><br />';
+			$result=$result.'- '.T_('Modification base de données').': <i class="fa fa-times-circle text-danger"></i><br />';
 			$error=1;
 		}
 	}
 	//case patch update
-	if ($type=='patch')
+	if($type=='patch')
 	{
-		if ($dedicated==1)
+		if($dedicated==1)
 		{
 			$storefilename='update_'.$current_version2[0].'.'.$current_version2[1].'.'.$current_version2[2].'.'.$current_version2[3].'_to_'.$current_version2[0].'.'.$current_version2[1].'.'.$current_version2[2].'.'.$next_ftp_patch.'.sql';
 		} else {
@@ -164,28 +209,28 @@ if ($step==5)
 		$qry->closeCursor();
 		$vactu="$rvactu[version]";
 		
-		if ($dedicated==1)
+		if($dedicated==1)
 		{
-			if ($vactu==$current_version2[0].'.'.$current_version2[1].'.'.$current_version2[2].'.'.$next_ftp_patch) {
-			$result=$result.'- '.T_('Modification base de données').': <i class="icon-ok-sign icon-large green"></i><br />';
+			if($vactu==$current_version2[0].'.'.$current_version2[1].'.'.$current_version2[2].'.'.$next_ftp_patch) {
+			$result=$result.'- '.T_('Modification base de données').': <i class="fa fa-check-circle text-success"></i><br />';
 			$step=6;
 			} else {
-				$result=$result.'- '.T_('Modification base de données').': <i class="icon-remove-sign icon-large red"></i><br />'; 
+				$result=$result.'- '.T_('Modification base de données').': <i class="fa fa-times-circle text-danger"></i><br />'; 
 				$error=1;
 			}
 		} else {
-			if ($vactu==$current_version2[0].'.'.$current_version2[1].'.'.$next_ftp_patch) {
-			$result=$result.'- '.T_('Modification base de données').': <i class="icon-ok-sign icon-large green"></i><br />';
+			if($vactu==$current_version2[0].'.'.$current_version2[1].'.'.$next_ftp_patch) {
+			$result=$result.'- '.T_('Modification base de données').': <i class="fa fa-check-circle text-success"></i><br />';
 			$step=6;
 			} else {
-				$result=$result.'- '.T_('Modification base de données').': <i class="icon-remove-sign icon-large red"></i><br />'; 
+				$result=$result.'- '.T_('Modification base de données').': <i class="fa fa-times-circle text-danger"></i><br />'; 
 				$error=1;
 			}
 		}
 	}
 }
-//copy lastest files
-if ($step==6)
+//copy latest files
+if($step==6)
 {
 	//backup current connect.php file
 	copy(__DIR__ .'/../connect.php', __DIR__ .'/../backup/connect.php'); 
@@ -194,8 +239,8 @@ if ($step==6)
 		$dir = opendir($src); 
 		@mkdir($dst); 
 		while(false !== ( $file = readdir($dir)) ) { 
-			if (( $file != '.' ) && ( $file != '..' )) { 
-				if ( is_dir($src . '/' . $file) ) { 
+			if(( $file != '.' ) && ( $file != '..' )) { 
+				if( is_dir($src . '/' . $file) ) { 
 					recurse_copy($src . '/' . $file,$dst . '/' . $file); 
 				} 
 				else { 
@@ -208,21 +253,23 @@ if ($step==6)
 	recurse_copy(__DIR__ ."/../download/tmp/",__DIR__ ."/../");
 	//restore connect.php file previously backup-ed
 	rename(__DIR__ .'/../backup/connect.php', __DIR__ .'/../connect.php'); 
-	$result=$result.'- '.T_('Copie des nouveaux fichiers').': <i class="icon-ok-sign icon-large green"></i><br />';
+	$result=$result.'- '.T_('Copie des nouveaux fichiers').': <i class="fa fa-check-circle text-success"></i><br />';
+	
+	
 	$step=7;
 }
 //clean temporary folder.
-if ($step==7)
+if($step==7)
 {
 	//delete download file
 	unlink(__DIR__ ."/../download/$installfile");
 	//remove temporary directory
 	function rrmdir($dir) {
-	   if (is_dir($dir)) {
+	   if(is_dir($dir)) {
 		 $objects = scandir($dir);
 		 foreach ($objects as $object) {
-		   if ($object != "." && $object != "..") {
-			 if (filetype($dir."/".$object) == "dir") rrmdir($dir."/".$object); else unlink($dir."/".$object);
+		   if($object != "." && $object != "..") {
+			 if(filetype($dir."/".$object) == "dir") rrmdir($dir."/".$object); else unlink($dir."/".$object);
 		   }
 		 }
 		 reset($objects);
@@ -231,39 +278,89 @@ if ($step==7)
 	 }
 	$dir=__DIR__ ."/../download/tmp/";
 	rrmdir($dir);
-	$result=$result.'- '.T_('Nettoyage de l\'installation').': <i class="icon-ok-sign icon-large green"></i><br />';
+	
+	//remove install directory
+	if(is_dir(__DIR__ ."/install/")) 
+	{
+		$dir=__DIR__ ."/install/";
+		rrmdir($dir);
+	}
+	//remove install directory
+	if(is_dir(__DIR__ ."/../install/")) 
+	{
+		$dir=__DIR__ ."/../install/";
+		rrmdir($dir);
+	}
+	$result=$result.'- '.T_("Nettoyage de l'installation").': <i class="fa fa-check-circle text-success"></i><br />';
 	$step=8;
 }
-if ($step==8)
+if($step==8)
 {
-	$boxtitle="<i class='icon-circle-arrow-up red'></i> ".T_('Rapport d\'installation');
-	$boxtext='
-	<form name="form" method="POST" action="" id="form">
-		<input name="install" type="hidden" value="1">
-		'.T_('L\'installation s\'est correctement déroulée').':<br /><br />
-		'.$result.'<br />
-		'.T_('Afin de finaliser la procédure, déconnectez vous, videz le cache de votre navigateur, et relancer l\'application').'.
-	</form>
-	';
-	$valid=T_('Continuer');
-	$action1="$( this ).dialog( \"close\" ); ";
-	$cancel=T_('Fermer');
-	$action2="$( this ).dialog( \"close\" ); ";
-	include __DIR__ ."/../modalbox.php"; 
+	if($cmd_update)
+	{
+		echo 'INSTALL SUCCESSFUL'.PHP_EOL;
+	} else {
+		echo '
+		<div class="modal fade" id="install_8" tabindex="-1" role="dialog" aria-labelledby="ModalLabel" aria-hidden="true">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="ModalLabel"><i class="fa fa-cloud-upload-alt text-success pr-2"></i>'.T_("Rapport d'installation").'</h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<form name="form8" method="POST" action="" id="form8">
+							<input name="cancel" type="hidden" value="1">
+							<input name="install" type="hidden" value="1">
+							'.T_("L'installation s'est correctement déroulée").':<br /><br />
+							'.$result.'<br />
+							'.T_("Afin de finaliser la procédure, déconnectez vous, videz le cache de votre navigateur, et relancer l'application").'.
+						</form>
+						<form name="form0" method="POST" action="" id="form0">
+							<input name="cancel" type="hidden" value="1">
+						</form>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-danger" onclick="$(\'form#form0\').submit();"><i class="fa fa-times pr-2"></i>'.T_('Fermer').'</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>$(document).ready(function(){$("#install_8").modal(\'show\');});</script>
+		';
+	}
 	
-} elseif ($error==1) {
-	$boxtitle="<i class='icon-circle-arrow-up red'></i>".T_('Rapport d\'installation');
-	$boxtext='
-	<form name="form" method="POST" action="" id="form">
-		<input name="install" type="hidden" value="1">
-		'.T_('Une erreur est survenue pendant l\'installation, il est recommandé de restaurer votre base de données et vos fichiers, puis de lancer la procédure manuellement').'.:<br /><br />
-		'.$result.'<br />
-	</form>
+} elseif($error==1) {
+	echo '
+	<div class="modal fade" id="install_8" tabindex="-1" role="dialog" aria-labelledby="ModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="ModalLabel"><i class="fa fa-cloud-upload-alt text-danger pr-2"></i>'.T_("Rapport d'installation").'</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form name="form8" method="POST" action="" id="form8">
+						<input name="cancel" type="hidden" value="1">
+						<input name="install" type="hidden" value="1">
+						'.T_("Une erreur est survenue pendant l'installation, il est recommandé de restaurer votre base de données et vos fichiers, puis de lancer la procédure manuellement").'.:<br /><br />
+						'.$result.'<br />
+					</form>
+					<form name="form0" method="POST" action="" id="form0">
+						<input name="cancel" type="hidden" value="1">
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-danger" onclick="$(\'form#form0\').submit();"><i class="fa fa-times pr-2"></i>'.T_('Fermer').'</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>$(document).ready(function(){$("#install_8").modal(\'show\');});</script>
 	';
-	$valid=T_('Continuer');
-	$action1="$( this ).dialog( \"close\" ); ";
-	$cancel=T_('Fermer');
-	$action2="$( this ).dialog( \"close\" ); ";
-	include __DIR__ ."/../modalbox.php"; 
 }
 ?>

@@ -6,14 +6,12 @@
 # @Parameters : GET_[ip] or globalping and server key for command line execution
 # @Author : Flox
 # @Create : 19/12/2015
-# @Update : 01/07/2019
-# @Version : 3.1.42
+# @Update : 28/05/2020
+# @Version : 3.2.2
 ################################################################################
 
 //initialize variables 
-if(!isset($_GET['server_key'])) $_GET['server_key'] = '';
 if(!isset($rparameters['server_private_key'])) $rparameters['server_private_key'] = '';
-if(!isset($_GET['iptoping'])) $_GET['iptoping'] = '';
 if(!isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) $_SERVER['HTTP_ACCEPT_LANGUAGE']=0;
 
 if(!isset($argv[1])) $argv[1] = '';
@@ -22,6 +20,7 @@ if(!isset($argv[2])) $argv[2] = '';
 //call via external script for cron 
 if(!$rparameters['server_private_key'])
 {
+	require_once(__DIR__."/../core/init_get.php");
 	//database connection
 	require_once(__DIR__."/../connect.php");
 	
@@ -47,7 +46,6 @@ if(!$rparameters['server_private_key'])
 	T_textdomain($_GET['lang']);
 	
 	if($rparameters['server_timezone']) {date_default_timezone_set($rparameters['server_timezone']);}
-
 }
 
 $today=date("Y-m-d");
@@ -138,10 +136,12 @@ if ($argv[1]=='globalping')
 	} else {echo "ERROR: Wrong server key go to application system page to get your key";}
 } elseif($_GET['iptoping']) { //single ping from ticket with OS detection
 	//test each iface with ip
-	$qry=$db->prepare("SELECT `id`,`ip`,`date_ping_ok`,`date_ping_ko` FROM `tassets_iface` WHERE asset_id=:asset_id AND disable=:disable");
-	$qry->execute(array('asset_id' => $globalrow['id'],'disable' => 0));
+	$qry=$db->prepare("SELECT `id`,`ip`,`date_ping_ok`,`date_ping_ko` FROM `tassets_iface` WHERE asset_id=:asset_id AND disable='0'");
+	$qry->execute(array('asset_id' => $globalrow['id']));
 	while($row=$qry->fetch()) 
 	{
+		$msg_error='';
+		$msg_success='';
 		if($row['ip'])
 		{
 			$test_ip=$row['ip'];
@@ -152,23 +152,29 @@ if ($argv[1]=='globalping')
 			foreach (explode('.',$test_ip) as $val) {$cnt++;if (!is_numeric($val)) { $error='not numeric value'; break;} if($val>254) { $error='error bloc more than 255'; break;}}
 			if(!$error) {if ($cnt!=4) {$error='error not 4 blocs';}}
 			
-			if (!$error)
+			if(!$error)
 			{
 				if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
 					$result=exec("ping -n 1 -w 1 $test_ip");	
 					//test result
 					if((preg_match('#Minimum#', $result)))
 					{
-						//display message
-						echo '<div class="alert alert-block alert-success"><i class="icon-exchange bigger-130 green"></i>&nbsp; <strong>'.T_('PING').'</strong> de <b>'.$test_ip.'</b> : OK <span style="font-size: x-small;">('.$result.')</span></div>';
+						$msg_success=T_('PING').' '.$test_ip.' : OK <span class="small">('.$result.')</span>';
 						//update asset flag
-						$db->exec('UPDATE tassets SET date_last_ping=\''.$today.'\' WHERE id=\''.$globalrow['id'].'\'');
-						$db->exec('UPDATE tassets_iface SET date_ping_ok=\''.date('Y-m-d H-i-s').'\' WHERE id=\''.$row['id'].'\'');
+						$qry2=$db->prepare("UPDATE `tassets` SET `date_last_ping`=:date_last_ping WHERE `id`=:id");
+						$qry2->execute(array('date_last_ping' => $today,'id' => $globalrow['id']));
+						
+						$current_datetime=date('Y-m-d H:i:s');
+						$qry2=$db->prepare("UPDATE `tassets_iface` SET `date_ping_ok`=:date_ping_ok WHERE `id`=:id");
+						$qry2->execute(array('date_ping_ok' => $current_datetime,'id' => $row['id']));
+						
 					} else {
 						$result=mb_convert_encoding($result, "UTF-8");
-						//display message
-						echo '<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('PING').'</strong> de <b>'.$test_ip.'</b> : KO <span style="font-size: x-small;">('.$result.')</span></div>';
-						$db->exec('UPDATE tassets_iface SET date_ping_ko=\''.date('Y-m-d H-i-s').'\' WHERE id=\''.$row['id'].'\'');
+						$msg_error=T_('PING').' '.$test_ip.' : KO <span class="small">('.$result.')</span>';
+						
+						$current_datetime=date('Y-m-d H:i:s');
+						$qry2=$db->prepare("UPDATE `tassets_iface` SET `date_ping_ko`=:date_ping_ko WHERE `id`=:id");
+						$qry2->execute(array('date_ping_ko' => $current_datetime,'id' => $row['id']));
 				}
 				} else {
 					$result=exec("ping -W 1 -c 1 $test_ip");
@@ -176,20 +182,27 @@ if ($argv[1]=='globalping')
 					if((preg_match('#min#', $result)))
 					{
 						//display message
-						echo '<div class="alert alert-block alert-success"><i class="icon-exchange bigger-130 green"></i>&nbsp; <strong>'.T_('PING').'</strong> de <b>'.$test_ip.'</b> : OK <span style="font-size: x-small;">('.$result.')</span></div>';
+						$msg_success=T_('PING').' '.$test_ip.' : OK <span class="small">('.$result.')</span>';
 						//update asset flag
-						$db->exec('UPDATE tassets SET date_last_ping=\''.$today.'\' WHERE id=\''.$globalrow['id'].'\'');
-						$db->exec('UPDATE tassets_iface SET date_ping_ok=\''.date('Y-m-d H-i-s').'\' WHERE id=\''.$row['id'].'\'');
+						$qry2=$db->prepare("UPDATE `tassets` SET `date_last_ping`=:date_last_ping WHERE `id`=:id");
+						$qry2->execute(array('date_last_ping' => $today,'id' => $globalrow['id']));
+						
+						$current_datetime=date('Y-m-d H:i:s');
+						$qry2=$db->prepare("UPDATE `tassets_iface` SET `date_ping_ok`=:date_ping_ok WHERE `id`=:id");
+						$qry2->execute(array('date_ping_ok' => $current_datetime,'id' => $row['id']));
 					} else {
 						$result=mb_convert_encoding($result, "UTF-8");
-						//display message
-						echo '<div class="alert alert-danger"><i class="icon-remove"></i><strong>'.T_('PING').'</strong> de <b>'.$test_ip.'</b> : KO <span style="font-size: x-small;">('.$result.')</span> </div>';
-						$db->exec('UPDATE tassets_iface SET date_ping_ko=\''.date('Y-m-d H-i-s').'\' WHERE id=\''.$row['id'].'\'');
+						$msg_error=T_('PING').' '.$test_ip.' : KO <span class="small">('.$result.')</span>';
+						$current_datetime=date('Y-m-d H:i:s');
+						$qry2=$db->prepare("UPDATE `tassets_iface` SET `date_ping_ko`=:date_ping_ko WHERE `id`=:id");
+						$qry2->execute(array('date_ping_ko' => $current_datetime,'id' => $row['id']));
 					}
 				}
 			} else {
-				echo '<div class="alert alert-danger"><i class="icon-remove"></i> <strong>'.T_('PING').'</strong> de <b>'.$test_ip.'</b> : KO <span style="font-size: x-small;">(Invalid IPv4 address: '.$error.')</span> </div>';
+				$msg_error=T_('PING').' '.$test_ip.'</b> : KO <span class="small">(Invalid IPv4 address: '.$error.')</span>';
 			}
+			if($msg_error){echo DisplayMessage('error',$msg_error);}
+			if($msg_success){echo DisplayMessage('success',$msg_success);}
 		}
 	}
 	$qry->closeCursor();

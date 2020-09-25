@@ -6,32 +6,61 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 26/01/2016
-# @Update : 13/09/2017
-# @Version : 3.1.26
+# @Update : 28/05/2020
+# @Version : 3.2.2
 ################################################################################
 
 $user_id=$_SESSION['user_id'];
 
 //count create asset in period to display in graphic title
-$query="SELECT count(tassets.id) FROM `tassets`,`tusers` WHERE tassets.user=tusers.id AND tusers.company LIKE '$_POST[company]' AND tassets.technician LIKE '$_POST[tech]' AND tassets.type LIKE '$_POST[type]' AND tassets.department LIKE '$_POST[service]' AND tassets.date_install LIKE '$_POST[year]-$_POST[month]-%' AND tassets.disable='0'";
-$query=$db->query($query);
-$row=$query->fetch();
+$qry=$db->prepare("
+SELECT COUNT(tassets.id) 
+FROM `tassets`,`tusers` 
+WHERE 
+tassets.user=tusers.id AND
+tusers.company LIKE :company AND 
+tassets.technician LIKE :technician AND 
+tassets.type LIKE :type AND 
+tassets.department LIKE :department AND 
+tassets.date_install LIKE :date_install AND 
+tassets.disable='0'");
+$qry->execute(array('company' => $_POST['company'],'technician' => $_POST['tech'],'type' => $_POST['type'],'department' => $_POST['service'],'date_install' => "$_POST[year]-$_POST[month]-%"));
+$row=$qry->fetch();
+$qry->closeCursor();
 $count=$row[0];
-$query->closeCursor(); 
 
 //count recycled asset in period to display in graphic title
-$query="SELECT count(tassets.id) FROM `tassets`,`tusers` WHERE tassets.user=tusers.id AND tusers.company LIKE '$_POST[company]' AND tassets.technician LIKE '$_POST[tech]' AND tassets.type LIKE '$_POST[type]' AND tassets.department LIKE '$_POST[service]' AND tassets.date_recycle LIKE '$_POST[year]-$_POST[month]-%' AND tassets.disable='0'";
-$query=$db->query($query);
-$row=$query->fetch();
+$qry=$db->prepare("
+SELECT COUNT(tassets.id) 
+FROM `tassets`,`tusers` 
+WHERE 
+tassets.user=tusers.id AND
+tusers.company LIKE :company AND 
+tassets.technician LIKE :technician AND 
+tassets.type LIKE :type AND 
+tassets.department LIKE :department AND 
+tassets.date_recycle LIKE :date_recycle AND 
+tassets.disable='0'");
+$qry->execute(array('company' => $_POST['company'],'technician' => $_POST['tech'],'type' => $_POST['type'],'department' => $_POST['service'],'date_recycle' => "$_POST[year]-$_POST[month]-%"));
+$row=$qry->fetch();
+$qry->closeCursor();
 $count2=$row[0];
-$query->closeCursor(); 
 
 //count total asset to display in graphic title
-$query="SELECT count(tassets.id) FROM `tassets`,`tusers` WHERE tassets.user=tusers.id AND tusers.company LIKE '$_POST[company]' AND tassets.technician LIKE '$_POST[tech]' AND tassets.type LIKE '$_POST[type]' AND tassets.department LIKE '$_POST[service]' AND tassets.disable='0'";
-$query=$db->query($query);
-$row=$query->fetch();
+$qry=$db->prepare("
+SELECT COUNT(tassets.id) 
+FROM `tassets`,`tusers` 
+WHERE 
+tassets.user=tusers.id AND
+tusers.company LIKE :company AND 
+tassets.technician LIKE :technician AND 
+tassets.type LIKE :type AND 
+tassets.department LIKE :department AND 
+tassets.disable='0'");
+$qry->execute(array('company' => $_POST['company'],'technician' => $_POST['tech'],'type' => $_POST['type'],'department' => $_POST['service']));
+$row=$qry->fetch();
+$qry->closeCursor();
 $count4=$row[0];
-$query->closeCursor();
 
 //query for year selection
 if (($_POST['month'] == '%') && ($_POST['year']!=='%'))
@@ -61,7 +90,6 @@ if (($_POST['month'] == '%') && ($_POST['year']!=='%'))
 //query for month selection
 else if ($_POST['month']!='%')
 {
-	
     $values1 = array();
     $values2 = array();
     $xnom1 = array();
@@ -111,12 +139,14 @@ else if ($_POST['year']=='%')
 
 if ($count!=0 || $count2!=0) 
 {
-	$liby=T_("Nombre d\'équipements");
+	$liby=T_("Nombre d'équipements");
 	$container="container20";		
 	include('./stat_line.php');
-	echo '<div id="'.$container.'" style="min-width: 400px; height: 400px; margin: 0 auto"></div>';
+	echo '<div class="card-body bgc-dark-l4 p-0 border-1 brc-default-l2 radius-2 px-1 mx-n2 mx-md-0 h-100 d-flex align-items-center" id="'.$container.'"></div>';
 }
-else {echo '<div class="alert alert-danger"><strong><i class="icon-remove"></i> '.T_('Erreur').':</strong> '.T_('Aucun équipement installé ou recyclé dans la plage indiqué').'.</div>';}
+else {
+	echo DisplayMessage('error',T_('Aucun équipement installé ou recyclé dans la plage indiqué'));
+}
 
 //display query on debug mode
 if($rparameters['debug']==1)

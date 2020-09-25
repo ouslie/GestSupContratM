@@ -5,8 +5,8 @@
 # @Call : /admin/parameters.php
 # @Author : Flox
 # @Create : 28/04/2015
-# @Update : 05/12/2018
-# @Version : 3.1.37
+# @Update : 14/04/2020
+# @Version : 3.2.1
 ################################################################################
 
 //initialize variables 
@@ -14,26 +14,26 @@ if(!isset($_POST['subcat'])) $_POST['subcat']= '';
 if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= ''; 
 
 ?>
-<div class="profile-info-row">
-	<div class="profile-info-name"> 
-		<i class="icon-time"></i>
+<tr>
+	<td style="width: 150px;" class="text-95 text-default-d3 bgc-secondary-l3">
+		<i class="fa fa-clock text-blue-m3 pr-1"></i>
 		<?php echo T_('Disponibilité'); ?> :
-	</div>
-	<div class="profile-info-value">
+	</td>
+	<td class="text-95 text-default-d3">
 			<label>
-				<input class="ace" type="checkbox" <?php if ($rparameters['availability']==1) echo "checked"; ?> name="availability" value="1">
-				<span class="lbl">&nbsp;<?php echo T_('Activer la fonction Disponibilité'); ?></span>
-				<i title="<?php echo T_('Active le suivi des catégories afin de produire des statistiques de disponibilité '); ?>." class="icon-question-sign blue"></i>
+				<input  type="checkbox" <?php if ($rparameters['availability']==1) echo "checked"; ?> name="availability" value="1">
+				<span class="lbl">&nbsp;<?php echo T_('Activer la fonction disponibilité'); ?></span>
+				<i title="<?php echo T_('Active le suivi des catégories afin de produire des statistiques de disponibilité'); ?>." class="fa fa-question-circle text-primary-m2"></i>
 			</label>
 			<?php
 			    if ($rparameters['availability']==1)
 			    {
 		    	    echo '
 		    	        <div class="space-4"></div>
-		    	        &nbsp; &nbsp; &nbsp;<i class="icon-circle green"></i> 1 - '.T_('Surveiller toutes les catégories').':&nbsp;
+		    	        &nbsp; &nbsp; &nbsp;<i class="fa fa-circle text-success"></i> 1 - '.T_('Surveiller toutes les catégories').' :&nbsp;
 		    	        <label for="availability_all_cat">
-							<input type="radio" class="ace" value="1" name="availability_all_cat"'; if ($rparameters['availability_all_cat']==1) {echo "checked";} echo '> <span class="lbl"> '.T_('Oui').' </span>
-							<input type="radio" class="ace" value="0" name="availability_all_cat"'; if ($rparameters['availability_all_cat']==0) {echo "checked";} echo '  > <span class="lbl"> '.T_('Non').' </span>
+							<input type="radio"  value="1" name="availability_all_cat"'; if ($rparameters['availability_all_cat']==1) {echo "checked";} echo '> <span class="lbl"> '.T_('Oui').' </span>
+							<input type="radio"  value="0" name="availability_all_cat"'; if ($rparameters['availability_all_cat']==0) {echo "checked";} echo '  > <span class="lbl"> '.T_('Non').' </span>
 						</label>
 		    	    ';
 		    	    if ($rparameters['availability_all_cat']==0)
@@ -41,7 +41,7 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 		    	        echo '
 		    	            <div class="space-4"></div>
 		    	            &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-		    	            <i class="icon-caret-right blue"></i> '.T_('Sélection des catégories ou sous-catégories à surveiller').':<br />
+		    	            <i class="fa fa-caret-right text-primary-m2"></i> '.T_('Sélection des catégories ou sous-catégories à surveiller').' :<br />
 		    	            ';
 		    	            //display availability list
 							$qry=$db->prepare("SELECT * FROM `tavailability`");
@@ -62,8 +62,8 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 								} else {$sname='';}
 								echo '
 									&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp;
-									<i class="icon-caret-right green"></i> ('.$cname['name'].' > '.$sname[0].') 
-									<a title="'.T_('Supprimer cette catégorie').'" href="./index.php?page=admin&subpage=parameters&tab=function&deleteavailability='.$row['id'].'"><i class="icon-trash red bigger-120"></i></a>
+									<i class="fa fa-caret-right text-success"></i> ('.$cname['name'].' > '.$sname[0].') 
+									<a title="'.T_('Supprimer cette catégorie').'" href="./index.php?page=admin&subpage=parameters&tab=function&deleteavailability='.$row['id'].'"><i class="fa fa-trash text-danger"></i></a>
 									<br />
 								';
                             }
@@ -71,9 +71,9 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 							//display add category form
 							echo'
 							&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-		    	            <i class="icon-caret-right blue"></i> 
-							'.T_('Ajouter la catégorie').':
-							<select name="category" onchange="submit()" style="width:100px; display:inline;" >
+		    	            <i class="fa fa-caret-right text-primary-m2"></i> 
+							'.T_('Ajouter la catégorie').' :
+							<select name="category" onchange="submit()" style="width:auto" class="form-control form-control-sm d-inline-block" >
 								<option value="%"></option>';
 								$qry=$db->prepare("SELECT * FROM `tcategory` ORDER BY name");
 								$qry->execute();
@@ -84,8 +84,8 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 								$qry->closeCursor();
 							echo'
 							</select>
-						    	&nbsp;'.T_('et la Sous-Catégorie').':
-							<select name="subcat" onchange="submit()" style="width:90px display:inline;">
+						    &nbsp;'.T_('et la Sous-Catégorie').' :
+							<select name="subcat" onchange="submit()" style="width:auto" class="form-control form-control-sm d-inline-block">
 								<option value="%"></option>';
 								echo "-$_POST[category]-";
 								if($_POST['category']!='%' && $_POST['category']!='')
@@ -113,9 +113,9 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 		    	    }
 		    	    echo '
 		    	    <div class="space-4"></div>
-		    	    &nbsp; &nbsp; &nbsp;<i class="icon-circle green"></i>
-		    	    2 - '.T_('Condition de prise en compte d\'un ticket').':&nbsp;
-		    	    <select name="availability_condition_type" onchange="submit()" style="display:inline;">
+		    	    &nbsp; &nbsp; &nbsp;<i class="fa fa-circle text-success"></i>
+		    	    2 - '.T_("Condition de prise en compte d'un ticket").' :&nbsp;
+		    	    <select name="availability_condition_type" onchange="submit()" style="width:auto" class="form-control form-control-sm d-inline-block">
 		    	        <option value="" '; if($_POST['availability_condition_type']=='' && $rparameters['availability_condition_type']=='') {echo ' selected';} echo ' ></option>
 		    	        <option value="types" '; if($_POST['availability_condition_type']=='types' ) {echo ' selected';} echo ' >'.T_('Type').'</option>
 		    	        <option value="criticality" '; if($_POST['availability_condition_type']=='criticality') {echo ' selected';} echo '>'.T_('Criticité').'</option>
@@ -134,7 +134,7 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 						
 		    	        $query = $db->query("SELECT * FROM t$table ORDER BY name");
 		    	        echo 'est ';
-		    	        echo '<select name="availability_condition_value" >';
+		    	        echo '<select style="width:auto" class="form-control form-control-sm d-inline-block" name="availability_condition_value" >';
 							while ($row = $query->fetch())
 							{
 								echo '<option '; if($rparameters['availability_condition_value']==$row['id']) {echo 'selected';} echo ' value="'.$row['id'].'">'.T_($row['name']).'</option>';
@@ -144,20 +144,20 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 		    	    }
 		    	    echo'
 		    	    <div class="space-4"></div>
-		    	    &nbsp; &nbsp; &nbsp;<i class="icon-circle green"></i>
-		    	    3 - '.T_('Dépendances').':&nbsp;
+		    	    &nbsp; &nbsp; &nbsp;<i class="fa fa-circle text-success"></i>
+		    	    3 - '.T_('Dépendances').' :&nbsp;
 		    	    <label for="availability_dep">
-							<input type="radio" class="ace" value="1" name="availability_dep"'; if ($rparameters['availability_dep']==1) {{echo "checked";}} echo '> <span class="lbl"> '.T_('Oui').' </span>
-							<input type="radio" class="ace" value="0" name="availability_dep"'; if ($rparameters['availability_dep']==0) echo "checked"; echo '  > <span class="lbl"> '.T_('Non').' </span>
+							<input type="radio"  value="1" name="availability_dep"'; if ($rparameters['availability_dep']==1) {{echo "checked";}} echo '> <span class="lbl"> '.T_('Oui').' </span>
+							<input type="radio"  value="0" name="availability_dep"'; if ($rparameters['availability_dep']==0) echo "checked"; echo '  > <span class="lbl"> '.T_('Non').' </span>
 					</label>
-					<i title="'.T_('Permet de définir des sous-catégories qui seront comptabilisées dans toutes les statistiques si elles possèdent la même condition. (ex: un ticket réseau critique, entraine une indisponibilité d\'une application)').'" class="icon-question-sign blue"></i>
+					<i title="'.T_("Permet de définir des sous-catégories qui seront comptabilisées dans toutes les statistiques si elles possèdent la même condition. (ex: un ticket réseau critique, entraîne une indisponibilité d'une application)").'" class="fa fa-question-sign blue"></i>
 					';
 				    if ($rparameters['availability_dep']==1)
 		    	    {
 		    	        echo '
 		    	            <div class="space-4"></div>
 		    	            &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-		    	            <i class="icon-caret-right blue"></i> '.T_('Liste des sous-catégories impactant toutes les catégories surveillées').':<br />
+		    	            <i class="fa fa-caret-right text-primary-m2"></i> '.T_('Liste des sous-catégories impactant toutes les catégories surveillées').':<br />
 		    	            ';
 		    	            //display availability dependency list
 							$qry=$db->prepare("SELECT * FROM `tavailability_dep`");
@@ -178,8 +178,8 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 								} else {$sname='';}
 								echo '
 									&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp;
-									<i class="icon-caret-right green"></i> ('.$cname['name'].' > '.$sname[0].') 
-									<a title="'.T_('Supprimer cette catégorie').'" href="./index.php?page=admin&subpage=parameters&tab=function&deleteavailabilitydep='.$row['id'].'"><i class="icon-trash red bigger-120"></i></a>
+									<i class="fa fa-caret-right text-success"></i> ('.$cname['name'].' > '.$sname[0].') 
+									<a title="'.T_('Supprimer cette catégorie').'" href="./index.php?page=admin&subpage=parameters&tab=function&deleteavailabilitydep='.$row['id'].'"><i class="fa fa-trash text-danger"></i></a>
 									<br />
 								';
                             }
@@ -187,9 +187,9 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 		    	            //display add cat form
 							echo'
 							&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-		    	            <i class="icon-caret-right blue"></i> 
-							'.T_('Ajouter la catégorie').':
-							<select name="depcategory" onchange="submit()" style="width:100px; display:inline;" >
+		    	            <i class="fa fa-caret-right text-primary-m2"></i> 
+							'.T_('Ajouter la catégorie').' :
+							<select name="depcategory" onchange="submit()" style="width:auto" class="form-control form-control-sm d-inline-block" >
 								<option value="%"></option>';
 								$qry=$db->prepare("SELECT `id`,`name` FROM `tcategory` ORDER BY name");
 								$qry->execute();
@@ -201,7 +201,7 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 							echo'
 							</select>
 						    	&nbsp;'.T_('et la Sous-Catégorie').':
-							<select name="depsubcat" onchange="submit()" style="width:90px display:inline;">
+							<select name="depsubcat" onchange="submit()" style="width:auto" class="form-control form-control-sm d-inline-block">
 								<option value="%"></option>';
 								if($_POST['depcategory'])
 								{
@@ -229,9 +229,9 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 		    	    //target tx part
 		    	   	echo'
 		    	    <div class="space-4"></div>
-		    	    &nbsp; &nbsp; &nbsp;<i class="icon-circle green"></i>
-		    	    4 - '.T_('Définition des taux de disponibilités cible par années, par sous-catégories').':&nbsp;
-					<i title="'.T_('Permet de fixer des objectifs de disponibilité, pour chaque sous catégorie, qui peuvent fluctuer chaque année').'." class="icon-question-sign blue"></i>
+		    	    &nbsp; &nbsp; &nbsp;<i class="fa fa-circle text-success"></i>
+		    	    4 - '.T_('Définition des taux de disponibilités cible par années, par sous-catégories').' :&nbsp;
+					<i title="'.T_('Permet de fixer des objectifs de disponibilité, pour chaque sous catégorie, qui peuvent fluctuer chaque année').'." class="fa fa-question-sign blue"></i>
 				   	<br />
 				   ';
 					//find tickets year and display subcat 
@@ -239,7 +239,7 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 					$qry->execute();
 					while($rowyear=$qry->fetch()) 
 					{
-						echo ' &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i class="icon-caret-right blue"></i> <b>'.$rowyear[0].'</b> <br />';
+						echo ' &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <i class="fa fa-caret-right text-primary-m2"></i> <b>'.$rowyear[0].'</b> <br />';
 						$querysubcat = $db->query("SELECT * FROM `tavailability`");
 						
 						$qry2=$db->prepare("SELECT `subcat` FROM `tavailability`");
@@ -257,10 +257,11 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 							$qry3->execute(array('subcat' => $rowsubcat['subcat'],'year' => $rowyear[0]));
 							$targettx=$qry3->fetch();
 							$qry3->closeCursor();
+							if(empty($targettx['target'])) {$targettx['target']='0';}
 							
-							echo ' &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; <i class="icon-caret-right green"></i> <u>'.$sname['name'].'</u> 
+							echo ' &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; <i class="fa fa-caret-right text-success"></i> <u>'.$sname['name'].'</u> 
 							'.T_('taux de disponibilité cible').': 
-							<input type="text" size="4" name="target_'.$rowyear[0].'_'.$rowsubcat['subcat'].'" value="'.$targettx['target'].'" />
+							<input style="width:auto" class="form-control form-control-sm d-inline-block" type="text" size="4" name="target_'.$rowyear[0].'_'.$rowsubcat['subcat'].'" value="'.$targettx['target'].'" />
 							%
 							<br />';
 					    }
@@ -269,5 +270,5 @@ if(!isset($_POST['depsubcat'])) $_POST['depsubcat']= '';
 					$qry->closeCursor();
 			    }
 		?>
-	</div>
-</div>
+	</td>
+</tr>

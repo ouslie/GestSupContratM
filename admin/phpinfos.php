@@ -6,12 +6,12 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 17/09/2009
-# @Update : 18/12/2017
-# @Version : 3.1.29
+# @Update : 08/11/2019
+# @Version : 3.1.46
 ################################################################################
 
 //initialize variables
-if(!isset($_GET['key'])) $_GET['key'] = '';
+require_once(__DIR__."/../core/init_get.php");
 
 //connexion script with database parameters
 require "./../connect.php";

@@ -4,9 +4,9 @@
 # @Description : page to add multiple assets in one time in your stock based on serials numbers
 # @Call : /dashboard.php
 # @Author : Flox
-# @Version : 3.1.37
+# @Version : 3.2.0
 # @Create : 18/12/2015
-# @Update : 24/12/2018
+# @Update : 28/01/2020
 ################################################################################################
 
 //initialize variables 
@@ -19,7 +19,7 @@ if(!isset($globalrow['manufacturer'])) $globalrow['manufacturer']= '';
 if(!isset($globalrow['type'])) $globalrow['type']= ''; 
 
 //insert assets in database
-if($_POST['save'])
+if($rright['asset'] && $_POST['save'])
 {
 	//check if warranty is present on asset model
 	$qry=$db->prepare("SELECT `warranty` FROM `tassets_model` WHERE id=:id");
@@ -54,7 +54,7 @@ if($_POST['save'])
 		$date=date('Y-m-d');
 		$qry=$db->prepare("
 		INSERT INTO `tassets` (`sn_internal`,`sn_manufacturer`,`sn_indent`,`user`,`type`,`manufacturer`,`model`,`state`,`date_stock`,`date_end_warranty`,`disable`) 
-		VALUES (:sn_internal,:sn_manufacturer,:sn_indent,:user,:type,:manufacturer,:model,:state,:date_stock,:date_end_warranty,:disable)");
+		VALUES (:sn_internal,:sn_manufacturer,:sn_indent,:user,:type,:manufacturer,:model,'1',:date_stock,:date_end_warranty,'0')");
 		$qry->execute(array(
 			'sn_internal' => $row_sn_internal,
 			'sn_manufacturer' => $serials[$i],
@@ -63,38 +63,36 @@ if($_POST['save'])
 			'type' => $_POST['type'],
 			'manufacturer' => $_POST['manufacturer'],
 			'model' => $_POST['model'],
-			'state' => 1,
 			'date_stock' => $date,
-			'date_end_warranty' => $date_end_warranty,
-			'disable' => 0
+			'date_end_warranty' => $date_end_warranty
 			));
 	}
 }
 ?>
-<div id="row">
-	<div class="col-xs-12">
-		<div class="widget-box">
+<div id="">
+	<div class="">
+		<div class="card" id="card-1" draggable="false">
 			<form class="form-horizontal" name="myform" id="myform" enctype="multipart/form-data" method="post" action="" onsubmit="loadVal();" >
-				<div class="widget-header">
-					<h4>
-						<i class="icon-desktop"></i>
+				<div class="card-header">
+					<h5 class="card-title">
+						<i class="fa fa-desktop"></i>
 						<?php echo T_('Entrées en stock'); ?>
-					</h4>
-					<span class="widget-toolbar">
-
-					</span>
+					</h5>
+					
 				</div>
-				<div class="widget-body">
-					<div class="widget-main">
+				<div class="card-body">
+					<div class="p-3">
 						<div class="row">
-							<div class="col-sm-6">
+							<div class="col-lg-9">
 								<!-- START type model part -->
-								<div class="form-group ">
-									<label class="col-sm-4 control-label no-padding-right" for="type">
-										<?php echo T_('Type'); ?>:
-									</label>
-									<div class="col-sm-8">
-										<select id="type" name="type" onchange="submit();" >
+								<div class="form-group row">
+									<div class="col-sm-2 col-form-label text-sm-right pr-0">
+										<label class="mb-0" for="type">
+											<?php echo T_('Type'); ?> :
+										</label>
+									</div>
+									<div class="col-sm-9">
+										<select class="form-control col-3 d-inline-block" id="type" name="type" onchange="submit();" >
 										<?php
 											$qry=$db->prepare("SELECT `id`,`name` FROM `tassets_type` ORDER BY name");
 											$qry->execute();
@@ -113,7 +111,7 @@ if($_POST['save'])
 											if ($globalrow['type']==0 && $_POST['type']==0) echo "<option value=\"\" selected></option>";
 										?>
 										</select>
-										<select id="manufacturer" name="manufacturer" onchange="submit();" >
+										<select class="form-control col-3 d-inline-block" id="manufacturer" name="manufacturer" onchange="submit();" >
 										<?php
 											if ($_POST['type'])
 											{
@@ -152,7 +150,7 @@ if($_POST['save'])
 											if ($globalrow['manufacturer']==0 && $_POST['manufacturer']==0) echo "<option value=\"\" selected></option>";
 											?>
 										</select>
-										<select  id="model" name="model" onchange="submit();" >
+										<select class="form-control col-3 d-inline-block" id="model" name="model" onchange="submit();" >
 										<?php
 											if ($_POST['type'])
 											{
@@ -196,37 +194,39 @@ if($_POST['save'])
 								<!-- END type model part -->
 								
 								<!-- START sn_indent part -->
-								<div class="form-group">
-									<label class="col-sm-4 control-label no-padding-right" for="sn_indent"><?php echo T_('N° de commande'); ?>:</label>
-									<div class="col-sm-6">
-										<input  name="sn_indent" id="sn_indent" type="text" size="15"  value=""  />
+								<div class="form-group row">
+									<div class="col-sm-2 col-form-label text-sm-right pr-0">
+										<label class="mb-0" for="sn_indent"><?php echo T_('N° de commande'); ?> :</label>
+									</div>
+									<div class="col-sm-9">
+										<input class="form-control col-3 d-inline-block " name="sn_indent" id="sn_indent" type="text" size="15"  value=""  />
 									</div>
 								</div>
 								<!-- END sn_indent part -->
 								
 								<!-- START serials part -->
-								<div class="form-group">
-									<label class="col-sm-4 control-label no-padding-right" for="serials"><?php echo T_('Numéros de séries'); ?>:</label>
-									<div class="col-sm-6">
-										<textarea  rows="30" cols="50" name="serials" id="serials"  /></textarea>
+								<div class="form-group  row">
+									<div class="col-sm-2 col-form-label text-sm-right pr-0">
+										<label class="mb-0" for="serials"><?php echo T_('Numéros de séries'); ?> :</label>
+									</div>
+									<div class="col-sm-9">
+										<textarea class="form-control col-9 d-inline-block " rows="30" cols="50" name="serials" id="serials"  /></textarea>
 									</div>
 								</div>
 								<!-- END serials part -->
 								
 							</div>
 						</div> <!-- div row -->
-						<div class="row" align="center">
-							<div class="clearfix form-actions" >	
-								<button name="save" id="save" value="save" type="submit" class="btn btn-sm btn-success">
-									<i class="icon-save icon-on-right bigger-110"></i> 
-									&nbsp;<?php echo T_('Enregistrer'); ?>
-								</button>
-								&nbsp;
-								<button name="cancel" id="cancel" value="cancel" type="submit" class="btn btn-sm btn-danger">
-									<i class="icon-remove icon-on-right bigger-110"></i> 
-									&nbsp;<?php echo T_('Annuler'); ?>
-								</button>
-							</div> <!-- div form-actions -->
+						<div class="border-t-1 brc-secondary-l1 bgc-secondary-l3 py-3 text-center">
+							<button name="save" id="save" value="save" type="submit" class="btn btn-success">
+								<i class="fa fa-plus "></i> 
+								&nbsp;<?php echo T_('Ajouter'); ?>
+							</button>
+							&nbsp;
+							<button name="cancel" id="cancel" value="cancel" type="submit" class="btn btn-danger">
+								<i class="fa fa-times "></i> 
+								&nbsp;<?php echo T_('Annuler'); ?>
+							</button>
 						</div> <!-- div row -->
 					</div> <!-- div widget main -->
 				</div> <!-- div widget body -->

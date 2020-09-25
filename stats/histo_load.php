@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 15/02/2014
-# @Update : 05/03/2019
-# @Version : 3.1.40
+# @Update : 06/02/2020
+# @Version : 3.2.0
 ################################################################################
 
 //array declaration
@@ -30,6 +30,7 @@ $query = $db->query("
 	tusers.disable='0' AND
 	tincidents.disable='0' AND
 	tincidents.u_service LIKE '$_POST[service]' $where_service $where_agency AND
+	$where_state AND
 	tincidents.time_hope-tincidents.time>0 AND
 	(tincidents.state='1' OR tincidents.state='2' OR tincidents.state='6')
 	GROUP BY tusers.firstname ORDER BY Charge DESC
@@ -43,5 +44,5 @@ while ($row = $query->fetch())
 } 
 $container="container5";
 include('./stat_histo.php');
-echo "<div id=\"$container\" style=\"min-width: 300px; height: 400px; margin: 0 auto\"></div>";
+echo "<div class=\"card-body bgc-dark-l4 p-0 border-1 brc-default-l2 radius-2 px-1 mx-n2 mx-md-0 h-100 d-flex align-items-center\" id=\"$container\"></div>";
 ?>

@@ -1,12 +1,12 @@
 <?php
 ################################################################################
 # @Name : /core/auto_mail.php
-# @Description : page to send automail
+# @Description : page to send automatic mail
 # @Call : ./core/ticket.php
 # @Parameters : ticket id 
 # @Author : Flox
-# @Update : 24/09/2019
-# @Version : 3.1.44
+# @Update : 11/06/2020
+# @Version : 3.2.2 p3
 ################################################################################
 
 //initialize variables 
@@ -16,6 +16,7 @@ if(!isset($_POST['resolution'])) $_POST['resolution'] = '';
 if(!isset($_POST['private'])) $_POST['private'] = ''; 
 if(!isset($_POST['modify'])) $_POST['modify']= ''; 
 if(!isset($_POST['quit'])) $_POST['quit'] = ''; 
+if(!isset($_POST['send'])) $_POST['send'] = ''; 
 if(!isset($autoclose)) $autoclose = 0; //call from cron job
 
 //secure string
@@ -36,7 +37,7 @@ if($mail_u_group['u_group']!=0)
 {
 	
 	//check if group members have mail
-	$qry = $db->prepare("SELECT `tusers`.mail FROM `tusers`,`tgroups_assoc` WHERE `tusers`.id=`tgroups_assoc`.user and `tgroups_assoc`.group=:group");
+	$qry = $db->prepare("SELECT `tusers`.mail FROM `tusers`,`tgroups_assoc` WHERE `tusers`.id=`tgroups_assoc`.user and `tgroups_assoc`.group=:group AND `tusers`.disable='0'");
 	$qry->execute(array('group' => $mail_u_group['u_group']));
 	$mail_u_group_members=$qry->fetch();
 	$qry->closeCursor();
@@ -61,56 +62,67 @@ if($mail_u_group['u_group']!=0)
 if($rparameters['debug']==1) {echo "<b>AUTO MAIL VAR:</b> SESSION[profile_id]=$_SESSION[profile_id] mail_auto_user_modify=$rparameters[mail_auto_user_modify] _POST[resolution]=$_POST[resolution] _POST[private]=$_POST[private] <br />";}
 
 //case send auto mail to tech when technician attribution
-if(($rparameters['mail_auto_tech_attribution']==1) && (($_POST['modify'] || $_POST['quit']) && (($globalrow['technician']!=$_POST['technician']) || ($t_group)) && ($_POST['technician']!=$_SESSION['user_id'])))
+if(($rparameters['mail_auto_tech_attribution']==1) && (($_POST['send'] || $_POST['modify'] || $_POST['quit']) && (($globalrow['technician']!=$_POST['technician']) || ($t_group)) && ($_POST['technician']!=$_SESSION['user_id'])))
 {
 	//debug
 	if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b>  FROM system TO tech  (Reason: mail_auto_tech_attribution ticket technician attribution is detected)<br> ";}
 	
-		if($rparameters['mail_from_adr']){$from=$rparameters['mail_from_adr'];} else {$from=$ruser['mail'];}
-		
-		//technician group detection
-		if($t_group) 
+	if($rparameters['mail_from_adr']){$from=$rparameters['mail_from_adr'];} else {$from=$ruser['mail'];}
+	
+	//technician group detection
+	if($t_group) 
+	{
+		$to='';
+		//check group change or attribution
+		if($t_group!=$globalrow['t_group'])
 		{
-			$to='';
-			//check group change or attribution
-			if($t_group!=$globalrow['t_group'])
-			{
-				$qry2=$db->prepare("SELECT `tusers`.mail FROM `tusers`,`tgroups_assoc` WHERE `tusers`.id=`tgroups_assoc`.user and `tgroups_assoc`.group=:group");
-				$qry2->execute(array('group' => $t_group));
-				while($row2=$qry2->fetch()) {$to.=$row2['mail'].';';}
-				$qry2->closeCursor();
-			} 
-		} else {
-			//get tech mail 
-			$qry = $db->prepare("SELECT * FROM tusers WHERE id=:id");
-			$qry->execute(array('id' => $_POST['technician']));
-			$techrow=$qry->fetch();
-			$qry->closeCursor();
-			$to=$techrow['mail'];
+			$qry2=$db->prepare("SELECT `tusers`.mail FROM `tusers`,`tgroups_assoc` WHERE `tusers`.id=`tgroups_assoc`.user and `tgroups_assoc`.group=:group AND `tusers`.disable='0'");
+			$qry2->execute(array('group' => $t_group));
+			while($row2=$qry2->fetch()) {$to.=$row2['mail'].';';}
+			$qry2->closeCursor();
+		} 
+	} else {
+		//get tech mail 
+		$qry = $db->prepare("SELECT `mail` FROM tusers WHERE id=:id");
+		$qry->execute(array('id' => $_POST['technician']));
+		$techrow=$qry->fetch();
+		$qry->closeCursor();
+		$to=$techrow['mail'];
+	}
+	
+	//check if tech have mail
+	if($to) 
+	{
+		$object=T_('Le ticket').' n°'.$_GET['id'].': '.$_POST['title'].' '.T_('vous a été attribué');
+		//remove single quote in post data
+		$description = str_replace("'", "", $_POST['description']);
+		$title = str_replace("'", "", $_POST['title']);
+		//get user name 
+		$qry = $db->prepare("SELECT `firstname`,`lastname` FROM tusers WHERE id=:id");
+		$qry->execute(array('id' => $_POST['user']));
+		$userrow=$qry->fetch();
+		$qry->closeCursor();
+		$message = '
+		'.T_('Le ticket').' n°'.$_GET['id'].' '.T_('vous a été attribué').' <br />
+		<br />
+		<u>'.T_('Demandeur').':</u><br />
+		'.$userrow['firstname'].' '.$userrow['lastname'].'<br />		
+		<br />	
+		<u>'.T_('Objet').':</u><br />
+		'.$title.'<br />		
+		<br />	
+		<u>'.T_('Description').':</u><br />
+		'.$description.'<br />
+		<br />
+		'.T_("Pour plus d'informations vous pouvez consulter le ticket sur").' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'</a>.
+		';
+		$mail_auto=true;
+		require('./core/message.php');
+		if($mail_send) { //insert thread
+			$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`text`,`type`,`dest_mail`) VALUES (:ticket,:date,'0','','3',:dest_mail)");
+			$qry->execute(array('ticket' => $_GET['id'],'date' => date('Y-m-d H:i:s'),'dest_mail' => $to));
 		}
-		
-		//check if tech have mail
-		if($to) 
-		{
-			$object=T_('Le ticket').' n°'.$_GET['id'].': '.$_POST['title'].' '.T_('vous a été attribué');
-			//remove single quote in post data
-			$description = str_replace("'", "", $_POST['description']);
-			$title = str_replace("'", "", $_POST['title']);
-			$message = '
-			'.T_('Le ticket').' n°'.$_GET['id'].' '.T_('vous a été attribué').' <br />
-			<br />
-			<u>'.T_('Objet').':</u><br />
-			'.$title.'<br />		
-			<br />	
-			<u>'.T_('Description').':</u><br />
-			'.$description.'<br />
-			<br />
-			'.T_('Pour plus d\'informations vous pouvez consulter le ticket sur').' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'</a>.
-			';
-			$mail_auto=true;
-			require('./core/message.php');
-		} else {if($rparameters['debug']==1) {echo "technician mail is empty or no technician associated or tech group no change on this ticket";}}
-
+	} else {if($rparameters['debug']==1) {echo "technician mail is empty or no technician associated or tech group no change on this ticket";}}
 }
 
 //case send mail to user where ticket open by technician.
@@ -125,8 +137,8 @@ if(($rparameters['mail_auto']==1) && ((($mail_send['open']=='') && ($_POST['modi
 		$mail_auto=true;
 		include('./core/mail.php');
 		//insert mail table
-		$qry=$db->prepare("INSERT INTO `tmails` (`incident`,`open`,`close`) VALUES (:incident,:open,:close)");
-		$qry->execute(array('incident' => $_GET['id'],'open' => 1,'close' => 0));
+		$qry=$db->prepare("INSERT INTO `tmails` (`incident`,`open`,`close`) VALUES (:incident,'1','0')");
+		$qry->execute(array('incident' => $_GET['id']));
 	} else {
 		//debug
 		if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b> FROM tech TO user (Reason: mail_auto enable, and open detect by technician.) but user have no mail and mail_cc empty message not sent<br />";}
@@ -149,8 +161,8 @@ if(($rparameters['mail_auto']==1) && ((($mail_send['open']=='') && ($_POST['modi
 				//auto send close notification mail
 				include('./core/mail.php');
 				//update mail table
-				$qry=$db->prepare("UPDATE tmails SET close=:close WHERE incident=:incident");
-				$qry->execute(array('close' => 1,'incident' => $_GET['id']));
+				$qry=$db->prepare("UPDATE tmails SET close='1' WHERE incident=:incident");
+				$qry->execute(array('incident' => $_GET['id']));
 			} else {
 				//close mail already sent
 			}
@@ -181,19 +193,19 @@ if(($rparameters['mail_auto']==1) && ((($mail_send['open']=='') && ($_POST['modi
 	}
 	
 //send mail to admin where user open new ticket
-} elseif(($rparameters['mail_newticket']==1) && $_POST['send'] && ($_SESSION['profile_id']!=0 && $_SESSION['profile_id']!=4)) 
+} elseif(($rparameters['mail_newticket']==1) && ($_POST['send'] || $_POST['upload']) && ($_SESSION['profile_id']!=0 && $_SESSION['profile_id']!=4)) 
 {
 	
 	//find user name
-	$qry = $db->prepare("SELECT * FROM tusers WHERE id=:id");
+	$qry = $db->prepare("SELECT `firstname`,`lastname`,`mail` FROM tusers WHERE id=:id");
 	$qry->execute(array('id' => $uid));
 	$userrow=$qry->fetch();
 	$qry->closeCursor();
 	
 	//mail parameters
-	if($rparameters['mail_from_adr']=='')
+	if(!$rparameters['mail_from_adr'])
 	{
-		if ($userrow['mail']!='') $from=$userrow['mail']; else $from=$rparameters['mail_cc'];
+		if($userrow['mail']) {$from=$userrow['mail'];} else {$from=$rparameters['mail_cc'];}
 	} else {
 		$from=$rparameters['mail_from_adr'];
 	}
@@ -203,9 +215,9 @@ if(($rparameters['mail_auto']==1) && ((($mail_send['open']=='') && ($_POST['modi
 		//debug
 		if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b>  FROM user TO tech OR parameter_cc (Reason: mail_newticket enable and user open ticket.<br> ";}
 		$to=$rparameters['mail_newticket_address'];
-		$object=T_('Un nouveau ticket a été déclaré par ').$userrow['lastname'].' '.$userrow['firstname'].': '.$_POST['title'];
+		$object=T_('Un nouveau ticket a été déclaré par ').$userrow['lastname'].' '.$userrow['firstname'].' : '.$_POST['title'];
 		$message = '
-		'.T_('Le ticket').' n°'.$_GET['id'].' '.T_('a été déclaré par l\'utilisateur').' '.$userrow['lastname'].' '.$userrow['firstname'].'.<br />
+		'.T_('Le ticket').' n°'.$_GET['id'].' '.T_("a été déclaré par l'utilisateur").' '.$userrow['lastname'].' '.$userrow['firstname'].'.<br />
 		<br />
 		<u>'.T_('Objet').':</u><br />
 		'.$_POST['title'].'<br />		
@@ -213,43 +225,59 @@ if(($rparameters['mail_auto']==1) && ((($mail_send['open']=='') && ($_POST['modi
 		<u>'.T_('Description').':</u><br />
 		'.$_POST['text'].'<br />
 		<br />
-		'.T_('Pour plus d\'informations vous pouvez consulter le ticket sur').' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'</a>.
+		'.T_("Pour plus d'informations vous pouvez consulter le ticket sur").' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'</a>.
 		';
 		$mail_auto=true;
 		require('./core/message.php');
+		if($mail_send) { //insert thread
+			$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`text`,`type`,`dest_mail`) VALUES (:ticket,:date,'0','','3',:dest_mail)");
+			$qry->execute(array('ticket' => $_GET['id'],'date' => date('Y-m-d H:i:s'),'dest_mail' => $to));
+		}
 	} else {
 		//debug
 		if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b> FROM user TO tech OR parameter_cc (Reason: mail_newticket enable and user open ticket, message not sent no administrator mail specified<br> ";}
 	}
 	
 //send mail to technician where an user add thread in ticket
-} elseif (($rparameters['mail_auto_tech_modify']==1) && ($_POST['modify'] || $_POST['quit']) && (($_POST['resolution']!='') && ($_POST['resolution']!='\'\'')))
+} elseif (($rparameters['mail_auto_tech_modify']==1) && ($_POST['modify'] || $_POST['quit'] || $_POST['upload']) && (($_POST['resolution']!='') && ($_POST['resolution']!='\'\'')))
 {
 	//debug
 	if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b>  FROM user TO tech  (Reason: mail_auto_tech_modify enable and user add thread in ticket.)<br> ";}
 
 	//find user name
-	$qry = $db->prepare("SELECT * FROM tusers WHERE id=:id");
+	$qry = $db->prepare("SELECT `mail` FROM tusers WHERE id=:id");
 	$qry->execute(array('id' => $uid));
 	$userrow=$qry->fetch();
 	$qry->closeCursor();
 	
 	//get user mail
-	if($rparameters['mail_from_adr']=='')
+	if(!$rparameters['mail_from_adr'])
 	{
-		if ($userrow['mail']!='') $from=$userrow['mail']; else $from=$rparameters['mail_cc'];
+		if($userrow['mail']) {$from=$userrow['mail'];} else {$from=$rparameters['mail_cc'];}
 	} else {
 		$from=$rparameters['mail_from_adr'];
 	}
-	//get tech mail 
-	$qry = $db->prepare("SELECT * FROM tusers WHERE id=:id");
-	$qry->execute(array('id' => $globalrow['technician']));
-	$techrow=$qry->fetch();
-	$qry->closeCursor();
-	
-	$to=$techrow['mail'];
+	//check if it's technician or technician group
+	$send_it=0;
+	if($t_group)
+	{
+		$qry=$db->prepare("SELECT `tusers`.mail FROM `tusers`,`tgroups_assoc` WHERE `tusers`.id=`tgroups_assoc`.user AND `tgroups_assoc`.group=:group AND `tusers`.disable='0' ");
+		$qry->execute(array('group' => $t_group));
+		while($row=$qry->fetch()) {$to.=$row['mail'].';';}
+		$qry->closeCursor();
+		$send_it=1;
+	} else {
+		//get tech mail 
+		$qry = $db->prepare("SELECT `id`,`mail` FROM tusers WHERE id=:id");
+		$qry->execute(array('id' => $globalrow['technician']));
+		$techrow=$qry->fetch();
+		$qry->closeCursor();
+		$to=$techrow['mail'];
+		if($techrow['id']!=$_SESSION['user_id']) {$send_it=1;}
+	}
+
 	//check if tech have mail
-	if($to && $techrow['id']!=$_SESSION['user_id']) 
+	if($to && $send_it) 
 	{
 		$object=T_('Votre ticket').' n°'.$_GET['id'].' : '.$_POST['title'].' '.T_('a été modifié');
 		//remove single quote in post data
@@ -264,17 +292,20 @@ if(($rparameters['mail_auto']==1) && ((($mail_send['open']=='') && ($_POST['modi
 		<u>'.T_('Ajout du commentaire').' :</u><br />
 		'.$resolution.'<br />
 		<br />
-		'.T_('Pour plus d\'informations vous pouvez consulter le ticket sur').' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'</a>.
+		'.T_("Pour plus d'informations vous pouvez consulter le ticket sur").' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'</a>.
 		';
 		$mail_auto=true;
 		require('./core/message.php');
+		if($mail_send) { //insert thread
+			$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`text`,`type`,`dest_mail`) VALUES (:ticket,:date,'0','','3',:dest_mail)");
+			$qry->execute(array('ticket' => $_GET['id'],'date' => date('Y-m-d H:i:s'),'dest_mail' => $to));
+		}
 	} else {if($rparameters['debug']==1) {echo "technician mail is empty or no technician associated with this ticket";}}
 }
 
 //case send auto mail to user where user open ticket
-if(($rparameters['mail_auto_user_newticket']==1) && ($mail_send['open']=='') && $_GET['action']=='new' && ($_POST['send'] || $_POST['modify'] || $_POST['quit']) && ($_SESSION['profile_id']==2 || $_SESSION['profile_id']==3 || $_SESSION['profile_id']==1))
+if(($rparameters['mail_auto_user_newticket']==1) && ($mail_send['open']=='') && $_GET['action']=='new' && ($_POST['send'] || $_POST['modify'] || $_POST['quit']|| $_POST['upload']) && ($_SESSION['profile_id']==2 || $_SESSION['profile_id']==3 || $_SESSION['profile_id']==1))
 {
-	echo "case";
 	if($usermail['mail'] || $rparameters['mail_cc'])
 	{
 		//debug
@@ -284,13 +315,13 @@ if(($rparameters['mail_auto_user_newticket']==1) && ($mail_send['open']=='') && 
 		$mail_auto=true;
 		include('./core/mail.php');
 		//insert mail table
-		$qry=$db->prepare("INSERT INTO `tmails` (`incident`,`open`,`close`) VALUES (:incident,:open,:close)");
-		$qry->execute(array('incident' => $_GET['id'],'open' => 1,'close' => 0));
+		$qry=$db->prepare("INSERT INTO `tmails` (`incident`,`open`,`close`) VALUES (:incident,'1','0')");
+		$qry->execute(array('incident' => $_GET['id']));
 	} else {
 		//debug
 		if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b> FROM user TO user (Reason: mail_auto_user_newticket enable, and open detect by user.) but user have no mail and mail_cc empty message not sent<br />";}
 	}
-} else 
+} 
 
 //send mail to user from tech for survey where ticket is in survey parameter state
 if(($rparameters['survey']==1) && ($_POST['modify'] || $_POST['quit'] || $_POST['close']) && ($_POST['state']==$rparameters['survey_ticket_state']))
@@ -308,12 +339,8 @@ if(($rparameters['survey']==1) && ($_POST['modify'] || $_POST['quit'] || $_POST[
 		{
 			//insert a token
 			$token=uniqid(); 
-			$qry=$db->prepare("INSERT INTO ttoken (token,action,ticket_id) VALUES (:token,:action,:ticket_id)");
-			$qry->execute(array(
-				'token' => $token,
-				'action' => 'survey',
-				'ticket_id' => $_GET['id']
-				));
+			$qry=$db->prepare("INSERT INTO ttoken (token,action,ticket_id) VALUES (:token,'survey',:ticket_id)");
+			$qry->execute(array('token' => $token,'ticket_id' => $_GET['id']));
 			//select sender address
 			if($rparameters['mail_from_adr']=='')
 			{

@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 13/02/2016
-# @Update : 05/03/2019
-# @Version : 3.1.40
+# @Update : 06/02/2020
+# @Version : 3.2.0
 ################################################################################
 
 //array declaration
@@ -15,7 +15,7 @@ $values = array();
 $xnom = array();
 
 //display title
-$libchart=T_("Répartition du nombre d\'équipements par services");
+$libchart=T_("Répartition du nombre d'équipements par services");
 $unit=T_('Équipements');
 
 $qry=$db->prepare("
@@ -60,5 +60,5 @@ $qry->closeCursor();
 
 $container='container101';
 include('./stat_pie.php');
-echo "<div id=\"$container\"></div>";
+echo '<div class="card-body bgc-dark-l4 p-0 border-1 brc-default-l2 radius-2 px-1 mx-n2 mx-md-0 h-100 d-flex align-items-center" id="'.$container.'"></div>';
 ?>

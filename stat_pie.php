@@ -6,8 +6,8 @@
 # @Parameters : unit, values, names, libchart
 # @Author : Flox
 # @Create : 06/10/2012
-# @Update : 14/09/2018
-# @Version : 3.1.35
+# @Update : 22/06/2020
+# @Version : 3.2.2
 ################################################################################
 ?>
 <script type="text/javascript">
@@ -22,10 +22,13 @@
                 plotBackgroundColor: null,
                 plotBorderWidth: null,
                 plotShadow: false,
-				backgroundColor:'#EEE'
+				backgroundColor:'<?php echo $bgc; ?>'
             },
+			credits: {
+				enabled: false
+			},
             title: {
-                text: '<?php echo $libchart; ?>'
+                text: "<?php echo $libchart; ?>"
             },
             tooltip: {
         	    pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>'

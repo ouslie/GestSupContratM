@@ -6,14 +6,20 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 06/03/2013
-# @Update : 21/12/2018
-# @Version : 3.1.37
+# @Update : 10/01/2020
+# @Version : 3.2.1
 ################################################################################
+if(!isset($rright))
+{
+	//load rights table
+	$qry=$db->prepare("SELECT * FROM `trights` WHERE profile=:profile");
+	$qry->execute(array('profile' => $_SESSION['profile_id']));
+	$rright=$qry->fetch();
+	$qry->closeCursor();
+}
 ?>
-<script src="./template/assets/js/bootstrap-wysiwyg.min.js"></script>
-<!-- ace scripts -->
-<script src="./template/assets/js/ace-elements.min.js"></script>
-
+<script type="text/javascript" src="./components/jquery-hotkeys/jquery.hotkeys.js"></script>
+<script type="text/javascript" src="./components/bootstrap-wysiwyg/js/bootstrap-wysiwyg.min.js"></script>
 <script type="text/javascript">
 	//load text from editor to input value
 	function loadVal(){
@@ -27,16 +33,15 @@
 				';
 			}
 		}
-			if ($rright['ticket_thread_add']!=0)
-			{
-				echo '
-				text2 = $("#editor2").html();
-				document.myform.text2.value = text2;
-				';
-			}
+		if($rright['ticket_thread_add'])
+		{
+			echo '
+			text2 = $("#editor2").html();
+			document.myform.text2.value = text2;
+			';
+		}
 		
-		
-		if ($_GET['page']=='procedure')
+		if($_GET['page']=='procedure')
 		{
 			echo '
 			text = $("#editor").html();
@@ -46,183 +51,180 @@
 		?>
 	}
 	
-	jQuery(function($) {
-		$('#editor').ace_wysiwyg({
-			toolbar:
-			[
-				<?php
-					//display a light font function if mobile is detected
-					if($mobile==0)
-					{
-						echo '
+jQuery(function($) {
+	$('#editor').aceWysiwyg({
+		toolbarStyle: 2,
+		toolbar:
+		[
+			<?php
+				//display a light font function if mobile is detected
+				if(!$mobile)
+				{
+					echo '
+						{
+							name:\'font\',
+							title:\''.T_('Police').'\',
+							values:[\'Some Special Font!\',\'Arial\',\'Verdana\',\'Comic Sans MS\',\'Custom Font!\']
+						},
+						null,
+						{
+							name:\'fontSize\',
+							title:\''.T_('Taille').'\',
+							values:{1 : \'Size#1 Text\' , 2 : \'Size#1 Text\' , 3 : \'Size#3 Text\' , 4 : \'Size#4 Text\' , 5 : \'Size#5 Text\'} 
+						},
+						null,
+						{name:\'bold\', title:\''.T_('Gras').'\'},
+						{name:\'italic\', title:\''.T_('Italique').'\'},
+						{name:\'underline\', title:\''.T_('Souligner').'\'},
+						null,
+						{name:\'insertunorderedlist\', title:\''.T_('Liste à puces').'\'},
+						{name:\'insertorderedlist\', title:\''. T_('Liste numéroté').'\'},
+						{name:\'outdent\', title:\''.T_('Diminuer le retrait').'\'},
+						{name:\'indent\', title:\''.T_('Augmenter le retrait').'\'},
+						null,
+						{name:\'justifyleft\',title:\''.T_('Aligner à gauche').'\'},
+						{name:\'justifycenter\',title:\''.T_('Centrer').'\'},
+						{name:\'justifyright\',title:\''.T_('Aligner à droite').'\'},
+						{name:\'justifyfull\',title:\''.T_('Justifier').'\'},
+						null,
+						{
+							name:\'createLink\',
+							title:\''.T_('Insérer un lien').'\',
+							placeholder:\''.T_('Insérer un lien').'\',
+							button_text:\''.T_('Ajouter').'\'
+						},
+						null,
+						';
+							if($rright['ticket_description_insert_image']!=0)
 							{
-								name:\'font\',
-								title:\''.T_('Police').'\',
-								values:[\'Some Special Font!\',\'Arial\',\'Verdana\',\'Comic Sans MS\',\'Custom Font!\']
-							},
-							null,
-							{
-								name:\'fontSize\',
-								title:\''.T_('Taille').'\',
-								values:{1 : \'Size#1 Text\' , 2 : \'Size#1 Text\' , 3 : \'Size#3 Text\' , 4 : \'Size#4 Text\' , 5 : \'Size#5 Text\'} 
-							},
-							null,
-							{name:\'bold\', title:\''.T_('Gras').'\'},
-							{name:\'italic\', title:\''.T_('Italique').'\'},
-							{name:\'underline\', title:\''.T_('Souligner').'\'},
-							null,
-							{name:\'insertunorderedlist\', title:\''.T_('Liste à puces').'\'},
-							{name:\'insertorderedlist\', title:\''. T_('Liste numéroté').'\'},
-							{name:\'outdent\', title:\''.T_('Diminuer le retrait').'\'},
-							{name:\'indent\', title:\''.T_('Augmenter le retrait').'\'},
-							null,
-							{name:\'justifyleft\',title:\''.T_('Aligner à gauche').'\'},
-							{name:\'justifycenter\',title:\''.T_('Centrer').'\'},
-							{name:\'justifyright\',title:\''.T_('Aligner à droite').'\'},
-							{name:\'justifyfull\',title:\''.T_('Justifier').'\'},
-							null,
-							{
-								name:\'createLink\',
-								title:\''.T_('Insérer un lien').'\',
-								placeholder:\''.T_('Insérer un lien').'\',
-								button_text:\''.T_('Ajouter').'\'
-							},
-							null,
-							';
-								if($rright['ticket_description_insert_image']!=0)
+								echo '
 								{
-									echo '
-									{
-										name:\'insertImage\',
-										title:\''.T_('Insérer une image').'\',
-										placeholder:\''.T_('Insérer une image').'\',
-										button_class:\'btn-inverse\',
-										//choose_file:false,//hide choose file button
-										button_text:\''.T_('Sélectionner une image').'\',
-										button_insert_class:\'btn-pink\',
-										button_insert:\''.T_('Insérer une image').'\'
-									},
-									null,
-									';
-								}
-							echo '
-							{name:\'foreColor\',title:\''.T_('Couleur').'\',values:[\'red\',\'green\',\'blue\',\'orange\',\'black\'],},
-							null,
-							{name:\'undo\',title:\''.T_('Annuler la modification').'\'},
-							{name:\'redo\',title:\''.T_('Rétablir').'\'}
-						';
-					} else {
+									name:\'insertImage\',
+									title:\''.T_('Insérer une image').'\',
+									placeholder:\''.T_('Insérer une image').'\',
+									button_class:\'btn-inverse\',
+									//choose_file:false,//hide choose file button
+									button_text:\''.T_('Sélectionner une image').'\',
+									button_insert_class:\'btn-pink\',
+									button_insert:\''.T_('Insérer une image').'\'
+								},
+								null,
+								';
+							}
 						echo '
-							{
-								name:\'font\',
-								title:\''.T_('Police').'\',
-								values:[\'Some Special Font!\',\'Arial\',\'Verdana\',\'Comic Sans MS\',\'Custom Font!\']
-							},
-							null,
-							{
-								name:\'fontSize\',
-								title:\''.T_('Taille').'\',
-								values:{1 : \'Size#1 Text\' , 2 : \'Size#1 Text\' , 3 : \'Size#3 Text\' , 4 : \'Size#4 Text\' , 5 : \'Size#5 Text\'} 
-							},
-							null,
-							{name:\'bold\', title:\''.T_('Gras').'\'},
-							{name:\'italic\', title:\''.T_('Italique').'\'},
-							{name:\'underline\', title:\''.T_('Souligner').'\'},
-						';
-					}
-				?>
-			],
-			speech_button:false,//hide speech button on chrome
-			
-			'wysiwyg': {
-				hotKeys : {} //disable hotkeys
-			}
-			
-		}).prev().addClass('wysiwyg-style2');
-		$('#editor2').ace_wysiwyg({
-			toolbar:
-			[
-				<?php
-					//display a light font function if mobile is detected
-					if($mobile==0)
-					{
-						echo '
-							{
-								name:\'font\',
-								title:\''.T_('Police').'\',
-								values:[\'Some Special Font!\',\'Arial\',\'Verdana\',\'Comic Sans MS\',\'Custom Font!\']
-							},
-							null,
-							{
-								name:\'fontSize\',
-								title:\''.T_('Taille').'\',
-								values:{1 : \'Size#1 Text\' , 2 : \'Size#1 Text\' , 3 : \'Size#3 Text\' , 4 : \'Size#4 Text\' , 5 : \'Size#5 Text\'} 
-							},
-							null,
-							{name:\'bold\', title:\''.T_('Gras').'\'},
-							{name:\'italic\', title:\''.T_('Italique').'\'},
-							{name:\'underline\', title:\''.T_('Souligner').'\'},
-							null,
-							{name:\'insertunorderedlist\', title:\''.T_('Liste à puces').'\'},
-							{name:\'insertorderedlist\', title:\''. T_('Liste numéroté').'\'},
-							{name:\'outdent\', title:\''.T_('Diminuer le retrait').'\'},
-							{name:\'indent\', title:\''.T_('Augmenter le retrait').'\'},
-							null,
-							{name:\'justifyleft\',title:\''.T_('Aligner à gauche').'\'},
-							{name:\'justifycenter\',title:\''.T_('Centrer').'\'},
-							{name:\'justifyright\',title:\''.T_('Aligner à droite').'\'},
-							{name:\'justifyfull\',title:\''.T_('Justifier').'\'},
-							null,
-							';
-								if($rright['ticket_resolution_insert_image']!=0)
-								{
-									echo '
-									{
-										name:\'insertImage\',
-										title:\''.T_('Insérer une image').'\',
-										placeholder:\''.T_('Insérer une image').'\',
-										button_class:\'btn-inverse\',
-										//choose_file:false,//hide choose file button
-										button_text:\''.T_('Sélectionner une image').'\',
-										button_insert_class:\'btn-pink\',
-										button_insert:\''.T_('Insérer une image').'\'
-									},
-									null,
-									';
-								}
-							echo '
-							{name:\'foreColor\',title:\''.T_('Couleur').'\',values:[\'red\',\'green\',\'blue\',\'orange\',\'black\'],},
-							null,
-							{name:\'undo\',title:\''.T_('Annuler la modification').'\'},
-							{name:\'redo\',title:\''.T_('Rétablir').'\'}
-						';
-					} else {
-						echo '
-							{
-								name:\'font\',
-								title:\''.T_('Police').'\',
-								values:[\'Some Special Font!\',\'Arial\',\'Verdana\',\'Comic Sans MS\',\'Custom Font!\']
-							},
-							null,
-							{
-								name:\'fontSize\',
-								title:\''.T_('Taille').'\',
-								values:{1 : \'Size#1 Text\' , 2 : \'Size#1 Text\' , 3 : \'Size#3 Text\' , 4 : \'Size#4 Text\' , 5 : \'Size#5 Text\'} 
-							},
-							null,
-							{name:\'bold\', title:\''.T_('Gras').'\'},
-							{name:\'italic\', title:\''.T_('Italique').'\'},
-							{name:\'underline\', title:\''.T_('Souligner').'\'},
-						';
-					}
-				?>
-			],
-			speech_button:false,//hide speech button on chrome
-			
-			'wysiwyg': {
-				hotKeys : {} //disable hotkeys
-			}
-			
-		}).prev().addClass('wysiwyg-style2');
+						{name:\'foreColor\',title:\''.T_('Couleur').'\',values:[\'red\',\'green\',\'blue\',\'orange\',\'black\'],},
+						null,
+						{name:\'undo\',title:\''.T_('Annuler la modification').'\'},
+						{name:\'redo\',title:\''.T_('Rétablir').'\'}
+					';
+				} else {
+					echo '
+						{
+							name:\'font\',
+							title:\''.T_('Police').'\',
+							values:[\'Some Special Font!\',\'Arial\',\'Verdana\',\'Comic Sans MS\',\'Custom Font!\']
+						},
+						null,
+						{
+							name:\'fontSize\',
+							title:\''.T_('Taille').'\',
+							values:{1 : \'Size#1 Text\' , 2 : \'Size#1 Text\' , 3 : \'Size#3 Text\' , 4 : \'Size#4 Text\' , 5 : \'Size#5 Text\'} 
+						},
+						null,
+						{name:\'bold\', title:\''.T_('Gras').'\'},
+						{name:\'italic\', title:\''.T_('Italique').'\'},
+						{name:\'underline\', title:\''.T_('Souligner').'\'},
+					';
+				}
+			?>
+		],
 	});
+	$('#editor2').aceWysiwyg({
+		toolbarStyle: 2,
+		toolbar:
+		[
+			<?php
+				//display a light font function if mobile is detected
+				if(!$mobile)
+				{
+					echo '
+						{
+							name:\'font\',
+							title:\''.T_('Police').'\',
+							values:[\'Some Special Font!\',\'Arial\',\'Verdana\',\'Comic Sans MS\',\'Custom Font!\']
+						},
+						null,
+						{
+							name:\'fontSize\',
+							title:\''.T_('Taille').'\',
+							values:{1 : \'Size#1 Text\' , 2 : \'Size#1 Text\' , 3 : \'Size#3 Text\' , 4 : \'Size#4 Text\' , 5 : \'Size#5 Text\'} 
+						},
+						null,
+						{name:\'bold\', title:\''.T_('Gras').'\'},
+						{name:\'italic\', title:\''.T_('Italique').'\'},
+						{name:\'underline\', title:\''.T_('Souligner').'\'},
+						null,
+						{name:\'insertunorderedlist\', title:\''.T_('Liste à puces').'\'},
+						{name:\'insertorderedlist\', title:\''. T_('Liste numéroté').'\'},
+						{name:\'outdent\', title:\''.T_('Diminuer le retrait').'\'},
+						{name:\'indent\', title:\''.T_('Augmenter le retrait').'\'},
+						null,
+						{name:\'justifyleft\',title:\''.T_('Aligner à gauche').'\'},
+						{name:\'justifycenter\',title:\''.T_('Centrer').'\'},
+						{name:\'justifyright\',title:\''.T_('Aligner à droite').'\'},
+						{name:\'justifyfull\',title:\''.T_('Justifier').'\'},
+						null,
+						{
+							name:\'createLink\',
+							title:\''.T_('Insérer un lien').'\',
+							placeholder:\''.T_('Insérer un lien').'\',
+							button_text:\''.T_('Ajouter').'\'
+						},
+						null,
+						';
+							if($rright['ticket_description_insert_image']!=0)
+							{
+								echo '
+								{
+									name:\'insertImage\',
+									title:\''.T_('Insérer une image').'\',
+									placeholder:\''.T_('Insérer une image').'\',
+									button_class:\'btn-inverse\',
+									//choose_file:false,//hide choose file button
+									button_text:\''.T_('Sélectionner une image').'\',
+									button_insert_class:\'btn-pink\',
+									button_insert:\''.T_('Insérer une image').'\'
+								},
+								null,
+								';
+							}
+						echo '
+						{name:\'foreColor\',title:\''.T_('Couleur').'\',values:[\'red\',\'green\',\'blue\',\'orange\',\'black\'],},
+						null,
+						{name:\'undo\',title:\''.T_('Annuler la modification').'\'},
+						{name:\'redo\',title:\''.T_('Rétablir').'\'}
+					';
+				} else {
+					echo '
+						{
+							name:\'font\',
+							title:\''.T_('Police').'\',
+							values:[\'Some Special Font!\',\'Arial\',\'Verdana\',\'Comic Sans MS\',\'Custom Font!\']
+						},
+						null,
+						{
+							name:\'fontSize\',
+							title:\''.T_('Taille').'\',
+							values:{1 : \'Size#1 Text\' , 2 : \'Size#1 Text\' , 3 : \'Size#3 Text\' , 4 : \'Size#4 Text\' , 5 : \'Size#5 Text\'} 
+						},
+						null,
+						{name:\'bold\', title:\''.T_('Gras').'\'},
+						{name:\'italic\', title:\''.T_('Italique').'\'},
+						{name:\'underline\', title:\''.T_('Souligner').'\'},
+					';
+				}
+			?>
+		],
+	});
+});
 </script>

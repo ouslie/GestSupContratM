@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 15/02/2014
-# @Update : 19/04/2017
-# @Version : 3.1.20
+# @Update : 06/02/2020
+# @Version : 3.2.0
 ################################################################################
 
 $values = array();
@@ -23,6 +23,7 @@ FROM tincidents INNER JOIN tstates ON (tincidents.state=tstates.id)
 WHERE tincidents.disable LIKE '0' AND
 tincidents.technician LIKE '$_POST[tech]' AND
 tincidents.u_service LIKE '$_POST[service]' $where_service $where_agency AND
+$where_state AND
 tincidents.type LIKE '$_POST[type]' AND
 criticality like '$_POST[criticality]' AND
 tincidents.category LIKE '$_POST[category]' AND
@@ -40,6 +41,6 @@ while ($row = $query->fetch())
 } 
 $container='container3';
 include('./stat_pie.php');
-echo "<div id=\"$container\" ></div>";
+echo '<div class="card-body bgc-dark-l4 p-0 border-1 brc-default-l2 radius-2 px-1 mx-n2 mx-md-0 h-100 d-flex align-items-center" id="'.$container.'"></div>';
 if ($rparameters['debug']==1)echo $query1;
 ?>

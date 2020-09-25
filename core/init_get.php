@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 07/11/2019
-# @Update : 11/11/2019
-# @Version : 3.1.44
+# @Update : 15/05/2020
+# @Version : 3.2.2
 ################################################################################
 
 //GET var definition
@@ -51,7 +51,11 @@ $all_get_var=array(
 	'companyview',
 	'techgroup',
 	'userkeywords',
+	'rightkeywords',
+	'procedurekeywords',
 	'download',
+	'download_file',
+	'download_backup',
 	'subpage',
 	'ldap',
 	'disable',
@@ -116,6 +120,7 @@ $all_get_var=array(
 	'month',
 	'year',
 	'userid',
+	'time',
 	'post'
 );
 
@@ -126,7 +131,10 @@ foreach($all_get_var as $get_var) {
 	//secure var
     $_GET[$get_var]=htmlspecialchars($_GET[$get_var], ENT_QUOTES, 'UTF-8');
 }
-$_GET['page']=str_replace(":", '', $_GET['page']);
-$_GET['page']=str_replace("=", '', $_GET['page']);
-$_GET['page']=str_replace("#", '', $_GET['page']);
+//check page 
+$page_white_list=array('dashboard','ticket','preview_mail','asset_list','asset','asset_stock','procedure','calendar','project','stat','admin','admin/user','plugins/availability/index','changelog','register','forgot_pwd','test');
+if(!in_array($_GET['page'],$page_white_list)) {$_GET['page']='';} 
+//check subpage 
+$subpage_white_list=array('system','infos','pwd_recovery','backup','group','profile','update','user','parameters','phpinfos','list','log');
+if(!in_array($_GET['subpage'],$subpage_white_list)) {$_GET['subpage']='';} 
 ?>

@@ -4,8 +4,8 @@
 # @Description : Display short ticket declaration interface to integer in other website (ex: intranet)
 # @Author : Flox
 # @Create : 29/10/2013
-# @Update : 05/03/2019
-# @Version : 3.1.39 p1
+# @Update : 28/10/2019
+# @Version : 3.1.46
 ################################################################################
 
 
@@ -37,17 +37,8 @@ if ($_POST['send']) //database input
 	INSERT INTO `tincidents` 
 	(`user`,`title`,`description`,`state`,`date_create`,`creator`,`criticality`,`techread`) 
 	VALUES 
-	(:user,:title,:description,:state,:date_create,:creator,:criticality,:techread)");
-	$qry->execute(array(
-		'user' => $_POST['user'],
-		'title' => $_POST['title'],
-		'description' => $_POST['description'],
-		'state' => 5,
-		'date_create' => $date,
-		'creator' => $_POST['user'],
-		'criticality' => 4,
-		'techread' => 0
-		));
+	(:user,:title,:description,'5',:date_create,:creator,'4','0')");
+	$qry->execute(array('user' => $_POST['user'],'title' => $_POST['title'],'description' => $_POST['description'],'date_create' => $date,'creator' => $_POST['user']));
 	
 	//load parameters table
 	$qry=$db->prepare("SELECT * FROM `tparameters`");
@@ -113,7 +104,6 @@ else //display form
 		</table>
 	</form>';
 }
-
 //close database access
 $db = null;
 ?>

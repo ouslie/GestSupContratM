@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 09/05/2019
-# @Update : 09/05/2019
-# @Version : 3.1.41
+# @Update : 29/10/2019
+# @Version : 3.1.46
 ################################################################################
 
 if($rparameters['ticket_autoclose'] && $rparameters['ticket_autoclose_delay']!=0)
@@ -23,8 +23,8 @@ if($rparameters['ticket_autoclose'] && $rparameters['ticket_autoclose_delay']!=0
 			$qry2=$db->prepare("UPDATE `tincidents` SET `state`='3',`date_res`=:date_res  WHERE `id`=:id");
 			$qry2->execute(array('id' => $row['id'],'date_res' => date('Y-m-d H:i:s')));
 			//insert close thread
-			$qry2=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`type`) VALUES (:ticket,:date,:author,:type)");
-			$qry2->execute(array('ticket' => $row['id'],'date' => date('Y-m-d H:i:s'),'author' => 0,'type' => 4));
+			$qry2=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`type`) VALUES (:ticket,:date,'0','4')");
+			$qry2->execute(array('ticket' => $row['id'],'date' => date('Y-m-d H:i:s')));
 			//send notifications mails
 			if($rparameters['mail_auto'])
 			{
@@ -43,8 +43,8 @@ if($rparameters['ticket_autoclose'] && $rparameters['ticket_autoclose_delay']!=0
 			$qry2=$db->prepare("UPDATE `tincidents` SET `state`='3',`date_res`=:date_res  WHERE `id`=:id");
 			$qry2->execute(array('id' => $row['id'],'date_res' => date('Y-m-d H:i:s')));
 			//insert close thread
-			$qry2=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`type`) VALUES (:ticket,:date,:author,:type)");
-			$qry2->execute(array('ticket' => $row['id'],'date' => date('Y-m-d H:i:s'),'author' => 0,'type' => 4));
+			$qry2=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`type`) VALUES (:ticket,:date,'0','4')");
+			$qry2->execute(array('ticket' => $row['id'],'date' => date('Y-m-d H:i:s')));
 			//send notifications mails
 			if($rparameters['mail_auto'])
 			{
@@ -55,7 +55,6 @@ if($rparameters['ticket_autoclose'] && $rparameters['ticket_autoclose_delay']!=0
 		}
 		$qry->closeCursor();
 	}
-	
 	//update last execution time
 	$qry=$db->prepare("UPDATE `tparameters` SET `cron_daily`=:cron_daily");
 	$qry->execute(array('cron_daily' => date('Y-m-d')));

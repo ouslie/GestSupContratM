@@ -6,23 +6,23 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 06/10/2012
-# @Update : 05/12/2018
-# @Version : 3.1.37
+# @Update : 22/06/2020
+# @Version : 3.2.2
 ################################################################################
 
 //customize label for graph selected
 if($_GET['tab']=='asset')
 {
-	$label_type=T_('Équipements');
-	$label_state1=T_('installés');
-	$label_state2=T_('recyclés');
+	$label_type='';
+	$label_state1=T_('Installés');
+	$label_state2=T_('Recyclés');
 	$label_state3='';
 	$subtitle='<u>'.T_('Total').' '.$label_state1.' :</u> '.$count.' / <u>'.T_('Total').' '.$label_state2.' :</u> '.$count2.'  / <u>'.T_('Total depuis le début').' :</u> '.$count4;
 } elseif ($container=='container1') {
 	$label_type='';
-	$label_state1=T_('Tickets avancés *');
-	$label_state2=T_('Tickets ouverts');
-	$label_state3=T_('Tickets fermés');
+	$label_state1=T_('Avancés *');
+	$label_state2=T_('Ouverts');
+	$label_state3=T_('Fermés');
 	$subtitle='<u>'.$label_state2.' :</u> '.$count.' / <u>'.$label_state3.' :</u> '.$count2.'  / <u> '.$label_state1.' :</u> '.$count3.' / <u>'.T_('Total depuis le début').' :</u> '.$count4;
 } elseif ($container=='container9') {
 	$label_type=T_('Élément de <br />résolutions');
@@ -47,11 +47,14 @@ if($_GET['tab']=='asset')
 		$(document).ready(function() {
 			chart1 = new Highcharts.Chart({
 				chart: {
+					backgroundColor: '<?php echo $bgc; ?>',
 					renderTo: '<?php echo $container; ?>',
 					type: 'line',
-					marginRight: 130,
-					marginBottom: 25,
-					backgroundColor:'#EEE'
+					marginRight: 20,
+					marginBottom: 80,
+				},
+				credits: {
+					enabled: false
 				},
 				title: {
 					text: '<?php echo $libchart; ?>',
@@ -67,7 +70,7 @@ if($_GET['tab']=='asset')
 				yAxis: {
 					allowDecimals:false,
 					title: {
-						text: '<?php echo $liby; ?>'
+						text: "<?php echo $liby; ?>"
 					},
 					plotLines: [{
 						value: 0,
@@ -82,12 +85,10 @@ if($_GET['tab']=='asset')
 					}
 				},
 				legend: {
-					layout: 'vertical',
-					align: 'right',
-					verticalAlign: 'top',
-					x: -10,
-					y: 100,
-					borderWidth: 0
+					 layout: "horizontal",
+					 itemDistance: 50,
+					align: "center"
+					
 				},
 				series: 
 				[

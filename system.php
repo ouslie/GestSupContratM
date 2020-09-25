@@ -6,14 +6,12 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 10/11/2013
-# @Update : 30/07/2019
-# @Version : 3.1.43
+# @Update : 11/06/2020
+# @Version : 3.2.2
 ################################################################################
 
-
 //initialize variables 
-if(!isset($_GET['page'])) $_GET['page'] = '';
-if(!isset($_GET['subpage'])) $_GET['subpage'] = '';
+require_once("core/init_get.php");
 
 //for install call
 if($_GET['page']=='admin') 
@@ -37,15 +35,12 @@ if($_GET['page']=='admin')
 if($rparameters['server_private_key']=='') 
 {
 	$key=md5(uniqid());
-	
 	$qry=$db->prepare("UPDATE `tparameters` SET `server_private_key`=:server_private_key WHERE `id`=1");
-	$qry->execute(array(
-		'server_private_key' => $key
-	));
+	$qry->execute(array('server_private_key' => $key));
 }
 
 //detect https connection
-if ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443) {$http='https';} else {$http='http';}
+if((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443) {$http='https';} else {$http='http';}
 
 //extract php info
 ob_start();
@@ -66,9 +61,9 @@ if(preg_match_all('#(?:<h2>(?:<a name=".*?">)?(.*?)(?:</a>)?</h2>)|(?:<tr(?: cla
 		}
 
 //find PHP table informations, depends of PHP versions			
-if (isset($phpinfo['Core'])!='') $vphp='Core';
-elseif (isset($phpinfo['PHP Core'])!='') $vphp='PHP Core';
-elseif (isset($phpinfo['HTTP Headers Information'])!='') $vphp='HTTP Headers Information'; 
+if(isset($phpinfo['Core'])!='') $vphp='Core';
+elseif(isset($phpinfo['PHP Core'])!='') $vphp='PHP Core';
+elseif(isset($phpinfo['HTTP Headers Information'])!='') $vphp='HTTP Headers Information'; 
 
 //initialize variables 
 if(!isset($_POST['Modifier'])) $_POST['Modifier'] = '';
@@ -79,28 +74,18 @@ if(!isset($phpinfo[$vphp]['post_max_size'][0])) $phpinfo[$vphp]['post_max_size']
 if(!isset($phpinfo[$vphp]['max_execution_time'][0])) $phpinfo[$vphp]['max_execution_time'][0] = '';
 if(!isset($phpinfo['date']['date.timezone'][0])) $phpinfo['date']['date.timezone'][0] = '';
 if(!isset($i)) $i = '';
-if(!isset($openssl)) $openssl = '';
-if(!isset($rdb_name)) $rdb_name = '';
-if(!isset($rdb_version)) $rdb_version = '';
-if(!isset($ldap)) $ldap = '';
-if(!isset($zip)) $zip = '';
-if(!isset($imap)) $imap = '';
-if(!isset($pdo_mysql)) $pdo_mysql = '';
-if(!isset($ftp)) $ftp = '';
-if(!isset($xml)) $xml = '';
-if(!isset($curl)) $curl = '';
 if(!isset($php_error)) $php_error = '';
 if(!isset($php_warning)) $php_warning = '';
 
 //SQL db connect
-if ($_GET['page']!='admin') {require('../connect.php');}
+if($_GET['page']!='admin') {require('../connect.php');}
 
 //get rdb database version 
 $qry=$db->prepare("SHOW VARIABLES");
 $qry->execute();
 while($row=$qry->fetch()) 
 {
-	if ($row[0]=="version") {
+	if($row[0]=="version") {
 		$rdb_version=$row[1];
 		if(strpos($rdb_version, 'MariaDB')) {
 			$rdb_name='MariaDB';
@@ -120,7 +105,7 @@ $os=$phpinfo['phpinfo']['System'];
 $os= explode(" ",$os);
 $os=$os[0];
 
-//check and convert current ram value in MB value to check presrequites
+//check and convert current ram value in MB value to check prerequisites
 $ram=$phpinfo[$vphp]['memory_limit'][0];
 if(preg_match("/M/",$ram)) {$ram_mb=explode('M',$ram);$ram_mb=$ram_mb[0];}
 if(preg_match("/m/",$ram)) {$ram_mb=explode('m',$ram);$ram_mb=$ram_mb[0];}
@@ -157,7 +142,7 @@ if(isset($web_server[1])) {
 if($web_server_name!='nginx')
 {
 	//get apache version
-	$apache=$phpinfo['apache2handler']['Apache Version'];
+	$apache=$_SERVER['SERVER_SOFTWARE'];
 	$apache=preg_split('[ ]', $apache); 
 	$apache=preg_split('[/]', $apache[0]);
 	if(isset($apache[1])) {
@@ -174,10 +159,8 @@ if($web_server_name!='nginx')
 	$web_server_icon='nginx_ok.png';
 }
 
-
-
 //get components versions
-if ($_GET['page']!='admin')
+if($_GET['page']!='admin')
 {
 	$phpmailer = file_get_contents('../components/PHPMailer/VERSION');
 	$phpgettext = file_get_contents('../components/php-gettext/VERSION');
@@ -187,10 +170,20 @@ if ($_GET['page']!='admin')
 	$mysqldumpphp = file_get_contents('../components/mysqldump-php/VERSION');
 	$fullcalendar = file_get_contents('../components/fullcalendar/VERSION');
 	$jquery = file_get_contents('../components/jquery/VERSION');
-	$jquery_ui = file_get_contents('../components/jquery-ui/VERSION');
 	$bootstrap = file_get_contents('../components/bootstrap/VERSION');
-	$datetimepicker = file_get_contents('../components/datetimepicker/VERSION');
+	$bootstrapwysiwyg = file_get_contents('../components/bootstrap-wysiwyg/VERSION');
+	$tempusdominus = file_get_contents('../components/tempus-dominus/VERSION');
 	$moment = file_get_contents('../components/moment/VERSION');
+	$chosen = file_get_contents('../components/chosen/VERSION');
+	$jqueryhotkey = file_get_contents('../components/jquery-hotkeys/VERSION');
+	$popperjs = file_get_contents('../components/popper-js/VERSION');
+	$fontawesome = file_get_contents('../components/fontawesome/VERSION');
+	$bootbox = file_get_contents('../components/bootbox/VERSION');
+	$smartwizard = file_get_contents('../components/smartwizard/VERSION');
+	$ace = file_get_contents('../template/ace/VERSION');
+	
+	//get log file to check version db and file version
+	$changelog = file_get_contents('../changelog.php');
 } else {
 	$phpmailer = file_get_contents('./components/PHPMailer/VERSION');
 	$phpgettext = file_get_contents('./components/php-gettext/VERSION');
@@ -200,10 +193,20 @@ if ($_GET['page']!='admin')
 	$mysqldumpphp = file_get_contents('./components/mysqldump-php/VERSION');	
 	$fullcalendar = file_get_contents('./components/fullcalendar/VERSION');	
 	$jquery = file_get_contents('./components/jquery/VERSION');	
-	$jquery_ui = file_get_contents('./components/jquery-ui/VERSION');
 	$bootstrap = file_get_contents('./components/bootstrap/VERSION');	
-	$datetimepicker = file_get_contents('./components/datetimepicker/VERSION');	
+	$bootstrapwysiwyg = file_get_contents('./components/bootstrap-wysiwyg/VERSION');	
+	$tempusdominus = file_get_contents('./components/tempus-dominus/VERSION');	
 	$moment = file_get_contents('./components/moment/VERSION');	
+	$chosen = file_get_contents('./components/chosen/VERSION');	
+	$jqueryhotkey = file_get_contents('./components/jquery-hotkeys/VERSION');	
+	$popperjs = file_get_contents('./components/popper-js/VERSION');	
+	$fontawesome = file_get_contents('./components/fontawesome/VERSION');	
+	$bootbox = file_get_contents('./components/bootbox/VERSION');	
+	$smartwizard = file_get_contents('./components/smartwizard/VERSION');	
+	$ace = file_get_contents('./template/ace/VERSION');	
+	
+	//get log file to check version db and file version
+	$changelog = file_get_contents('changelog.php');
 }
 
 //get php session max lifetime parameter
@@ -222,173 +225,197 @@ while($row=$qry->fetch()){$db_size += $row["Data_length"] + $row["Index_length"]
 $qry->closeCursor();
 $db_size=formatfilesize($db_size);
 
+//check if latest stable version is installed
+if($_GET['subpage']=='system')
+{
+	if(extension_loaded('ftp'))
+	{
+		//ftp check
+		$conn_id = ftp_connect('ftp.gestsup.fr',21,2) or die('ERROR : enable to access on GestSup FTP Server');
+		$login_result = ftp_login($conn_id, 'gestsup', 'gestsup');
+		$pasv = ftp_pasv($conn_id, true);
+		$ftp_list=ftp_nlist($conn_id, "./versions/current/stable/");
+		$patch_ftp_list = preg_grep("/patch_/", $ftp_list);
+		$patch_ftp_array = array();
+		foreach($patch_ftp_list as $patch){
+			$patch=explode("_",$patch);
+			$patch=explode(".zip",$patch[1]);
+			array_push($patch_ftp_array, $patch[0]);
+		}
+		natsort($patch_ftp_array);
+		$last_ftp_patch=end($patch_ftp_array);
+		if($last_ftp_patch>$rparameters['version'])
+		{$gestsup_version='<i style="width:20px;" title="'.T_("Votre version de l'application est obsolète, installer la dernière version stable").' '.$last_ftp_patch.'" class="fa fa-ticket-alt text-warning"></i>';} 
+	}
+}
+
+if(!isset($gestsup_version))
+{
+	if(strpos($changelog, $rparameters['version']))
+	{
+		$gestsup_version='<i style="width:20px;" class="fa fa-ticket-alt text-success"></i>';
+	} else {
+		$gestsup_version='<i style="width:20px;" title="'.T_("Une incohérence de version de l'application à été détectée, entre votre base de données et vos fichiers").'" class="fa fa-exclamation-triangle text-danger"></i>';
+	}
+}
+
+function folderSize ($dir)
+{
+    $size = 0;
+    foreach (glob(rtrim($dir, '/').'/*', GLOB_NOSORT) as $each) {
+        $size += is_file($each) ? filesize($each) : folderSize($each);
+    }
+    return $size;
+}
+$upload_size=round(((folderSize('upload')/1024)/1024),2).'MB';
+
 ?>
-<div class="profile-user-info profile-user-info-striped">
-	<div class="profile-info-row">
-		<div class="profile-info-name">  <?php echo T_('Serveur'); ?> : </div>
-		<div class="profile-info-value">
-			<span id="username">
-				&nbsp;&nbsp;&nbsp;&nbsp;<img src="./images/<?php echo strtolower($os); ?>_ok.png" style="border-style: none" alt="img" /> <?php echo "<b>OS :</b> {$phpinfo['phpinfo']['System']}<br />"; ?>
+<table class="table table table-bordered">
+	<tbody>
+		<tr>
+			<td style="width: 150px;" class="text-95 text-default-d3 bgc-secondary-l3"><i class="fa fa-server text-blue-m3 pr-1"></i><?php echo T_('Serveur'); ?></td>
+			<td class="text-95 text-default-d3">
+				<img src="./images/<?php echo strtolower($os); ?>_ok.png" style="border-style: none" alt="img" /> <?php echo "<b>OS :</b> {$phpinfo['phpinfo']['System']}<br />"; ?>
 				<?php 
-					echo '&nbsp;&nbsp;&nbsp;&nbsp;<img src="./images/'.$web_server_icon.'" style="border-style: none" alt="img" /> <b>'.ucfirst($web_server_name).' :</b> '.$web_server_version.'<br />';
+					echo '<img src="./images/'.$web_server_icon.'" style="border-style: none" alt="img" /> <b>'.ucfirst($web_server_name).' :</b> '.$web_server_version.'<br />';
 				?>
-				&nbsp;&nbsp;&nbsp;&nbsp;<img src="./images/<?php echo strtolower($rdb_name).'_'.$rdb_icon.'.png'; ?>" style="border-style: none" alt="img" /> <?php echo '<b>'.$rdb_name.' :</b> '.$rdb_version.' <i>('.T_('base').' : '.$db_name.' '.$db_size.')</i><br />'; ?>
-				&nbsp;&nbsp;&nbsp;&nbsp;
+				<img style="width:20px;" src="./images/<?php echo strtolower($rdb_name).'_'.$rdb_icon.'.png'; ?>" style="border-style: none" alt="img" /> <?php echo '<b>'.$rdb_name.' :</b> '.$rdb_version.' <i>('.T_('base').' : '.$db_name.' '.$db_size.')</i><br />'; ?>
+				
 				<?php 
 				//check php version
 				$php_version=phpversion();
-				$php_version=explode(".",$php_version);
-				if($php_version[0]<7){
-					echo '<i class="icon-remove-sign icon-large red"></i> <b>PHP :</b>  '.T_('Votre version de PHP ').phpversion().T_(' est obsolète, installer au minimum la version 7.X').'.';
+				if($php_version<'7.3.0'){
+					echo '<i class="fa fa-times-circle text-danger"></i> <b>PHP :</b>  '.T_('Votre version de PHP ').phpversion().T_(' est obsolète, installer au minimum la version 7.3.0');
 				}else{
-					echo '<img src="./images/php_ok.png" style="border-style: none" alt="img" /> <b>PHP :</b> '.phpversion();
+					echo '<img class="pr-1" src="./images/php_ok.png" style="border-style: none" alt="img" /> <b>PHP :</b> '.phpversion();
 				}
 				?>  
 				<br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-ticket icon-large"></i> <b><?php echo T_('GestSup'); ?> :</b> <?php echo $rparameters['version']; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-time icon-large"></i> &nbsp;<b><?php echo T_('Horloge'); ?> :</b> <?php echo date('Y-m-d H:i:s'); ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-key icon-large"></i> <b><?php echo T_('Clé privée'); ?> :</b> <?php echo $rparameters['server_private_key']; ?> <i><?php echo T_("(Clé à ne pas divulguer)"); ?></i>
-			</span>
-		</div>
-	</div>
-	<div class="profile-info-row">
-		<div class="profile-info-name">  <?php echo T_('Client'); ?> : </div>
-		<div class="profile-info-value">
-			<span id="username">
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>Mobile :</b> <?php if($mobile) {echo 'Oui';} else {echo 'Non';} ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>Infos :</b> <?php echo $_SERVER['HTTP_USER_AGENT']; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>IP :</b> <?php echo $_SERVER['REMOTE_ADDR']; ?><br />
-			</span>
-		</div>
-	</div>
-	<div class="profile-info-row">
-		<div class="profile-info-name">  <?php echo T_('Composants'); ?> : </div>
-		<div class="profile-info-value">
-			<span id="username">
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>PHPmailer :</b> <?php echo $phpmailer; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>PHPimap :</b> <?php echo $phpimap; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>PHPgettext :</b> <?php echo $phpgettext; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>PHPmysqldump :</b> <?php echo $mysqldumpphp; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>Highcharts :</b> <?php echo $highcharts; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>WOL :</b> <?php echo $wol; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>FullCalendar :</b> <?php echo $fullcalendar; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>jQuery :</b> <?php echo $jquery; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>jQuery-ui :</b> <?php echo $jquery_ui; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>Bootstrap :</b> <?php echo $bootstrap; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>DateTimePicker :</b> <?php echo $datetimepicker; ?><br />
-				&nbsp;&nbsp;&nbsp;&nbsp;<i class="green icon-puzzle-piece icon-large"></i> <b>Moment :</b> <?php echo $moment; ?><br />
-			</span>
-		</div>
-	</div>
-	<div class="profile-info-row">
-		<div class="profile-info-name"><?php echo T_('Paramètres'); ?><br />PHP :</div>
-		<div class="profile-info-value">
-			<span id="username">
-				<?php
-				if ($phpinfo[$vphp]['file_uploads'][0]=="On") echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>file_uploads</b> : '.T_('Activé').'<br />'; else echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-remove-sign icon-large red"></i> <b>file_uploads :</b> '.T_('Désactivé').' <i>('.T_('Le chargement de fichiers sera impossible').')</i><br />';
-				if ($ram_mb>=512) echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>memory_limit :</b> '.$phpinfo[$vphp]['memory_limit'][0].'<br />'; else echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>memory_limit :</b> '.$phpinfo[$vphp]['memory_limit'][0].' <i>('.T_('Il est préconisé d\'allouer plus de mémoire pour PHP valeur minimum 512M éditer votre fichier php.ini').')</i>.<br />';
-				if ($max_filesize_mb>=5) echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>upload_max_filesize :</b> '.$max_filesize_mb.'M<br />'; else echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>upload_max_filesize : </b>'.$max_filesize_mb.'M <i> ('.T_('Il est préconisé d\'avoir une valeur supérieur ou égale à 5Mo, afin d\'attacher des pièces jointes volumineuses').')</i>.<br />';
-				if ($post_max_size_mb>=5) echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>post_max_size :</b> '.$post_max_size_mb.'M <br />'; else echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>post_max_size : </b>'.$post_max_size_mb.'M <i> ('.T_('Il est préconisé d\'avoir une valeur supérieur ou égale à 5Mo, afin d\'attacher des pièces jointes volumineuses').')</i>.<br />';
-				if ($phpinfo[$vphp]['max_execution_time'][0]>="240") echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>max_execution_time :</b> '.$phpinfo[$vphp]['max_execution_time'][0].'s<br />'; else echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>max_execution_time : </b>'.$phpinfo[$vphp]['max_execution_time'][0].'s <i>('.T_('Valeur conseillé 240s, modifier votre php.ini relancer apache et actualiser cette page').'.)</i><br />';
-				if ($phpinfo['date']['date.timezone'][0]!='UTC') echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>date.timezone :</b> '.$phpinfo['date']['date.timezone'][0].'<br />'; else echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>date.timezone :</b> '.$phpinfo['date']['date.timezone'][0].' <i>('.T_('Il est préconisé de modifier la valeur date.timezone du fichier php.ini, et mettre "Europe/Paris" afin de ne pas avoir de problème d\'horloge').'.)</i><br />';
+				<?php echo $gestsup_version; ?> <b><?php echo T_('GestSup'); ?> :</b> <?php echo $rparameters['version']; ?><br />
+				<i style="width:16px;" class="fa fa-clock text-success"></i> &nbsp;<b><?php echo T_('Horloge'); ?> :</b> <?php echo date('Y-m-d H:i:s'); ?><br />
+				<i style="width:16px;" class="fa fa-hdd text-success"></i> &nbsp;<b><?php echo T_('Fichiers chargés'); ?> :</b> <?php echo $upload_size; ?><br />
+				<i style="width:19px;" class="fa fa-key text-success"></i> 
+					<b><?php echo T_('Clé privée'); ?> :</b> 
+					<button onclick="DisplayKey()" class="btn btn-sm btn-info"><?php echo T_('Afficher');?></button>
+					<span id="private_key" style="display:none"><?php echo $rparameters['server_private_key']; ?> <i><?php echo T_("(Clé à ne pas divulguer)"); ?></i></span>
+				 	<script>function DisplayKey() {document.getElementById("private_key").style.display= '';}</script>
+				<?php 
+					//check write
+					if(!is_writable('./upload/ticket') && is_dir('./upload/ticket')){echo '<br /><i class="fa fa-times-circle text-danger"></i> <b>'.T_("Droit d'écriture").' : </b> '.T_('Répertoire').' "upload/ticket" '.T_('verrouillé').' <i>('.T_("Ajouter les droits d'écriture sur ce repertoire, afin de pouvoir charger des pièces jointes à un ticket").').</i>';}
+					if(!is_writable('./upload/logo')){echo '<br /><i class="fa fa-times-circle text-danger"></i> <b>'.T_("Droit d'écriture").' : </b> '.T_('Répertoire').' "upload/logo" '.T_('verrouillé').' <i>('.T_("Ajouter les droits d'écriture sur ce repertoire, afin de pouvoir charger un logo").').</i>';}
+					if(!is_writable('./upload/procedure')){echo '<br /><i class="fa fa-times-circle text-danger"></i> <b>'.T_("Droit d'écriture").' : </b> '.T_('Répertoire').' "upload/procedure" '.T_('verrouillé').' <i>('.T_("Ajouter les droits d'écriture sur ce repertoire, afin de pouvoir charger des pièces jointes à une procédure").').</i>';}
+					if(!is_writable('./upload/asset')){echo '<br /><i class="fa fa-times-circle text-danger"></i> <b>'.T_("Droit d'écriture").' : </b> '.T_('Répertoire').' "upload/asset" '.T_('verrouillé').' <i>('.T_("Ajouter les droits d'écriture sur ce repertoire, afin de pouvoir charger une image de modèle d'équipement").').</i>';}
+					//check SMTP configuration
+					if($rparameters['mail'] && $rparameters['mail_smtp'] && $rparameters['mail_username'] && $rparameters['mail_username']!=$rparameters['mail_from_adr']){echo '<br /><i class="fa fa-exclamation-triangle text-warning"></i> <b>'.T_("Connecteur SMTP").' : </b> '.T_("L'adresse mail de l'émetteur est différente de l'adresse mail de connexion au serveur, vos mails peuvent être considérés en tant que SPAM.");}
 				?>
-			</span>
-		</div>
-	</div>
-	<div class="profile-info-row">
-		<div class="profile-info-name"><?php echo T_('Extensions'); ?><br />PHP :</div>
-		<div class="profile-info-value">
-			<span id="username">
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 150px;" class="text-95 text-default-d3 bgc-secondary-l3"><i class="fa fa-desktop text-blue-m3 pr-1"></i><?php echo T_('Client'); ?> </td>
+			<td class="text-95 text-default-d3">
+				<i class="fa fa-check-circle text-success"></i> <b>Mobile :</b> <?php if($mobile) {echo 'Oui';} else {echo 'Non';} ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>Infos :</b> <?php echo $_SERVER['HTTP_USER_AGENT']; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b><?php if(strstr($_SERVER['REMOTE_ADDR'],':')) {echo 'IPv6';} else {echo 'IPv4';}  ?> :</b> <?php echo $_SERVER['REMOTE_ADDR']; ?><br />
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 160px;" class="text-95 text-default-d3 bgc-secondary-l3"><i class="fa fa-cog text-blue-m3 pr-1"></i><?php echo T_('Paramètres PHP'); ?> </td>
+			<td class="text-95 text-default-d3">
 				<?php
-				$textension = get_loaded_extensions();
-				$nblignes = count($textension);
-				if(!isset($textension[$i])) $textension[$i] = '';
-				for ($i;$i<$nblignes;$i++)
-				{
-					if ($textension[$i]=='openssl') $openssl="1";
-					if ($textension[$i]=='zip') $zip="1";
-					if ($textension[$i]=='imap') $imap="1";
-					if ($textension[$i]=='ldap') $ldap="1";
-					if ($textension[$i]=='pdo_mysql') $pdo_mysql="1";
-					if ($textension[$i]=='ftp') $ftp="1";
-					if ($textension[$i]=='xml') $xml="1";
-					if ($textension[$i]=='curl') $curl="1";
-				}
-				if ($pdo_mysql=="1") echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>php_pdo_mysql :</b> '.T_('Activée'); else echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-remove-sign icon-large red"></i> <b>php_pdo_mysql</b> '.T_('Désactivée, l\'interconnexion de base de données ne pourra être disponible');
-				echo "<br />";
-				if ($openssl=="1") echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>php_openssl :</b> '.T_('Activée'); else echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>php_openssl</b> '.T_('Désactivée, si vous utilisé un serveur SMTP sécurisé les mails ne seront pas envoyés. (Installation Linux: apt-get install openssl)').'.';
-				echo "<br />";
-				if ($ldap=="1") echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>php_ldap :</b> '.T_('Activée'); else echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>php_ldap</b> '.T_('Désactivée, aucune synchronisation ni authentification via un serveur LDAP ne sera possible (Installation Linux: apt-get install php7.0-ldap)').'.';
-				echo "<br />";
-				if ($zip=="1") echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>php_zip :</b> '.T_('Activée'); else echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-remove-sign icon-large red"></i> <b>php_zip</b> '.T_('Désactivée, la fonction de mise à jour automatique ne sera pas possible').'.';
-				echo "<br />";
-				if ($imap=="1") echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>php_imap :</b> '.T_('Activée'); else echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>php_imap</b> '.T_('Désactivée, la fonction Mail2Ticket ne fonctionnera pas (Installation Linux: apt-get install php7.0-imap)').'.';
-				echo "<br />";
-				if ($ftp=="1") echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>php_ftp :</b> '.T_('Activée'); else echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-remove-sign icon-large red"></i> <b>php_ftp</b> '.T_('Désactivée, aucune mise à jour du logiciel ne sera possible (dé-commenter la ligne extension=php_ftp votre php.ini)').'.';
-				echo "<br />";
-				if ($xml=="1") echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>php_xml :</b> '.T_('Activée'); else echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large red"></i> <b>php_xml</b> '.T_('Désactivée, le connecteur LDAP ne fonctionnera pas (apt-get install php7.0-xml)').'.';
-				echo "<br />";
-				if ($curl=="1") echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>php_curl :</b> '.T_('Activée'); else echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>php_curl</b> '.T_('Le contrôle de sécurité sur le listing des repertoire ne fonctionnera pas. (apt-get install php7.0-curl)').'.';
+				if($phpinfo[$vphp]['file_uploads'][0]=="On") echo '<i class="fa fa-check-circle text-success"></i> <b>file_uploads</b> : '.T_('Activé').'<br />'; else echo '<i class="fa fa-times-circle text-danger"></i> <b>file_uploads :</b> '.T_('Désactivé').' <i>('.T_('Le chargement de fichiers sera impossible').')</i><br />';
+				if($ram_mb>=512) echo '<i class="fa fa-check-circle text-success"></i> <b>memory_limit :</b> '.$phpinfo[$vphp]['memory_limit'][0].'<br />'; else echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>memory_limit :</b> '.$phpinfo[$vphp]['memory_limit'][0].' <i>('.T_("Il est préconisé d'allouer plus de mémoire pour PHP valeur minimum 512M éditer votre fichier php.ini").')</i>.<br />';
+				if($max_filesize_mb>=5) echo '<i class="fa fa-check-circle text-success"></i> <b>upload_max_filesize :</b> '.$max_filesize_mb.'M<br />'; else echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>upload_max_filesize : </b>'.$max_filesize_mb.'M <i> ('.T_("Il est préconisé d'avoir une valeur supérieur ou égale à 5Mo, afin d'attacher des pièces jointes volumineuses").')</i>.<br />';
+				if($post_max_size_mb>=5) echo '<i class="fa fa-check-circle text-success"></i> <b>post_max_size :</b> '.$post_max_size_mb.'M <br />'; else echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>post_max_size : </b>'.$post_max_size_mb.'M <i> ('.T_("Il est préconisé d'avoir une valeur supérieur ou égale à 5Mo, afin d'attacher des pièces jointes volumineuses").')</i>.<br />';
+				if($phpinfo[$vphp]['max_execution_time'][0]>="240") echo '<i class="fa fa-check-circle text-success"></i> <b>max_execution_time :</b> '.$phpinfo[$vphp]['max_execution_time'][0].'s<br />'; else echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>max_execution_time : </b>'.$phpinfo[$vphp]['max_execution_time'][0].'s <i>('.T_('Valeur conseillé 240s, modifier votre php.ini relancer apache et actualiser cette page').'.)</i><br />';
+				if($phpinfo['date']['date.timezone'][0]!='UTC' || $rparameters['server_timezone']) echo '<i class="fa fa-check-circle text-success"></i> <b>date.timezone :</b> '.date_default_timezone_get().'<br />'; else echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>date.timezone :</b> '.date_default_timezone_get().' <i>('.T_("Il est préconisé de modifier la valeur date.timezone du fichier php.ini, et mettre Europe/Paris afin de ne pas avoir de problème d'horloge").'.)</i><br />';
 				?>
-			</span>
-		</div>
-	</div>
-	<div class="profile-info-row">
-		<div class="profile-info-name">  <?php echo T_('Sécurité'); ?> : </div>
-		<div class="profile-info-value">
-			<span id="username">
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 160px;" class="text-95 text-default-d3 bgc-secondary-l3"><i class="fa fa-puzzle-piece text-blue-m3 pr-1"></i><?php echo T_('Extensions PHP'); ?> </td>
+			<td class="text-95 text-default-d3">
 				<?php
-				if ($http=="https") 
-				{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>HTTPS : </b>'.T_('Activée');}
+				if(extension_loaded('pdo_mysql')) echo '<i class="fa fa-check-circle text-success"></i> <b>php_pdo_mysql :</b> '.T_('Activée'); else echo '<i class="fa fa-times-circle text-danger"></i> <b>php_pdo_mysql</b> : '.T_("Désactivée").' <i>('.T_("L'interconnexion de base de données ne pourra être disponible").')</i>';
+				echo "<br />";
+				if(extension_loaded('openssl')) echo '<i class="fa fa-check-circle text-success"></i> <b>php_openssl :</b> '.T_('Activée'); else echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>php_openssl</b> : '.T_("Désactivée").' <i>('.T_("Si vous utilisez un serveur SMTP sécurisé les mails ne seront pas envoyés. apt-get install openssl").')</i>';
+				echo "<br />";
+				if(extension_loaded('ldap')) echo '<i class="fa fa-check-circle text-success"></i> <b>php_ldap :</b> '.T_('Activée'); else echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>php_ldap</b> : '.T_("Désactivée").' <i>('.T_("Aucune synchronisation ni authentification via un serveur LDAP ne sera possible. apt-get install php7.3-ldap").')</i>';
+				echo "<br />";
+				if(extension_loaded('zip')) echo '<i class="fa fa-check-circle text-success"></i> <b>php_zip :</b> '.T_('Activée'); else echo '<i class="fa fa-times-circle text-danger"></i> <b>php_zip</b> : '.T_("Désactivée").' <i>('.T_("La fonction de mise à jour automatique ne sera pas possible").')</i>';
+				echo "<br />";
+				if(extension_loaded('imap')) echo '<i class="fa fa-check-circle text-success"></i> <b>php_imap :</b> '.T_('Activée'); else echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>php_imap</b> : '.T_("Désactivée").' <i>('.T_("La fonction Mail2Ticket ne fonctionnera pas. apt-get install php7.3-imap").')</i>';
+				echo "<br />";
+				if(extension_loaded('ftp')) echo '<i class="fa fa-check-circle text-success"></i> <b>php_ftp :</b> '.T_('Activée'); else echo '<i class="fa fa-times-circle text-danger"></i> <b>php_ftp</b> : '.T_("Désactivée").' <i>('.T_("Aucune mise à jour du logiciel ne sera possible, dé-commenter la ligne extension=php_ftp votre php.ini'").')</i>';
+				echo "<br />";
+				if(extension_loaded('xml')) echo '<i class="fa fa-check-circle text-success"></i> <b>php_xml :</b> '.T_('Activée'); else echo '<i class="fa fa-times-circle text-danger"></i> <b>php_xml</b> : '.T_("Désactivée").' <i>('.T_("Le connecteur LDAP ne fonctionnera pas. apt-get install php7.3-xml").')</i>';
+				echo "<br />";
+				if(extension_loaded('curl')) echo '<i class="fa fa-check-circle text-success"></i> <b>php_curl :</b> '.T_('Activée'); else echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>php_curl</b> : '.T_("Désactivée").' <i>('.T_("Le contrôle de sécurité sur le listing des répertoire ne fonctionnera pas. apt-get install php7.3-curl").')</i>';
+				echo "<br />";
+				if(extension_loaded('mbstring')) echo '<i class="fa fa-check-circle text-success"></i> <b>php_mbstring :</b> '.T_('Activée'); else echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>php_mbstring</b> : '.T_("Désactivée").' <i>('.T_("des erreurs sont possible dans la liste des tickets. apt install php7.3-mbstring").')</i>';
+				echo "<br />";
+				if(extension_loaded('gd')) echo '<i class="fa fa-check-circle text-success"></i> <b>php_gd :</b> '.T_('Activée'); else echo '<i class="fa fa-times-circle text-danger"></i> <b>php_gd</b> : '.T_("Désactivée").' <i>('.T_("La confirmation visuelle lors de l'enregistrement d'un utilisateur ne fonctionnera pas. apt install php7.3-gd").')</i>';
+				?>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 160px;" class="text-95 text-default-d3 bgc-secondary-l3"><i class="fa fa-shield-alt text-blue-m3 pr-1"></i><?php echo T_('Sécurité'); ?> </td>
+			<td class="text-95 text-default-d3">
+				<?php
+				if($http=="https") 
+				{echo '<i class="fa fa-check-circle text-success"></i> <b>HTTPS : </b>'.T_('Activée');}
 				else 
-				{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>HTTPS : </b>'.T_("Désactivé, les connexions vers le serveur ne sont pas chiffrées").' <a target="_blank" href="https://certbot.eff.org"> ('.T_("Installer un certificat Let's Encrypt").')</a>.';}
+				{echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>HTTPS : </b>'.T_("Désactivé").' <i>('.T_("Les connexions vers le serveur ne sont pas chiffrées, si votre serveur est publié sur Internet vous devez obligatoirement").' <a target="_blank" href="https://certbot.eff.org"> '.T_("installer un certificat SSL").'</a>.)</i>';}
 				echo "<br />";
-				if ($web_server_name=='apache') 
+				if($web_server_name=='apache') 
 				{
-					if ($apache_display_version==0)
-					{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>'.T_('Version Apache').' : </b>'.T_('Non affichée');}
+					if($apache_display_version==0)
+					{echo '<i class="fa fa-check-circle text-success"></i> <b>'.T_('Version Apache').' : </b>'.T_('Non affichée');}
 					else
-					{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>'.T_('Version Apache').' : </b>'.T_("Affichée, pour plus de sécurité masquer la version d'apache que vous utilisez. (Passer \"ServerTokens\" à \"Prod\" dans security.conf)").'.';}	
+					{echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>'.T_('Version Apache').' : </b>'.T_("Affichée").' <i>('.T_("Pour plus de sécurité masquer la version d'apache que vous utilisez. Passer \"ServerTokens\" à \"Prod\" dans security.conf").'.)</i>';}	
 					echo "<br />";
 				}
 				
-				if ($maxlifetime<=1440 && $rparameters['timeout']<=24) 
-				{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>'.T_('Durée de la session').' : </b> PHP='.$maxlifetime.'s GestSup='.$rparameters['timeout'].'m';}
+				if($phpinfo[$vphp]['expose_php'][0]=='Off')
+				{echo '<i class="fa fa-check-circle text-success"></i> <b>'.T_('Version PHP').' : </b>'.T_('Non affichée');}
 				else
-				{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>'.T_('Durée de la session').' : </b> PHP='.$maxlifetime.'s GestSup='.$rparameters['timeout'].'m, '.T_("pour plus de sécurité diminuer la durée à 24m minimum, paramètre \"session.gc_maxlifetime\" du php.ini et paramètre GestSup.");}
+				{echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>'.T_('Version PHP').' : </b>'.T_("Affichée").' <i>('.T_("Pour plus de sécurité masquer la version de PHP que vous utilisez. Passer le paramètre \"expose_php\" à  \"Off\" dans le php.ini").'.)</i>';}	
+				echo "<br />";
+				
+				if($maxlifetime<=1440 && $rparameters['timeout']<=24) 
+				{echo '<i class="fa fa-check-circle text-success"></i> <b>'.T_('Durée de la session').' : </b> PHP='.$maxlifetime.'s GestSup='.$rparameters['timeout'].'m';}
+				else
+				{echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>'.T_('Durée de la session').' : </b> PHP='.$maxlifetime.'s GestSup='.$rparameters['timeout'].'m <i>('.T_("Pour plus de sécurité diminuer la durée à 24m minimum, paramètre \"session.gc_maxlifetime\" du php.ini et paramètre GestSup.").')</i>';}
 				echo "<br />";
 				if($_GET['subpage']=='system') //not display on installation page
 				{
-					if (!is_writable('./index.php'))
-					{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>'.T_("Droits d'écriture").' : </b>'.T_('Verrouillés');}
+					if(!is_writable('./index.php'))
+					{echo '<i class="fa fa-check-circle text-success"></i> <b>'.T_("Droits d'écriture").' : </b>'.T_('Verrouillés');}
 					else
-					{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>'.T_("Droits d'écriture").' : </b>'.T_('Non verrouillés').' (<a target="_blank" href="https://gestsup.fr/index.php?page=support&item1=install&item2=debian#43">'.T_('cf documentation').'</a>).';}  
+					{echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>'.T_("Droits d'écriture").' : </b>'.T_('Non verrouillés').' <i>(<a target="_blank" href="https://gestsup.fr/index.php?page=support&item1=install&item2=debian#43">'.T_('cf documentation').'</a>).</i>';}  
 					echo "<br />";
 					$test_install_file=file_exists('./install/index.php' );
-					if (!$test_install_file) 
-					{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>'.T_("Répertoire installation").' : </b>'.T_('Non présent');}
+					if(!$test_install_file) 
+					{echo '<i class="fa fa-check-circle text-success"></i> <b>'.T_("Répertoire installation").' : </b>'.T_('Non présent');}
 					else 
-					{echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-remove-sign icon-large red"></i> <b>'.T_("Répertoire installation").' : </b>'.T_('Présent, supprimer le répertoire "./install" de votre serveur').'.';}
+					{echo '<i class="fa fa-times-circle text-danger"></i> <b>'.T_("Répertoire installation").' : </b>'.T_('Présent').' <i>('.T_("Supprimer le répertoire \"./install\" de votre serveur").').</i>';}
 					echo "<br />";
 				}
 				//if curl extension is installed
-				if($curl==1)
+				if(extension_loaded('curl'))
 				{
 					//test directory listing
-					$url=$http.'://'.$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'];
-					$url=explode('/index.php', $url);
-					$url=$url[0].'/upload/';
+					$url=$http.'://'.$_SERVER['SERVER_NAME'].'/components/';
 					$c = curl_init($url);
 					curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
 					$html = curl_exec($c);
-					if (curl_error($c)) die(curl_error($c));
+					if(curl_error($c)) die(curl_error($c));
 					$status = curl_getinfo($c, CURLINFO_HTTP_CODE);
 					curl_close($c);
-					if($status=='403' || $status=='301')
+					if($status=='200')
 					{
-						echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>'.T_("Listing des répertoires").' : </b>'.T_('Désactivé').'<br />';
+						echo '<i class="fa fa-times-circle text-danger"></i> <b>'.T_("Listing des répertoires").' : </b>'.T_("Activé, vérifier l'option 'Indexes' de votre serveur Apache").'.<br />';
 					} else {
-						echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-remove-sign icon-large red"></i> <b>'.T_("Listing des répertoires").' : </b>'.T_("Activé, vérifier l'option \"Indexes\" de votre serveur Apache").'.<br />';
+						echo '<i class="fa fa-check-circle text-success"></i> <b>'.T_("Listing des répertoires").' : </b>'.T_('Désactivé').'<br />';
 					}
 				}
 				if($_GET['subpage']=='system')
@@ -398,9 +425,9 @@ $db_size=formatfilesize($db_size);
 					{
 						if($rparameters['mail_port']=='587' || $rparameters['mail_port']=='465')
 						{
-							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>SMTP : </b>'.T_('Sécurisé').'<br />';
+							echo '<i class="fa fa-check-circle text-success"></i> <b>SMTP : </b>'.T_('Sécurisé').'<br />';
 						} else {
-							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>SMTP : </b>'.T_('Non sécurisé').' <i>('.T_('Régler le port 465 ou 587, dans la configuration du connecteur').').</i><br />';
+							echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>SMTP : </b>'.T_('Non sécurisé').' <i>('.T_('Régler le port 465 ou 587, dans la configuration du connecteur').').</i><br />';
 						}
 					}
 					//check secure IMAP
@@ -408,9 +435,9 @@ $db_size=formatfilesize($db_size);
 					{
 						if($rparameters['imap_port']=='993/imap/ssl')
 						{
-							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>IMAP : </b>'.T_('Sécurisé').'<br />';
+							echo '<i class="fa fa-check-circle text-success"></i> <b>IMAP : </b>'.T_('Sécurisé').'<br />';
 						} else {
-							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>IMAP : </b>'.T_('Non sécurisé').' <i>('.T_('Régler le port 993, dans la configuration du connecteur').').</i><br />';
+							echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>IMAP : </b>'.T_('Non sécurisé').' <i>('.T_('Régler le port 993, dans la configuration du connecteur').').</i><br />';
 						}
 					}
 					//check secure LDAP
@@ -418,29 +445,68 @@ $db_size=formatfilesize($db_size);
 					{
 						if($rparameters['ldap_port']=='636')
 						{
-							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>LDAP : </b>'.T_('Sécurisé').'<br />';
+							echo '<i class="fa fa-check-circle text-success"></i> <b>LDAP : </b>'.T_('Sécurisé').'<br />';
 						} else {
-							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>LDAP : </b>'.T_('Non sécurisé').' <i>('.T_('Régler le port 636, dans la configuration du connecteur').').</i><br />';
+							echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>LDAP : </b>'.T_('Non sécurisé').' <i>('.T_('Régler le port 636, dans la configuration du connecteur').').</i><br />';
 						}
 					}
 					//check password policy
 					if($rparameters['ldap_auth'])
 					{
-						echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>Mots de passes : </b>'.T_('Gérer par le serveur LDAP').'<br />';
+						echo '<i class="fa fa-check-circle text-success"></i> <b>'.T_('Mots de passes').' : </b>'.T_('Géré par le serveur LDAP').'<br />';
 					} elseif($rparameters['user_password_policy'])
 					{
 						if($rparameters['user_password_policy_min_lenght']>=8)
 						{
-							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-ok-sign icon-large green"></i> <b>Mots de passes : </b>'.T_('Sécurisés').'<br />';
+							echo '<i class="fa fa-check-circle text-success"></i> <b>'.T_('Mots de passes').' : </b>'.T_('Sécurisés').'<br />';
 						} else {
-							echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>Mots de passes : </b>'.T_('Longueur de mot de passe trop faible').' <i>('.T_('Définir la longueur minimal à 8 caractères').').</i><br />';
+							echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>'.T_('Mots de passes').' : </b>'.T_('Longueur de mot de passe trop faible').' <i>('.T_('Définir la longueur minimal à 8 caractères').').</i><br />';
 						}
 					} else {
-						echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="icon-warning-sign icon-large orange"></i> <b>'.T_('Mots de passes').' : </b>'.T_('Aucune politique définie').' <i>('.T_('Définissez une politique de mot de passe dans Administration > Paramètres > Général > Utilisateur').').</i><br />';
+						echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>'.T_('Mots de passes').' : </b>'.T_('Aucune politique définie').' <i>('.T_('Définissez une politique de mot de passe dans Administration > Paramètres > Général > Utilisateur').').</i><br />';
 					}
+					//check enable log 
+					if($rparameters['log'])
+					{
+						echo '<i class="fa fa-check-circle text-success"></i> <b>'.T_('Logs').' : </b>'.T_('Activés').'<br />';
+					} else {
+						echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>'.T_('Logs').' : </b>'.T_('Désactivés').' <i>('.T_('Pour plus de sécurité vous pouvez activer les logs de sécurité dans Administration > Paramètres > Général > Serveur').').</i><br />';
+					}
+					//check limit IP
+					if($rparameters['restrict_ip'])
+					{
+						echo '<i class="fa fa-check-circle text-success"></i> <b>'.T_('Restriction IP').' : </b>'.T_('Activé').'<br />';
+					} else {
+						echo '<i class="fa fa-info-circle text-info"></i> <b>'.T_('Restriction IP').' : </b>'.T_('Désactivé').' <i>('.T_("Pour plus de sécurité, il est possible de restreindre l'accès des clients à certaines adresses IP, cf Administration > Paramètres > Général > Serveur").').</i><br />';
+					}
+					
 				}
 				?>
-			</span>
-		</div>
-	</div>
-</div>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 150px;" class="text-95 text-default-d3 bgc-secondary-l3"><i class="fa fa-cubes text-blue-m3 pr-1"></i><?php echo T_('Composants'); ?> </td>
+			<td class="text-95 text-default-d3">
+				<i class="fa fa-check-circle text-success"></i> <b>Ace :</b> <?php echo $ace; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>Bootbox :</b> <?php echo $bootbox; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>Bootstrap :</b> <?php echo $bootstrap; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>Bootstrap wysiwyg :</b> <?php echo $bootstrapwysiwyg; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>Chosen :</b> <?php echo $chosen; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>Fontawesome :</b> <?php echo $fontawesome; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>FullCalendar :</b> <?php echo $fullcalendar; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>Highcharts :</b> <?php echo $highcharts; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>jQuery :</b> <?php echo $jquery; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>jQuery Hotkeys :</b> <?php echo $jqueryhotkey; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>Moment :</b> <?php echo $moment; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>PHPmailer :</b> <?php echo $phpmailer; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>PHPimap :</b> <?php echo $phpimap; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>PHPgettext :</b> <?php echo $phpgettext; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>PHPmysqldump :</b> <?php echo $mysqldumpphp; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>Popper :</b> <?php echo $popperjs; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>Smart Wizard :</b> <?php echo $smartwizard; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>Tempus Dominus :</b> <?php echo $tempusdominus; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b>WOL :</b> <?php echo $wol; ?><br />
+			</td>
+		</tr>
+	</tbody>
+</table>

@@ -6,12 +6,12 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 01/05/2017
-# @Update : 11/09/2019
-# @Version : 3.1.44
+# @Update : 29/11/2019
+# @Version : 3.1.48
 ################################################################################
 
 //initialize variables 
-if(!isset($_GET['token'])) $_GET['token'] = ''; 
+require_once(__DIR__."/../core/init_get.php");
 if(!isset($_COOKIE['token'])) $_COOKIE['token'] = '';  
 
 //locales
@@ -48,6 +48,20 @@ if ($_GET['token']==$_COOKIE['token'] && $_GET['token'])
 	$qry->execute();
 	$rparameters=$qry->fetch();
 	$qry->closeCursor();
+	
+	//display error parameter
+	if($rparameters['debug']==1) {
+		ini_set('display_errors', 'On');
+		ini_set('display_startup_errors', 'On');
+		ini_set('html_errors', 'On');
+		error_reporting(E_ALL);
+	} else {
+		ini_set('display_errors', 'Off');
+		ini_set('display_startup_errors', 'Off');
+		ini_set('html_errors', 'Off');
+		error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
+	}
+
 
 	//create a file pointer connected to the output stream
 	$output = fopen('php://output', 'w');
@@ -71,8 +85,8 @@ if ($_GET['token']==$_COOKIE['token'] && $_GET['token'])
 	fputcsv($output, $col_title,";");
 	
 	//get each ticket
-	$qry = $db->prepare("SELECT distinct(tsurvey_answers.ticket_id) FROM `tsurvey_answers`,`tincidents` WHERE tsurvey_answers.ticket_id=tincidents.id AND tincidents.disable=:disable ORDER BY ticket_id DESC");
-	$qry->execute(array('disable' => 0));
+	$qry = $db->prepare("SELECT distinct(tsurvey_answers.ticket_id) FROM `tsurvey_answers`,`tincidents` WHERE tsurvey_answers.ticket_id=tincidents.id AND tincidents.disable='0' ORDER BY ticket_id DESC");
+	$qry->execute();
 	while ($row = $qry->fetch(PDO::FETCH_ASSOC)) 
 	{	
 		$outputrow=array();

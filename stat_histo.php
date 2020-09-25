@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 06/11/2012
-# @Update : 26/10/2018
-# @Version : 3.1.36
+# @Update : 22/06/2020
+# @Version : 3.2.2
 ################################################################################
 ?>
 <script type="text/javascript">
@@ -18,13 +18,16 @@ $(function () {
             chart: {
                 renderTo: '<?php echo $container; ?>',
                 type: 'column',
-				backgroundColor:'transparent'
+				backgroundColor:'<?php echo $bgc; ?>'
             },
+			credits: {
+				enabled: false
+			},
             title: {
                 text: '<?php echo $libchart; ?>'
             },
             subtitle: {
-                text: '<?php echo T_("Nombre d\'heures de travail restantes dans les tickets ouverts"); ?>'
+                text: "<?php echo T_("Nombre d'heures de travail restantes dans les tickets ouverts"); ?>"
             },
             xAxis: {
                 categories: [
@@ -41,7 +44,7 @@ $(function () {
             yAxis: {
                 min: 0,
                 title: {
-                    text: '<?php echo T_("Nombre d\'heures"); ?>'
+                    text: "<?php echo T_("Nombre d'heures"); ?>"
                 }
             },
             legend: {
@@ -68,7 +71,7 @@ $(function () {
             },
                 series: [
 				{
-					name: '<?php echo T_('Charge de travail en heures'); ?>',
+					name: '<?php echo T_('Charge en heures'); ?>',
 					data: [
 					 <?php
 					for($i=0;$i<sizeof($values);$i++) 

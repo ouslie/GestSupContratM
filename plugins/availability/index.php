@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 18/04/2014
-# @Update : 26/01/2019
-# @Version : 3.1.38
+# @Update : 23/01/2020
+# @Version : 3.2.0
 ################################################################################
 
 //initialize variables 
@@ -19,9 +19,10 @@ if(!isset($mindependancy)) $mindependancy='';
 if(!isset($hour_planned)) $hour_planned='';
 if(!isset($min_planned )) $min_planned ='';
 if(!isset($_GET['page'])) $_GET['page'] = '';
+if(!isset($_GET['year'])) $_GET['year'] = '';
 
 //default settings
-if(!isset($_GET['year']))$year=date('Y'); else $year=$_GET['year'];
+if($_GET['year']=='') {$year=date('Y');} else {$year=$_GET['year'];}
 
 //get median calculate
 include('median.php');
@@ -29,8 +30,8 @@ include('median.php');
 //display head
 echo '
 <div class="page-header position-relative">
-	<h1>
-		<i class="icon-time"></i> '.T_('Disponibilité du Système d\'information').' '.$rparameters['company'].'
+	<h1 <h1 class="page-title text-primary-m2">
+		<i class="fa fa-clock text-primary-m2"></i> '.T_("Disponibilité du Système d'information").' '.$rparameters['company'].'
 	</h1>
 </div>
 <div class="sidebar-shortcuts-large" id="sidebar-shortcuts-large">
@@ -48,7 +49,7 @@ echo '
 	$queryyears->closeCursor(); 
 	echo '
             
-    <a href="./plugins/availability/print.php?year='.$year.'&token='.$_COOKIE['token'].'" target="_blank" <i title="'.T_('Imprimer').'" class="icon-print green bigger-130"></i></a>
+    <a href="./plugins/availability/print.php?year='.$year.'&token='.$_COOKIE['token'].'" target="_blank" <i title="'.T_('Imprimer').'" class="fa fa-print text-success"></i></a>
 
 </div>
 <div class="sidebar-shortcuts-large" id="sidebar-shortcuts-large"></div>
@@ -61,11 +62,11 @@ echo '
             <a id="'.$year.'"></a>
             <br />
             <h3>'.T_('Pour l\'année').' '.$year.'</h3>
-            <blockquote>
+            <blockquote class="ml-4" >
             	'; if ($_GET['page']=='plugins/availability/index') {echo '<br />';} echo '
-                <i class="icon-circle grey"></i> '.T_('Médiane des taux de disponibilité cible des applications').': <font color="green">'.$median_target.'%</font><br />
-                <i class="icon-circle grey"></i> '.T_('Médiane du taux de disponibilité constaté').': <font color="green">'.$median_global.'%</font><br />
-                <i class="icon-circle grey"></i> '.T_('Médiane du taux de disponibilité constaté').' (hors interventions planifiées): <font color="green">'.$median_none_planned.'%</font><br />
+                <i class="fa fa-circle text-dark-l2"></i> '.T_('Médiane des taux de disponibilité cible des applications').': <font color="green">'.$median_target.'%</font><br />
+                <i class="fa fa-circle text-dark-l2"></i> '.T_('Médiane du taux de disponibilité constaté').': <font color="green">'.$median_global.'%</font><br />
+                <i class="fa fa-circle text-dark-l2"></i> '.T_('Médiane du taux de disponibilité constaté').' (hors interventions planifiées): <font color="green">'.$median_none_planned.'%</font><br />
                 ';
             	$querysubcat = $db->query("SELECT * FROM `tavailability`");
     		    while ($rowsubcat=$querysubcat->fetch())
@@ -89,18 +90,18 @@ echo '
     				<table '; if ($_GET['page']=='plugins/availability/index') {echo 'width=\"800\"';} echo ' border="0">
     					<tr>
     				        <td>
-							<h4>'.T_('Pour').' '.$sname[0].' '.T_('sur').' '.$year.'</h4>
-    					        <blockquote>
+							<h4 class="pt-2">'.T_('Pour').' '.$sname[0].' '.T_('sur').' '.$year.'</h4>
+    					        <blockquote class="ml-4" >
     					        	'; if ($_GET['page']=='plugins/availability/index') {echo '<br />';} echo '
-    					            <i class="icon-circle green"></i> <b>'.T_('Taux de disponibilité constaté pour l\'année').' '.$year.': <font color="'.$color_tx.'" size="3">'.$tx.' %</font> '.T_('sur').' '.$tx_target.' % '.T_('attendu').'</b><br />
-    					            <i class="icon-circle green"></i> '.T_('Taux de disponibilité hors interventions planifiées pour l\'année').' '.$year.': <font color="'.$color_tx_planned.'">'.$tx_planned.' %</font> '.T_('sur').' '.$tx_target.' % '.T_('attendu').'<br />
+    					            <i class="fa fa-circle text-success"></i> <b>'.T_("Taux de disponibilité constaté pour l'année").' '.$year.': <font color="'.$color_tx.'" size="3">'.$tx.' %</font> '.T_('sur').' '.$tx_target.' % '.T_('attendu').'</b><br />
+    					            <i class="fa fa-circle text-success"></i> '.T_("Taux de disponibilité hors interventions planifiées pour l'année").' '.$year.': <font color="'.$color_tx_planned.'">'.$tx_planned.' %</font> '.T_('sur').' '.$tx_target.' % '.T_('attendu').'<br />
     			                    <br />
-    			                    <i class="icon-circle blue"></i> <b>'.T_('Durée d\'indisponibilité pour l\'année').' '.$year.': <font color="'.$color_tx.'">'.$global_hour.' h '.$global_min.' min</font></b><br />
+    			                    <i class="fa fa-circle text-primary"></i> <b>'.T_("Durée d'indisponibilité pour l'année").' '.$year.': <font color="'.$color_tx.'">'.$global_hour.' h '.$global_min.' min</font></b><br />
     			                    <br />
-    			                    <i class="icon-circle purple"></i> <b>'.T_('Liste des arrêts planifiés pour').' '.$sname[0].': ('.$total_hour_planned.' h '.$total_min_planned.' min)</b><br />
-    			                    <blockquote>
+    			                    <i class="fa fa-circle text-purple"></i> <b>'.T_('Liste des arrêts planifiés pour').' '.$sname[0].': ('.$total_hour_planned.' h '.$total_min_planned.' min)</b><br />
+    			                    <blockquote class="ml-4" >
     			                    	'; if ($_GET['page']=='plugins/availability/index') {echo '<br />';} echo '
-    			                        <i class="icon-caret-right purple"></i> <u>'.T_('Maintenance de').' '.$sname[0].'</u><br />
+    			                        <i class="fa fa-caret-right text-purple"></i> <u>'.T_('Maintenance de').' '.$sname[0].'</u><br />
     			                        ';
     			                        //find and display planned ticket
     			                        $queryticket = "SELECT tincidents.* FROM tincidents, tcriticality WHERE subcat=$rowsubcat[subcat] AND tincidents.criticality=tcriticality.id AND tcriticality.id=$rparameters[availability_condition_value] AND tincidents.disable=0 AND tincidents.start_availability LIKE '$year%' AND tincidents.availability_planned=1 ORDER BY tincidents.start_availability";
@@ -120,7 +121,7 @@ echo '
                         					echo '&nbsp; - <a target="_blank" href="./index.php?page=ticket&id='.$rowticket['id'].'">'.T_('Ticket').' n°'.$rowticket['id'].'</a>: '.$rowticket['title'].' '.T_('le').' '.$dateticket.' ('.$time_hour.' h '.$time_min.' min)<br />';
                         				}
     			                        echo '
-    			                        <i class="icon-caret-right purple"></i> <u>'.T_('Autres maintenances').'</u><br />
+    			                        <i class="fa fa-caret-right text-purple"></i> <u>'.T_('Autres maintenances').'</u><br />
     			                        ';
     			                        //find dependancy of planned tickets
     			                        $queryticket = "SELECT tincidents.* FROM tincidents, tcriticality, tavailability_dep WHERE tincidents.criticality=tcriticality.id AND tincidents.subcat=tavailability_dep.subcat AND tcriticality.id=$rparameters[availability_condition_value] AND tincidents.disable=0 AND tincidents.start_availability LIKE '$year%' AND tincidents.availability_planned=1 ORDER BY tincidents.start_availability";
@@ -141,10 +142,10 @@ echo '
                         				}
     			                        echo '
     			                    </blockquote>
-    			                    <i class="icon-circle orange"></i> <b>'.T_('Liste des arrêts non planifiés pour').' '.$sname[0].': ('.$total_hour_none_planned.' h '.$total_min_none_planned.' min)</b><br />
-    			                    <blockquote>
+    			                    <i class="fa fa-circle text-warning"></i> <b>'.T_('Liste des arrêts non planifiés pour').' '.$sname[0].': ('.$total_hour_none_planned.' h '.$total_min_none_planned.' min)</b><br />
+    			                    <blockquote class="ml-4" >
     			                    	'; if ($_GET['page']=='plugins/availability/index') {echo '<br />';} echo '
-    			                        <i class="icon-caret-right orange"></i> <u>'.T_('Problèmes de').' '.$sname[0].'</u><br />
+    			                        <i class="fa fa-caret-right text-warning"></i> <u>'.T_('Problèmes de').' '.$sname[0].'</u><br />
     			                        ';
     			                       //find and display non planned ticket
     			                        $queryticket = "SELECT tincidents.* FROM tincidents, tcriticality WHERE subcat=$rowsubcat[subcat] AND tincidents.criticality=tcriticality.id AND tcriticality.id=$rparameters[availability_condition_value] AND tincidents.disable=0 AND tincidents.start_availability LIKE '$year%' AND tincidents.availability_planned=0 ORDER BY tincidents.start_availability";
@@ -164,7 +165,7 @@ echo '
                         					echo '&nbsp;&nbsp;&nbsp; - <a target="_blank" href="./index.php?page=ticket&id='.$rowticket['id'].'">'.T_('Ticket').' n°'.$rowticket['id'].'</a>: '.$rowticket['title'].' '.T_('le').' '.$dateticket.' ('.$time_hour.' h '.$time_min.' min)<br />';
                         				}
     			                        echo '
-    			                        <i class="icon-caret-right orange"></i> <u>'.T_('Autres problème').'</u><br />
+    			                        <i class="fa fa-caret-right text-warning"></i> <u>'.T_('Autres problème').'</u><br />
     			                        ';
     			                        //find dependancy of non planned tickets
     			                        $queryticket = "SELECT tincidents.* FROM tincidents, tcriticality, tavailability_dep WHERE tincidents.criticality=tcriticality.id AND tincidents.subcat=tavailability_dep.subcat AND tcriticality.id=$rparameters[availability_condition_value] AND tincidents.disable=0 AND tincidents.start_availability LIKE '$year%' AND tincidents.availability_planned=0 ORDER BY tincidents.start_availability";
@@ -189,6 +190,7 @@ echo '
     				        </td>
     				        <td>
     	   	    			";
+								echo '<script type="text/javascript" src="./components/jquery/jquery.min.js"></script>';
     				   	    	//display graphic
     							$container="container".$sname[0].$year;
     							if ($_GET['page']=='plugins/availability/index') {include('./stat_bar_stacked.php');}
@@ -212,7 +214,7 @@ echo '
     		    	echo '
     		    		<hr>
     		        	<h3>'.T_('Pour le trimestre').' '.$i.' '.T_('de l\'année').' '.$year.' ('.T_('Période de').' '.$label.')</h3>
-    		       		<blockquote>';
+    		       		<blockquote class="ml-4" >';
             		        $querysubcat = $db->query("SELECT * FROM `tavailability`");
                 		    while ($rowsubcat=$querysubcat->fetch())
                 		    { 
@@ -235,17 +237,17 @@ echo '
                 		    			<tr>
                 	        		        <h4>'.T_('Pour').' '.$sname[0].' '.T_('sur le trimestre').' '.$i.' '.T_('de l\'année').' '.$year.'</h4>
                 	        		        <td>
-                		        		        <blockquote>
+                		        		        <blockquote class="ml-4" >
                 		        		        	'; if ($_GET['page']=='plugins/availability/index') {echo '<br />';} echo '
-                		        		            <i class="icon-circle green"></i> <b>'.T_('Taux de disponibilité constaté pour le trimestre').' '.$i.' '.T_('de l\'année').' '.$year.': <font color="'.$color_tx.'" size="3">'.$tx.' %</font> '.T_('sur').' '.$tx_target.' % '.T_('attendu').'.</b><br />
-                		        		            <i class="icon-circle green"></i> '.T_('Taux de disponibilité hors interventions planifiées pour l\'année').' '.$year.': <font color="'.$color_tx_planned.'" >'.$tx_planned.' %</font> '.T_('sur').' '.$tx_target.' '.T_('attendu').'.<br />
+                		        		            <i class="fa fa-circle text-success"></i> <b>'.T_('Taux de disponibilité constaté pour le trimestre').' '.$i.' '.T_('de l\'année').' '.$year.': <font color="'.$color_tx.'" size="3">'.$tx.' %</font> '.T_('sur').' '.$tx_target.' % '.T_('attendu').'.</b><br />
+                		        		            <i class="fa fa-circle text-success"></i> '.T_('Taux de disponibilité hors interventions planifiées pour l\'année').' '.$year.': <font color="'.$color_tx_planned.'" >'.$tx_planned.' %</font> '.T_('sur').' '.$tx_target.' '.T_('attendu').'.<br />
                 		                            <br />
-                		                            <i class="icon-circle blue"></i> <b>'.T_('Durée d\'indisponibilité pour le trimestre').' '.$i.' '.T_('de l\'année').' '.$year.': <font color="green"> '.$global_hour.' h '.$global_min.' min</font></b><br />
+                		                            <i class="fa fa-circle text-primary"></i> <b>'.T_('Durée d\'indisponibilité pour le trimestre').' '.$i.' '.T_('de l\'année').' '.$year.': <font color="green"> '.$global_hour.' h '.$global_min.' min</font></b><br />
                 		                            <br />
-                		                            <i class="icon-circle purple"></i> <b>'.T_('Liste des arrêts planifiés pour').' '.$sname[0].':</b> ('.$total_hour_planned.' h '.$total_min_planned.' min)<br />
-                		                            <blockquote>
+                		                            <i class="fa fa-circle text-purple"></i> <b>'.T_('Liste des arrêts planifiés pour').' '.$sname[0].':</b> ('.$total_hour_planned.' h '.$total_min_planned.' min)<br />
+                		                            <blockquote class="ml-4" >
 														'; if ($_GET['page']=='plugins/availability/index') {echo '<br />';} echo '
-                		                                <i class="icon-caret-right purple"></i> <u>'.T_('Maintenance de').' '.$sname[0].'</u><br />
+                		                                <i class="fa fa-caret-right text-purple"></i> <u>'.T_('Maintenance de').' '.$sname[0].'</u><br />
                 		                                ';
                         			                     //find and display planned ticket
 														$queryticket = "SELECT tincidents.* FROM tincidents, tcriticality WHERE subcat=$rowsubcat[subcat] AND tincidents.criticality=tcriticality.id AND tcriticality.id=$rparameters[availability_condition_value] AND tincidents.disable=0 AND tincidents.start_availability LIKE '$year%' $months AND tincidents.availability_planned=1 ORDER BY tincidents.start_availability";
@@ -266,7 +268,7 @@ echo '
                                         				}
 														$queryticket->closeCursor();  
                     			                        echo '
-                		                                <i class="icon-caret-right purple"></i> <u>'.T_('Autres maintenances').'</u><br />
+                		                                <i class="fa fa-caret-right text-purple"></i> <u>'.T_('Autres maintenances').'</u><br />
                 		                                ';
                     			                        //find dependancy of planned tickets
                     			                        $queryticket = "SELECT tincidents.* FROM tincidents, tcriticality, tavailability_dep WHERE tincidents.criticality=tcriticality.id AND tincidents.subcat=tavailability_dep.subcat AND tcriticality.id=$rparameters[availability_condition_value] AND tincidents.disable=0 AND tincidents.start_availability LIKE '$year%' $months AND tincidents.availability_planned=1 ORDER BY tincidents.start_availability";
@@ -288,10 +290,10 @@ echo '
 														$queryticket->closeCursor(); 
                     			                        echo '
                 		                            </blockquote>
-                		                            <i class="icon-circle orange"></i> <b>'.T_('Liste des arrêts non planifiés pour').' '.$sname[0].':</b> ('.$total_hour_none_planned.' h '.$total_min_none_planned.' min)<br />
-                		                            <blockquote>
+                		                            <i class="fa fa-circle text-warning"></i> <b>'.T_('Liste des arrêts non planifiés pour').' '.$sname[0].':</b> ('.$total_hour_none_planned.' h '.$total_min_none_planned.' min)<br />
+                		                            <blockquote class="ml-4" >
 														'; if ($_GET['page']=='plugins/availability/index') {echo '<br />';} echo '
-                		                                <i class="icon-caret-right orange"></i> <u>'.T_('Problèmes de').' '.$sname[0].'</u><br />
+                		                                <i class="fa fa-caret-right text-warning"></i> <u>'.T_('Problèmes de').' '.$sname[0].'</u><br />
                 		                                ';
                     			                         //find and display non planned ticket
                     			                        $queryticket = "SELECT tincidents.* FROM tincidents, tcriticality WHERE subcat=$rowsubcat[subcat] AND tincidents.criticality=tcriticality.id AND tcriticality.id=$rparameters[availability_condition_value] AND tincidents.disable=0 AND tincidents.start_availability LIKE '$year%' $months AND tincidents.availability_planned=0 ORDER BY tincidents.start_availability";
@@ -312,7 +314,7 @@ echo '
                                         				}
 														$queryticket->closeCursor(); 
                     			                        echo '
-                		                                <i class="icon-caret-right orange"></i> <u>'.T_('Autres problème').'</u><br />
+                		                                <i class="fa fa-caret-right text-warning"></i> <u>'.T_('Autres problème').'</u><br />
                 		                                ';
                     			                        //find dependency of non planned tickets
                     			                        $queryticket = "SELECT tincidents.* FROM tincidents, tcriticality, tavailability_dep WHERE tincidents.criticality=tcriticality.id AND tincidents.subcat=tavailability_dep.subcat AND tcriticality.id=$rparameters[availability_condition_value] AND tincidents.disable=0 AND tincidents.start_availability LIKE '$year%' $months AND tincidents.availability_planned=0 ORDER BY tincidents.start_availability";

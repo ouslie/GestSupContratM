@@ -6,8 +6,8 @@
 # @Parameters : unit, values, names, libchart
 # @Author : Flox
 # @Create : 05/06/2014
-# @Update : 26/10/2018
-# @Version : 3.1.36
+# @Update : 20/02/2020
+# @Version : 3.2.0
 ################################################################################
 ?>
 
@@ -20,6 +20,9 @@ $(function () {
                 renderTo: '<?php echo $container; ?>',
                 type: 'column'
             },
+			credits: {
+				enabled: false
+			},
             title: {
                 text: ''
             },

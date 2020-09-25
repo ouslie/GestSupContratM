@@ -6,8 +6,8 @@
 # @parameters : category
 # @Author : Flox
 # @Create : 05/05/2015
-# @Update : 03/05/2017
-# @Version : 3.1.20
+# @Update : 30/01/2020
+# @Version : 3.2.0
 ################################################################################
 
 //initialize variables 
@@ -135,7 +135,7 @@ if ($rparameters['availability_dep']==1)
 } else $dependancy_time_planned=0;
 
 //unavailability time for ticket without planned
-if($row_planned['hourdiff']||$row_planned['minutediff'])
+if(!empty($row_planned['hourdiff'])||!empty($row_planned['minutediff']))
 {
 	if ($row_planned['minutediff']!=0)  //avoid problem division by 0.
 	{
@@ -147,7 +147,7 @@ if($row_planned['hourdiff']||$row_planned['minutediff'])
 }
 
 //convert in hours and minutes 
-if($rowdata['hourdiff']||$rowdata['minutediff'])
+if(!empty($rowdata['hourdiff'])||!empty($rowdata['minutediff']))
 {
 	$min=explode(".", ($rowdata['minutediff'])/60);
 	//case for min equal 1 or 0

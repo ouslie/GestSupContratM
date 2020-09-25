@@ -6,13 +6,12 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 15/02/2014
-# @Update : 21/03/2019
-# @Version : 3.1.40
+# @Update : 11/06/2020
+# @Version : 3.2.2
 ################################################################################
 
 //initialize variables 
-if(!isset($_GET['user_id'])) $_GET['user_id'] = ''; 
-if(!isset($_GET['key'])) $_GET['key'] = ''; 
+require('core/init_get.php');
 
 //connexion script with database parameters
 require "connect.php";
@@ -40,7 +39,7 @@ if($_GET['key']==$key['server_private_key'])
 	//define current language
 	require "localization.php";
 
-	//switch SQL MODE to allow empty values with lastest version of MySQL
+	//switch SQL MODE to allow empty values with latest version of MySQL
 	$db->exec('SET sql_mode = ""');
 
 	//get current date
@@ -100,25 +99,26 @@ if($_GET['key']==$key['server_private_key'])
 
 	echo '
 	<!DOCTYPE html>
-	<html lang="fr">
+		<html lang="fr">
 		<head>
-			<?php header(\'x-ua-compatible: ie=edge\'); //disable ie compatibility mode ?>
 			<meta charset="UTF-8" />
-			<title>GestSup | '.T_('Gestion de Support').'</title>
+			<title>GestSup | '.T_('Moniteur').'</title>
 			<link rel="shortcut icon" type="image/png" href="./images/favicon_ticket.png" />
 			<meta name="description" content="gestsup" />
-			<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-			<link href="./components/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
-			<link rel="stylesheet" href="./template/assets/css/font-awesome.min.css" />
-			<link rel="stylesheet" href="./template/assets/css/ace-fonts.css" />
-			<link rel="stylesheet" href="./components/jquery-ui/jquery-ui.min.css" />
-			<link rel="stylesheet" href="./template/assets/css/ace.min.css" />
-			<link rel="stylesheet" href="./template/assets/css/ace-rtl.min.css" />
-			<link rel="stylesheet" href="./template/assets/css/ace-skins.min.css" />
-			<script src="./template/assets/js/ace-extra.min.js"></script>
+			<meta name="robots" content="noindex, nofollow">
+			<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1">
+			<!-- bootstrap styles -->
+			<link rel="stylesheet" href="./components/bootstrap/dist/css/bootstrap.min.css" />
+			<!-- fontawesome styles -->
+			<link rel="stylesheet" type="text/css" href="./components/fontawesome/css/fontawesome.min.css">
+			<link rel="stylesheet" type="text/css" href="./components/fontawesome/css/solid.min.css">
+			<!-- ace styles -->
+			<link rel="stylesheet" type="text/css" href="./template/ace/dist/css/ace-font.min.css">
+			<link rel="stylesheet" type="text/css" href="./template/ace/dist/css/ace.min.css">
+			<link rel="stylesheet" type="text/css" href="./template/ace/dist/css/ace-themes.min.css">
 			<meta http-equiv="Refresh" content="60">
 		</head>
-		<body>
+		<body class="m-3">
 			';
 			//generate color
 			if($cnt5[0]>0) $color='danger'; else $color='success';
@@ -130,54 +130,69 @@ if($_GET['key']==$key['server_private_key'])
 			if($nbdayres[0]>1) $res=T_('Résolus'); else $res=T_('Résolu');
 			
 			echo '
-			<a href="#" class="btn btn-'.$color.' btn-app radius-4">
-				'.$new.'<br />'.$ticket.' <br /><br />
-				<i class="icon-ticket bigger-230"><br /><br />'.$cnt5[0].'</i>
-				<br />
+			<a href="#" class="btn btn-'.$color.' btn-app radius-4 mr-2 mr-2">
+				'.$new.'<br />'.$ticket.'
+				<div class="mt-4"></div>
+				<i class="fa fa-ticket-alt text-200"></i>
+				<div class="mt-4"></div>
+				<div class="text-180">'.$cnt5[0].'</div>
+				<div class="mt-4"></div>
 			</a>
 			';
 			
 			if($nbcritical[0]>0)
 			{
 				echo '
-				<a href="#" class="btn btn-warning btn-app radius-4">
+				<a href="#" class="btn btn-warning btn-app radius-4 mr-2">
 					'.T_('Ouverts').'<br />'.T_('critique').'
-					<br /><br />
-					<i class="icon-warning-sign bigger-230"><br /><br />'.$nbcritical[0].'</i>
-					<br />
+					<div class="mt-4"></div>
+					<i class="fa fa-exclamation-triangle text-200"></i>
+					<div class="mt-4"></div>
+					<div class="text-180">'.$nbcritical[0].'</div>
+					<div class="mt-4"></div>
 				</a>
 				';
 			}
 			echo '
-			<a href="#" class="btn btn-primary btn-app radius-4">
+			<a href="#" class="btn btn-primary btn-app radius-4 mr-2">
 				'.$open.'<br />'.T_('du jour').'
-				<br /><br />
-				<i class="icon-calendar bigger-230"><br /><br />'.$nbday[0].'</i>
-				<br />
+				<div class="mt-4"></div>
+				<i class="fa fa-calendar text-200"></i>
+				<div class="mt-4"></div>
+				<div class="text-180">'.$nbday[0].'</div>
+				<div class="mt-4"></div>
 			</a>
-			<a href="#" class="btn btn-purple btn-app radius-4">
+			<a href="#" class="btn btn-purple btn-app radius-4 mr-2">
 				'.$res.'<br />'.T_('du jour').'
-				<br /><br />
-				<i class="icon-calendar bigger-230"><br /><br />'.$nbdayres[0].'</i>
-				<br />
+				<div class="mt-4"></div>
+				<i class="fa fa-calendar text-200"></i>
+				<div class="mt-4"></div>
+				<div class="text-180">'.$nbdayres[0].'</div>
+				<div class="mt-4"></div>
 			</a>
-			<a href="#" class="btn btn-grey btn-app radius-4">
+			<a href="#" class="btn btn-grey btn-app radius-4 mr-2">
 				'.T_('Tous les <br />ouverts').'
-				<br /><br />
-				<i class="icon-plus bigger-230"><br /><br />'.$nbopen[0].'</i>
-				<br />
+				<div class="mt-4"></div>
+				<i class="fa fa-plus text-200"></i>
+				<div class="mt-4"></div>
+				<div class="text-180">'.$nbopen[0].'</div>
+				<div class="mt-4"></div>
 			</a>
-			<a href="#" class="btn btn-info btn-app radius-4">
+			<a href="#" class="btn btn-info btn-app radius-4 mr-2">
 				'.T_('Tickets').' <br />'.T_('à traiter').'
-				<br /><br />
-				<i class="icon-check bigger-230"><br /><br />'.$nbtodo[0].'</i>
-				<br />
+				<div class="mt-4"></div>
+				<i class="fa fa-check text-200"></i>
+				<div class="mt-4"></div>
+				<div class="text-180">'.$nbtodo[0].'</div>
+				<div class="mt-4"></div>
 			</a>
-			<a href="#" class="btn btn-pink btn-app radius-4">
+			<a href="#" class="btn btn-pink btn-app radius-4 mr-2">
 				'.T_('Attente').'<br />'.T_('retour').'
-				<br /><br />
-				<i class="icon-reply bigger-230"><br /><br />'.$nbwaituser[0].'</i>
-				<br />
+				<div class="mt-4"></div>
+				<i class="fa fa-reply text-200"></i>
+				<div class="mt-4"></div>
+				<div class="text-180">'.$nbwaituser[0].'</div>
+				<div class="mt-4"></div>
 			</a>
 		</body>
 	</html>
