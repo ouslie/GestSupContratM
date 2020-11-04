@@ -1,5 +1,23 @@
 # Changelog
 
+## v3.0.0
+(Aug 11th 2020)
+
+### New
+* New default dashboard and improved general design
+
+### Changes
+* Added several new options (see docs)
+* Removed some options (see docs)
+* Updated all packages to their latest version
+
+### Fixes
+* Multiple fixes and enhancements
+
+
+---------------
+
+
 ## v2.1.4
 (May 13th 2020)
 
@@ -72,7 +90,6 @@
 
 ## v2
 (Dec 24th 2019)
-
 ### New
 * Moved from BS3 to BS4
 

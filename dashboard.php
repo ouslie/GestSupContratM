@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 17/07/2009
-# @Update : 26/06/2020
-# @Version : 3.2.2 p5
+# @Update : 12/08/2020
+# @Version : 3.2.3 p6
 ################################################################################
 
 //initialize variables 
@@ -191,7 +191,7 @@ if($_GET['state']=='meta')
 } else {
     $state='AND	tincidents.state LIKE \''.$_POST['state'].'\'';
 }
-$url_post_parameters="userid=$_GET[userid]&state=$_POST[state]&viewid=$_GET[viewid]&ticket=$_POST[ticket]&technician=$_POST[technician]&techgroup=$_GET[techgroup]&user=$_POST[user]&sender_service=$_POST[sender_service]&category=$_POST[category]&subcat=$_POST[subcat]&asset=$_POST[asset]&title=$_POST[title]&date_create=$_POST[date_create]&priority=$_POST[priority]&criticality=$_POST[criticality]&place=$_POST[place]&service=$_POST[service]&agency=$_POST[agency]&companyview=$_GET[companyview]&type=$_POST[type]&company=$_POST[company]&keywords=$keywords&view=$_GET[view]&date_start=$_POST[date_start]&date_end=$_POST[date_end]&time=$_POST[time]";
+$url_post_parameters="userid=$_GET[userid]&state=$_POST[state]&viewid=$_GET[viewid]&ticket=$_POST[ticket]&technician=$_POST[technician]&techgroup=$_GET[techgroup]&user=$_POST[user]&sender_service=$_POST[sender_service]&category=$_POST[category]&subcat=$_POST[subcat]&asset=$_POST[asset]&title=$_POST[title]&date_create=$_POST[date_create]&priority=$_POST[priority]&criticality=$_POST[criticality]&place=$_POST[place]&service=$_POST[service]&agency=$_POST[agency]&companyview=$_GET[companyview]&type=$_POST[type]&company=$_POST[company]&keywords=$keywords&view=$_GET[view]&date_start=$_POST[date_start]&date_end=$_POST[date_end]&time=$_POST[time]&techread=$_GET[techread]";
 $url_post_parameters=preg_replace('/%/','%25',$url_post_parameters);
 //special case redirect to all ticket if date create is filtered on activity view
 if(!isset($today)) {$today=date('Y-m-d');}
@@ -360,7 +360,7 @@ if(
 		$state
 		";
 		//special case to display ticket where technician is user associated to the ticket, and service limit is enabled
-		if($_SESSION['profile_id']==0 && $rparameters['user_limit_service']==1 && $_GET['userid']!='%')
+		if($_SESSION['profile_id']==0 && $rparameters['user_limit_service']==1 && $_GET['userid']!='%' && $_GET['userid']!=0)
 		{
 			$where.="AND tincidents.user LIKE $db_user AND (tincidents.technician LIKE $db_technician OR tincidents.user LIKE $db_technician) ";
 		} else {
@@ -1939,7 +1939,7 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 								$resultdiff=$qry->fetch();
 								$qry->closeCursor();
 								
-								if(($resultdiff[0]>0) && ($row['state']!='3')) $late = '<i title="'.$resultdiff[0].' '.T_('jours de retard').'" class="fa fa-clock fa-pulse text-warning-m2 "></i>';
+								if(($resultdiff[0]>0) && ($row['state']!='3') && ($row['state']!='4')) $late = '<i title="'.$resultdiff[0].' '.T_('jours de retard').'" class="fa fa-clock fa-pulse text-warning-m2 "></i>';
 							}
 							//colorize ticket id and add tag
 							$new_ticket='';
@@ -2028,7 +2028,7 @@ if($_POST['selectrow'] && $_POST['selectrow']!='selectall')
 											echo '<input class="mt-1" type="checkbox" name="checkbox'.$row['id'].'" value="'.$row['id'].'" '.$checked.' />';
 										} 
 										echo '
-										&nbsp<a href="'.$open_ticket_link.'"><span style="min-width:30px" title="'.$comment.'" class="badge '.$bgcolor.' ">'.$row['id'].'</span></a>
+										&nbsp<a href="'.$open_ticket_link.'"><span style="min-width:30px" title="'.$comment.'" class="badge '.$bgcolor.' "><span style="color:#FFF;">'.$row['id'].'</span></span></a>
 										'.$new_ticket.'
 										'.$late.'
 										'.$warning_hope.'

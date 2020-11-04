@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 07/03/2010
-# @Update : 08/06/2020
-# @Version : 3.2.2 p1
+# @Update : 21/07/2020
+# @Version : 3.2.3 p1
 ################################################################################
 
 //includes 
@@ -266,10 +266,8 @@ if($_GET['download'] && $_SESSION['user_id']) {require('core/download.php'); exi
 		if($_GET['page']=='calendar')
 		{
 			echo '
-			<!-- fullcalendar4 styles -->
-			<link rel="stylesheet" href="./components/fullcalendar/packages/core/main.min.css" />
-			<link rel="stylesheet" href="./components/fullcalendar/packages/daygrid/main.min.css" />
-			<link rel="stylesheet" href="./components/fullcalendar/packages/timegrid/main.min.css" />
+			<!-- fullcalendar5 styles -->
+			<link rel="stylesheet" href="./components/fullcalendar/lib/main.min.css" />
 			';
 		}
 		if($_GET['page']=='project')

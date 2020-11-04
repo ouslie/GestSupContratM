@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 07/03/2010
-# @Update : 11/06/2020
-# @Version : 3.2.2
+# @Update : 12/08/2020
+# @Version : 3.2.3
 ################################################################################
 
 //initialize variables 
@@ -286,10 +286,12 @@ if($_GET['state']=='') $_GET['state'] = '%';
 	{
 		echo '
 		<body>
+		
 			<div class="body-container" style=" background-image: linear-gradient(#6baace, #264783); background-attachment: fixed; background-repeat: no-repeat;" >
-				<div class="main-container container">
-					<div role="main" class="main-content ">
+				<div class="main-container container bgc-transparent">
+					<div role="main" class="main-content">
 						<div class="justify-content-center pb-2">
+						
 							';
 								if($error){echo DisplayMessage('error',$error);}
 								echo '
@@ -363,7 +365,7 @@ if($_GET['state']=='') $_GET['state'] = '%';
 														echo '
 														
 														<div class="form-group col-md-6 offset-md-3">
-															<button type="submit" onclick="submit()" name="submit" class="btn btn-info btn-block btn-md btn-bold mt-2 mb-4">
+															<button type="submit" onclick="submit()" name="submit" class="btn btn-primary btn-block px-4 btn-bold mt-2 mb-4">
 																<i class="fa fa-sign-in-alt"></i>
 																'.T_('Connexion').'
 															</button>

@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 06/03/2013
-# @Update : 04/03/2020
-# @Version : 3.2.2 p1
+# @Update : 20/07/2020
+# @Version : 3.2.3
 ################################################################################
 
 //delete attachment
@@ -80,8 +80,12 @@ if($globalrow['state']!=3 && $rright['ticket_attachment'])
 	
 	//check size
 	$upload_max_size_error=T_('Le fichier est joint est trop volumineux, la taille maximum est ').ini_get('post_max_size');
-	$upload_max_size=(preg_replace('/[^0-9.]+/', '', ini_get('post_max_size')))*1024*1024;
-	if($_GET['action']!='adduser' && $_GET['action']!='edituser'  && $_GET['action']!='addcat' && $_GET['action']!='editcat' && $_GET['action']!='template' && ini_get('post_max_size'))
+	//get php value parameters
+	if(preg_match('~[0-9]~', ini_get('post_max_size')))
+	{$upload_max_size=(preg_replace('/[^0-9.]+/', '', ini_get('post_max_size')))*1024*1024;
+	} else {$upload_max_size=8000000;}
+	
+	if($_GET['action']!='adduser' && $_GET['action']!='edituser'  && $_GET['action']!='addcat' && $_GET['action']!='editcat' && $_GET['action']!='template')
 	{
 		echo "
 		<script>

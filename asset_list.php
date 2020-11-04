@@ -6,7 +6,7 @@
 # @Author : Flox
 # @Create : 20/11/2014
 # @Update : 11/06/2020
-# @Version : 3.2.2
+# @Version : 3.2.3 p1
 ################################################################################
 
 //initialize variables 
@@ -88,7 +88,7 @@ if($rright['side_asset_all_state']==0) {$_POST['state']=2;}
 
 if($_GET['way']=='ASC' || $_GET['way']=='DESC') {$db_way=$_GET['way'];} else {$db_way='DESC';}
 //convert order in number
-if($_GET['order']=='sn_internal') $_GET['order']= 'ABS(sn_internal)'; 
+if($_GET['order']=='sn_internal') $_GET['order']= 'sn_internal'; //$_GET['order']= 'ABS(sn_internal)';  #5257
 if($_GET['order']=='tassets_iface.ip') $_GET['order']= "INET_ATON(tassets_iface.ip) $db_way,tassets.id"; 
 
 //select case no lastname on user filter

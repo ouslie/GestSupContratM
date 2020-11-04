@@ -3,6 +3,39 @@
 <style type="text/css">@media screen and (max-width: 980px) {body{font-size: 18px}}</style>
 #################################<br />
 # @Name : GestSup Release Notes  <br />
+# @Date : 12/08/2020             <br />
+# @Version : 3.2.3	    	 	 <br />
+#################################<br />
+<br />
+<u>Update :</u><br />
+- Système : Ajout d'un contrôle sur le changement du mot de passe de l'utilisateur admin(./system.php)<br />
+- Système : Ajout d'un contrôle sur l'utilisation d'un compte administrateur pour le connecteur LDAP (./system.php)<br />
+- Mail : Ajout d'un contrôle sur la présence d'une adresse mail d'émission (./core/mail.php)<br />
+- Composant : Ace v3.0.0 (./template/ace/*)<br />
+- Composant : FullCalendar v5.2.0 (./components/fullcalendar/*)<br />
+- Composant : PHPmailer v6.1.7 (./components/phpmailer/*)<br />
+- Composant : Fontawesome v5.14.0 (./components/fontawesome/*)<br />
+- Composant : Bootstrap v4.5.2 (./components/bootstrap/*)<br />
+<u>Bugfix :</u><br />  
+- Connecteur IMAP : Incompatibilité avec exchange 2013 (./mail2ticket.php)<br />
+- Connecteur IMAP : Erreur d'encodage des mails en plaintext encodés en iso-8859-1, downgrade phpimap 3.1.0 (./components/phpimap/*)<br />
+- Connecteur IMAP : Erreur avec la version de PHP 7.2 non supportée (./mail2ticket.php)<br />
+- Connecteur IMAP : Erreur de définition de l'adresse mail de l'expéditeur dans le cas d'un envoi de mail à l'administrateur (./mail2ticket.php)<br />
+- Connecteur IMAP : Erreur d'affichage d'image issue des signatures lors d'une réponse (./mail2ticket.php)<br />
+- Connecteur IMAP : Erreur d'encodage de la date affichée sur certains mois en français (./mail2ticket.php)<br />
+- Fiche utilisateur : Défaut d'affichage qu'aucun service n'est associé (./admin/list.php)<br />
+- Calendrier : Défaut d'affichage dans certains cas, lorsqu'un qu'aucun événement n'était planifié (./calendar.php)<br />
+- Ticket : Dans certains cas le ticket ne passait pas en non lu pour le technicien (./core/ticket.php)<br />
+- Ticket : Dans certains cas l'impression ne fonctionnait pas (./ticket_print.php)<br />
+- Ticket : Dans certains cas lors de l'utilisation d'un modèle de ticket certains champs n'étaient pas dupliqués (./include/ticket_template.php)<br />
+- Ticket : Défaut d'initialisation de variable PHP avec PHP 7.4.8 (./attachement.php)<br />
+- Ticket : Lors de l'utilisation des modèles de tickets les pièces jointes n'étaient pas dupliquées (./includes/ticket_template.php)<br />
+- Mail automatique : Erreur d'émission du mail automatique au technicien lors de la modification du ticket par le demandeur, avec un groupe de techniciens (./core/aut_mail.php)<br />
+- Statistiques : Erreur de traduction de la ligne titre de l'export CSV (./core/export_tickets.php)<br />
+- Liste tickets : Pour un profil technicien sur la vue vos tickets, le filtre par demandeur ne fonctionnait pas si le cloisonnement par service était activé pour ce profil (./dashboard.php)<br />
+<br />
+#################################<br />
+# @Name : GestSup Release Notes  <br />
 # @Date : 30/06/2020             <br />
 # @Version : 3.2.2	    	 	 <br />
 #################################<br />
@@ -173,6 +206,7 @@
 - Connecteur IMAP : Erreur de définition de variables dans certains cas (./core/mail.php)<br />
 - Administration des groupes : Dans certains cas la suppression d'un utilisateur entraînait la désactivation de son groupe. (./admin/group.php)<br />
 - Administration des listes : Dans certains cas la suppression de société pouvait entraîner une erreur de définition de variable. (./admin/list.php)<br />
+- Logs : Modification du moteur de stockage de la table tlogs en InnoDB. (SQL)<br />
 <br />
 #################################<br />
 # @Name : GestSup Release Notes  <br />

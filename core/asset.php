@@ -6,7 +6,7 @@
 # @Author : Flox
 # @Create : 28/10/2013
 # @Update : 17/06/2020
-# @Version : 3.2.2
+# @Version : 3.2.3 p1
 ################################################################################
 
 //initialize variable
@@ -77,7 +77,7 @@ if($_GET['action']=='new')
 	$row_id=$qry->fetch();
 	$qry->closeCursor(); 
 	
-	$_POST['sn_internal'] =$row_sn_internal[0]+1;
+	if(!$_POST['sn_internal']) {$_POST['sn_internal']=$row_sn_internal[0]+1;}
 	$_GET['id'] =$row_id[0]+1;
 }
 

@@ -75,6 +75,7 @@ assets/**/*.gif
 assets/**/*.svg
 assets/**/*.woff
 assets/**/*.woff2
+assets/**/*.txt
 assets/js/demo.min.js
 
 

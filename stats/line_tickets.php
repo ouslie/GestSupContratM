@@ -7,7 +7,7 @@
 # @Author : Flox
 # @Create : 15/02/2014
 # @Update : 28/05/2020
-# @Version : 3.2.2
+# @Version : 3.2.3 p1
 ################################################################################
 
 $user_id=$_SESSION['user_id'];
@@ -164,7 +164,7 @@ else if ($_POST['year']=='%')
     $xnom2 = array();
     $xnom3 = array();
 	$libchart=T_('Évolution des tickets ouverts et fermés sur toutes les années');
-	$query2=$db->query("SELECT year(date_create) AS x,COUNT(*) AS y FROM `tincidents` WHERE technician LIKE '$_POST[tech]' AND u_service LIKE '$_POST[service]' $where_service $where_agency AND $where_state AND criticality LIKE '$_POST[criticality]' AND type LIKE '$_POST[type]' AND category LIKE '$_POST[category]' AND date_create NOT LIKE '0000-00-00 00:00:00' AND date_res > '1900-00-00 00:00:00' AND date_create LIKE '$_POST[year]-$_POST[month]-%' AND disable='0' GROUP BY x ");
+	$query2=$db->query("SELECT year(date_create) AS x,COUNT(*) AS y FROM `tincidents` WHERE technician LIKE '$_POST[tech]' AND u_service LIKE '$_POST[service]' $where_service $where_agency AND $where_state AND criticality LIKE '$_POST[criticality]' AND type LIKE '$_POST[type]' AND category LIKE '$_POST[category]' AND date_create NOT LIKE '0000-00-00 00:00:00' AND date_create LIKE '$_POST[year]-$_POST[month]-%' AND disable='0' GROUP BY x ");
 	$query3=$db->query("SELECT year(date_res) AS x,COUNT(*) AS y FROM `tincidents` WHERE technician LIKE '$_POST[tech]' AND u_service LIKE '$_POST[service]' $where_service $where_agency AND $where_state AND criticality LIKE '$_POST[criticality]' AND type LIKE '$_POST[type]' AND category LIKE '$_POST[category]' AND date_res NOT LIKE '0000-00-00 00:00:00' AND date_res > '1900-00-00 00:00:00' AND date_res LIKE '$_POST[year]-$_POST[month]-%' AND state='3' AND disable='0' GROUP BY x ");
 	$query1=$db->query("
 		SELECT year(tthreads.date) AS x,COUNT(DISTINCT tincidents.id) AS y FROM `tincidents`,`tthreads`

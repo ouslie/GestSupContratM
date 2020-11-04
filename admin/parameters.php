@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 11/06/2020
-# @Version : 3.2.2
+# @Update : 08/07/2020
+# @Version : 3.2.3
 ################################################################################
 
 //initialize variables 
@@ -765,8 +765,8 @@ if($test_install_file==1)
 				</a>
 			</li>
 		</ul>
-		<div class="tab-content">
-			<div id="general" class="tab-pane <?php if($_GET['tab']=='general' || $_GET['tab']=='') echo 'active'; ?>">
+		<div class="tab-content" style="background-color:#FFF;">
+			<div id="general"  class="tab-pane <?php if($_GET['tab']=='general' || $_GET['tab']=='') echo 'active'; ?>">
 				<form enctype="multipart/form-data" method="post" action="">
 					<div class="table-responsive">
 						<table class="table table table-bordered">

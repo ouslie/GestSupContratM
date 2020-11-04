@@ -16,7 +16,6 @@ let build = process.env.BUILD;
 let htmlOutput = process.env.HTML == 'true';
 
 let isForOnlineDemo = build === 'dist';
-let requireDemoAssets = [];
 
 class App {
 	
@@ -59,7 +58,7 @@ class App {
 
 
 	generateHTML() {
-		let path = resolve.AppDirAbs()+'/data/'+constants.DEFAULT_DEMO+'/layouts/pages.json';
+		let path = resolve.AppDirAbs()+'/data/'+constants.DEFAULT_DEMO+'/layouts/sidebar.json';
 	
 		var sidebarData = null;
 		
@@ -85,32 +84,32 @@ class App {
 
 	_renderPage(requestedPageId, outputStream) {
 		var demo = constants.DEFAULT_DEMO;
-		
+
 		let page = new Page(requestedPageId, this.base, this.data);
 		page.setLayout(this.display.getLayout());
 
 		let layoutInfo = page.getLayoutInfo() || constants.DEFAULT_LAYOUT;//which is 'main'
-		
+
 		this.display.updatePagePartialsDirFor(page);
-		
+
 		this.app.render(page.getTemplate(), {
 			useCDN: isForOnlineDemo,
 			staticHTML: htmlOutput,
 
 			layout: layoutInfo,
-		
+
 			demoName: demo,
-			
+
 			//assign the variables
 			pageId: page.id,
 			title: page.getTitle(),
 			description: page.getDescription(),
-			
+
 			sidebarItems: page.getSidebar(),
 			breadcrumbs: page.getBreadcrumbs(),
-			
+
 			appFolder: constants.APP_FOLDER,
-			
+
 			helpers: extend(
 				HbsHelpers.Helpers(page),
 				

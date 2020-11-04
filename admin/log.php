@@ -61,7 +61,7 @@ elseif($rright['admin'])
 			$qry->closeCursor();
 			echo '
 		</ul>
-		<div class="tab-content">
+		<div class="tab-content" style="background-color:#FFF;">
 			<div class="sidebar-shortcuts-large" id="sidebar-shortcuts-large">
 				<p>
 					<button onclick=\'window.location.href="./index.php?page=admin&amp;subpage=log&amp;log='.$_GET['log'].'&amp;clear=1";\' class="btn btn-danger">

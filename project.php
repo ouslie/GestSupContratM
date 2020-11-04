@@ -7,7 +7,7 @@
 # @Author : Flox
 # @Create : 26/01/2019
 # @Update : 28/05/2020
-# @Version : 3.2.2
+# @Version : 3.2.3 p1
 ################################################################################
 
 //initialize variables 
@@ -15,15 +15,6 @@ if(!isset($_POST['name'])) $_POST['name'] = '';
 if(!isset($_POST['save'])) $_POST['save'] = '';
 if(!isset($_POST['return'])) $_POST['return'] = '';
 if(!isset($_POST['task_add'])) $_POST['task_add'] = '';
-
-function decimal_to_time($decimal) {
-    $hours = floor($decimal / 60);
-    $minutes = floor($decimal % 60);
-    $seconds = $decimal - (int)$decimal;
-    $seconds = round($seconds * 60);
- 
-    return str_pad($hours, 2, "0", STR_PAD_LEFT) . ":" . str_pad($minutes, 2, "0", STR_PAD_LEFT) . ":" . str_pad($seconds, 2, "0", STR_PAD_LEFT);
-}
 
 if($rright['project'])
 {
@@ -91,33 +82,34 @@ if($rright['project'])
 		}
 		///////////////////////////FORM add project
 		echo '
-		<div class="page-header position-relative">
-			<h1 class="page-title text-primary-m2">
-				<i class="fa fa-tasks text-primary-m2"></i> '.T_("Ajout d'un projet").'
-			</h1>
+		<div class="card bcard" id="card-1">
+			<div class="card-header">
+				<h5 class="card-title">
+					<i class="fa fa-tasks text-primary-m2"></i> '.T_("Ajout d'un projet").'
+				</h5>
+			</div><!-- /.card-header -->
+			<div class="card-body p-0">
+				<!-- to have smooth .card toggling, it should have zero padding -->
+				<div class="p-3">
+					<form method="POST" enctype="multipart/form-data" name="myform" id="myform" action="" >
+						<label for="name">'.T_('Nom du projet').' :</label>
+						<input type="text" style="width:auto;" class="form-control form-control-sm d-inline-block" name="name" maxlength="50" value="'; echo $_POST['name']; echo '">
+						<br />
+						<br />
+						<div class="border-t-1 brc-secondary-l1 bgc-secondary-l3 py-3 text-center mt-5">
+							<button name="save" value="save" id="save" type="submit" class="btn btn-success mr-2">
+								<i class="fa fa-save bigger-110"></i>
+								'.T_('Sauvegarder').'
+							</button>
+							<button name="return" value="return" id="return" type="submit" class="btn btn-danger">
+								<i class="fa fa-undo bigger-110"></i>
+								'.T_('Retour').'
+							</button>
+						</div>
+					</form>
+				</div>
+			</div><!-- /.card-body -->
 		</div>
-		<div class="space-3"></div>
-		<fieldset>
-			<div class="col-xs-12">
-				<form method="POST" enctype="multipart/form-data" name="myform" id="myform" action="" >
-					<label for="name">'.T_('Nom du projet').' :</label>
-					<input type="text" style="width:auto;" class="form-control form-control-sm d-inline-block" name="name" maxlength="50" value="'; echo $_POST['name']; echo '">
-					<br />
-					<br />
-					<div class="border-t-1 brc-secondary-l1 bgc-secondary-l3 py-3 text-center mt-5">
-						<button name="save" value="save" id="save" type="submit" class="btn btn-success mr-2">
-							<i class="fa fa-save bigger-110"></i>
-							'.T_('Sauvegarder').'
-						</button>
-						<button name="return" value="return" id="return" type="submit" class="btn btn-danger">
-							<i class="fa fa-undo bigger-110"></i>
-							'.T_('Retour').'
-						</button>
-					</div>
-				</form>
-			</div>
-		</fieldset>	
-		
 		';
 		
 	} elseif($_GET['action']=='edit') //////////////////////////////////////////////////////////// edit project
@@ -153,59 +145,60 @@ if($rright['project'])
 		$qry->closeCursor();
 		
 		echo '
-		<div class="page-header position-relative">
-			<h1 class="page-title text-primary-m2">
+		<div class="card bcard" id="card-1">
+			<div class="card-header">
+				<h5 class="card-title">
 				<i class="fa fa-tasks text-primary-m2"></i> '.T_("Modification du projet").' : '.$project['name'].'
-			</h1>
+				</h5>
+			</div><!-- /.card-header -->
+			<div class="card-body p-0">
+				<!-- to have smooth .card toggling, it should have zero padding -->
+				<div class="p-3">
+					<form method="POST" enctype="multipart/form-data" name="myform" id="myform" action="" >
+						<label for="name">'.T_('Nom du projet').' :</label>
+						<input type="text" style="width:auto;" class="form-control form-control-sm d-inline-block" maxlength="50" name="name" value="'; echo $project['name']; echo '">
+						<div class="pt-3"></div>
+						<label for="tasks">'.T_('Liste des tâches de ce projet').' :</label>
+						<br />
+						';
+						//list tasks
+						$qry=$db->prepare("SELECT `id`,`number`,`project_id`,`ticket_id` FROM `tprojects_task` WHERE `project_id`=:project_id ORDER BY `number`");
+						$qry->execute(array('project_id' => $_GET['id']));
+						while($task=$qry->fetch()) 
+						{
+							//get ticket data
+							$qry2=$db->prepare("SELECT `title` FROM `tincidents` WHERE id=:id");
+							$qry2->execute(array('id' => $task['ticket_id']));
+							$ticket=$qry2->fetch();
+							$qry2->closeCursor();
+							if(empty($ticket['title'])) {$ticket['title']='';}
+							
+							echo '<i class="fa fa-circle text-success pl-2"></i> <b>'.T_('Tâche n°').' '.$task['number'].' :</b> '.T_('Ticket').' '.$task['ticket_id'].' ('.$ticket['title'].')';
+							echo '<a href="./index.php?page=project&id='.$_GET['id'].'&action=edit&task_id='.$task['id'].'&task_action=delete" onClick="javascript: return confirm(\''.T_('Êtes-vous sur de vouloir supprimer cette tâche ?').'\');" ><i title="'.T_('Supprimer cette tâche').'" class="fa fa-trash text-danger pl-1"></i></a>';
+							echo '<br />';
+						}
+						$qry->closeCursor();
+						//add task
+						echo '<div class="pt-2"></div>';
+						echo '<i class="fa fa-plus text-success pl-2"></i> '.T_('Tâche n°').'&nbsp;<input type="text" style="width:auto;" class="form-control form-control-sm d-inline-block" size="2" name="add_task_number" value="">';
+						echo '&nbsp;'.T_('ticket n°').' <input type="text" style="width:auto;" class="form-control form-control-sm d-inline-block" size="4" name="add_ticket_number" value="">';
+						echo '&nbsp;&nbsp;<button class="btn btn-xs btn-success" title="'.T_('Ajouter').'" id="task_add" name="task_add" value="task_add" type="submit" ><i class="fa fa-check"></i></button>';
+						echo '
+						<div class="border-t-1 brc-secondary-l1 bgc-secondary-l3 py-3 text-center mt-5">
+							<button name="save" value="save" id="save" type="submit" class="btn btn-success mr-2">
+								<i class="fa fa-save bigger-110"></i>
+								'.T_('Sauvegarder').'
+							</button>
+							<button name="return" value="return" id="return" type="submit" class="btn btn-danger">
+								<i class="fa fa-undo bigger-110"></i>
+								'.T_('Retour').'
+							</button>
+						</div>
+					</form>
+				</div>
+			</div><!-- /.card-body -->
 		</div>
-		<div class="space-3"></div>
-		<fieldset>
-			<div class="col-xs-12">
-				<form method="POST" enctype="multipart/form-data" name="myform" id="myform" action="" >
-					<label for="name">'.T_('Nom du projet').' :</label>
-					<input type="text" style="width:auto;" class="form-control form-control-sm d-inline-block" maxlength="50" name="name" value="'; echo $project['name']; echo '">
-					<div class="pt-3"></div>
-					<label for="tasks">'.T_('Liste des tâches de ce projet').' :</label>
-					<br />
-					';
-					//list tasks
-					$qry=$db->prepare("SELECT `id`,`number`,`project_id`,`ticket_id` FROM `tprojects_task` WHERE `project_id`=:project_id ORDER BY `number`");
-					$qry->execute(array('project_id' => $_GET['id']));
-					while($task=$qry->fetch()) 
-					{
-						//get ticket data
-						$qry2=$db->prepare("SELECT `title` FROM `tincidents` WHERE id=:id");
-						$qry2->execute(array('id' => $task['ticket_id']));
-						$ticket=$qry2->fetch();
-						$qry2->closeCursor();
-						if(empty($ticket['title'])) {$ticket['title']='';}
-						
-						echo '<i class="fa fa-circle text-success pl-2"></i> <b>'.T_('Tâche n°').' '.$task['number'].' :</b> '.T_('Ticket').' '.$task['ticket_id'].' ('.$ticket['title'].')';
-						echo '<a href="./index.php?page=project&id='.$_GET['id'].'&action=edit&task_id='.$task['id'].'&task_action=delete" onClick="javascript: return confirm(\''.T_('Êtes-vous sur de vouloir supprimer cette tâche ?').'\');" ><i title="'.T_('Supprimer cette tâche').'" class="fa fa-trash text-danger pl-1"></i></a>';
-						echo '<br />';
-					}
-					$qry->closeCursor();
-					//add task
-					echo '<div class="pt-2"></div>';
-					echo '<i class="fa fa-plus text-success pl-2"></i> '.T_('Tâche n°').'&nbsp;<input type="text" style="width:auto;" class="form-control form-control-sm d-inline-block" size="2" name="add_task_number" value="">';
-					echo '&nbsp;'.T_('ticket n°').' <input type="text" style="width:auto;" class="form-control form-control-sm d-inline-block" size="4" name="add_ticket_number" value="">';
-					echo '&nbsp;&nbsp;<button class="btn btn-xs btn-success" title="'.T_('Ajouter').'" id="task_add" name="task_add" value="task_add" type="submit" ><i class="fa fa-check"></i></button>';
-					echo '
-					<div class="border-t-1 brc-secondary-l1 bgc-secondary-l3 py-3 text-center mt-5">
-						<button name="save" value="save" id="save" type="submit" class="btn btn-success mr-2">
-							<i class="fa fa-save bigger-110"></i>
-							'.T_('Sauvegarder').'
-						</button>
-						<button name="return" value="return" id="return" type="submit" class="btn btn-danger">
-							<i class="fa fa-undo bigger-110"></i>
-							'.T_('Retour').'
-						</button>
-					</div>
-				</form>
-			</div>
-		</fieldset>		
 		';
-		
 	} else { //////////////////////////////////////////////////////////// list projects
 		$qry=$db->prepare("SELECT COUNT(id) FROM `tprojects` WHERE `disable`=0");
 		$qry->execute();
@@ -230,125 +223,137 @@ if($rright['project'])
 		{
 			//check finish project
 			$finish=1;
-			$qry2=$db->prepare("SELECT `tincidents`.state, `tincidents`.time FROM `tprojects_task`,`tincidents` WHERE `tprojects_task`.`ticket_id`=`tincidents`.`id` AND `tincidents`.`disable`=0 AND `tprojects_task`.project_id=:project_id");
+			$qry2=$db->prepare("SELECT `tincidents`.state FROM `tprojects_task`,`tincidents` WHERE `tprojects_task`.`ticket_id`=`tincidents`.`id` AND `tincidents`.`disable`=0 AND `tprojects_task`.project_id=:project_id");
 			$qry2->execute(array('project_id' => $project['id']));
-			$time = 0;
 			while($row2=$qry2->fetch()) 
-			{	$time = $time + $row2['time'];
+			{
 				if($row2['state']!=3) {$finish=0;}
-
 			}
 			$qry2->closeCursor();
 			if($finish==1) {$flag='text-success';} else {$flag='text-warning';}
 			
 			echo '
-			<h4 class="text-blue-m1 mb-3 border-b-1 brc-grey-l1 pb-1 pt-2">
-				<i class="fa fa-flag '.$flag.'"></i> '.T_("Projet").' n°'.$project['id'].' : '.$project['name'].' | Temps consommé  : '.decimal_to_time($time).' 
-				<a href="./index.php?page=project&id='.$project['id'].'&action=delete" onClick="javascript: return confirm(\''.T_('Êtes-vous sur de vouloir supprimer ce projet ?').'\');" >
-					<i style="float:right; margin:5px;" title="'.T_('Supprimer ce projet').'" class="fa fa-trash text-danger text-80"></i>
-				</a>
-				<a href="./index.php?page=project&id='.$project['id'].'&action=edit" >
-					<i style="float:right; margin:5px;" title="'.T_('Modifier ce projet').'" class="fa fa-pencil-alt text-warning text-80"></i>
-				</a>
-			</h4>
-			<div id="smartwizard-1" class="sw-main sw-theme-circles">
-				<ul class="mx-auto nav nav-tabs step-anchor">
-					';
-					$qry2=$db->prepare("SELECT `number`,`ticket_id` FROM `tprojects_task` WHERE `project_id`=:project_id ORDER by `number`");
-					$qry2->execute(array('project_id' => $project['id']));
-					while($task=$qry2->fetch()) 
-					{
-						//get ticket data
-						$qry3=$db->prepare("SELECT `id`,`title`,`state`,`date_hope`,`date_res` FROM `tincidents` WHERE id=:id");
-						$qry3->execute(array('id' => $task['ticket_id']));
-						$ticket=$qry3->fetch();
-						$qry3->closeCursor();
-						
-						
-						//check if event exist with this ticket
-						$qry3=$db->prepare("SELECT `date_start`,`date_end` FROM `tevents` WHERE incident=:incident AND type=2");
-						$qry3->execute(array('incident' => $task['ticket_id']));
-						$event=$qry3->fetch();
-						$qry3->closeCursor();
-						
-						if($event)
-						{
-							//convert datetime
-							if($event['date_start'] && $event['date_start']!='0000-00-00 00:00:00')
-							{
-								$date_start=DateTime::createFromFormat('Y-m-d H:i:s',$event['date_start']);
-								$date_start=$date_start->format('d/m/Y');
-							}  else {$date_start='';}
-							
-							if($event['date_end'] && $event['date_end']!='0000-00-00 00:00:00')
-							{
-								$date_end=DateTime::createFromFormat('Y-m-d H:i:s',$event['date_end']);
-								$date_end=$date_end->format('d/m/Y');
-							} else {$date_end='';}
-							
-							if($ticket['state']=='3') {
-								$class='done success';
-								$color='success';
-								$date=T_('Résolu le').' : '.$date_end;
-								$date_label=T_('Date de résolution du ticket');
-							} else {
-								$class='';
-								$color='warning';
-								$date=T_('Planifié le').' : '.$date_start;
-								$date_label=T_('Date de résolution estimée du ticket');
-							}
-						} else {
-							//convert datetime
-							if(!empty($ticket['date_res']) && $ticket['date_res']!='0000-00-00 00:00:00')
-							{
-								$date_res=DateTime::createFromFormat('Y-m-d H:i:s',$ticket['date_res']);
-								$date_res=$date_res->format('d/m/Y');
-							}  else {$date_res='';}
-							
-							if(!empty($ticket['date_hope']) && $ticket['date_hope']!='0000-00-00')
-							{
-								$date_hope=DateTime::createFromFormat('Y-m-d',$ticket['date_hope']);
-								$date_hope=$date_hope->format('d/m/Y');
-							} else {$date_hope='';}
-							
-							if($ticket['state']=='3') {
-								$class='done success';
-								$color='success';
-								$date=T_('Résolu le').' : '.$date_res;
-								$date_label=T_('Date de résolution du ticket');
-							} else {
-								$class='';
-								$color='warning';
-								$date=T_('Date estimée le').' : '.$date_hope;
-								$date_label=T_('Date de résolution estimée du ticket');
-							}
-						}
-						echo '
-						<li data-target="" class="nav-item '.$class.'" >
-							<a class="nav-link" >
-								<span class="step-title" title="'.T_('Numéro de la tâche').'" class="step">
-									'.$task['number'].'
-								</span>
-								<span class="step-title-done">
-									<i class="fa fa-check text-success-m1"></i>
-								</span>
+			
+			<div class="cards-container" id="card-container-'.$project['id'].'">
+				<div class="card bcard" id="card-1">
+					<div class="card-header">
+						<h5 class="card-title">
+							<i class="fa fa-flag '.$flag.'"></i> '.T_("Projet").' n°'.$project['id'].' : '.$project['name'].'
+						</h5>
+						<div class="card-toolbar">
+							<a href="./index.php?page=project&id='.$project['id'].'&action=delete" onClick="javascript: return confirm(\''.T_('Êtes-vous sur de vouloir supprimer ce projet ?').'\');" >
+								<i style="float:right; margin:5px;" title="'.T_('Supprimer ce projet').'" class="fa fa-trash text-danger "></i>
 							</a>
-							<span class="step-description">
-								<a title="'.T_('Ouvrir le ticket associé à cette tâche').'" target="_blank " href="index.php?page=ticket&id='.$ticket['id'].'">
-									<i class="fa fa-ticket-alt text-'.$color.'"></i> '.$ticket['id'].' : '.$ticket['title'].'
-								</a>
-								<div class="p-0"></div>
-								<i title="'.$date_label.'" class="fa fa-calendar text-'.$color.'"></i> '.$date.'
-							</span>
-							
-						</li>
-						';
-					}
-					$qry2->closeCursor();
-					echo '
-				</ul>
+							<a href="./index.php?page=project&id='.$project['id'].'&action=edit" >
+								<i style="float:right; margin:5px;" title="'.T_('Modifier ce projet').'" class="fa fa-pencil-alt text-warning "></i>
+							</a>
+						</div>
+					</div><!-- /.card-header -->
+					<div class="card-body p-0">
+						<div class="p-3">
+							<div id="smartwizard-1" class="sw-main sw-theme-circles">
+							<ul class="mx-auto nav nav-tabs step-anchor">
+								';
+								$qry2=$db->prepare("SELECT `number`,`ticket_id` FROM `tprojects_task` WHERE `project_id`=:project_id ORDER by `number`");
+								$qry2->execute(array('project_id' => $project['id']));
+								while($task=$qry2->fetch()) 
+								{
+									//get ticket data
+									$qry3=$db->prepare("SELECT `id`,`title`,`state`,`date_hope`,`date_res` FROM `tincidents` WHERE id=:id");
+									$qry3->execute(array('id' => $task['ticket_id']));
+									$ticket=$qry3->fetch();
+									$qry3->closeCursor();
+									
+									
+									//check if event exist with this ticket
+									$qry3=$db->prepare("SELECT `date_start`,`date_end` FROM `tevents` WHERE incident=:incident AND type=2");
+									$qry3->execute(array('incident' => $task['ticket_id']));
+									$event=$qry3->fetch();
+									$qry3->closeCursor();
+									
+									if($event)
+									{
+										//convert datetime
+										if($event['date_start'] && $event['date_start']!='0000-00-00 00:00:00')
+										{
+											$date_start=DateTime::createFromFormat('Y-m-d H:i:s',$event['date_start']);
+											$date_start=$date_start->format('d/m/Y');
+										}  else {$date_start='';}
+										
+										if($event['date_end'] && $event['date_end']!='0000-00-00 00:00:00')
+										{
+											$date_end=DateTime::createFromFormat('Y-m-d H:i:s',$event['date_end']);
+											$date_end=$date_end->format('d/m/Y');
+										} else {$date_end='';}
+										
+										if($ticket['state']=='3') {
+											$class='done success';
+											$color='success';
+											$date=T_('Résolu le').' : '.$date_end;
+											$date_label=T_('Date de résolution du ticket');
+										} else {
+											$class='';
+											$color='warning';
+											$date=T_('Planifié le').' : '.$date_start;
+											$date_label=T_('Date de résolution estimée du ticket');
+										}
+									} else {
+										//convert datetime
+										if(!empty($ticket['date_res']) && $ticket['date_res']!='0000-00-00 00:00:00')
+										{
+											$date_res=DateTime::createFromFormat('Y-m-d H:i:s',$ticket['date_res']);
+											$date_res=$date_res->format('d/m/Y');
+										}  else {$date_res='';}
+										
+										if(!empty($ticket['date_hope']) && $ticket['date_hope']!='0000-00-00')
+										{
+											$date_hope=DateTime::createFromFormat('Y-m-d',$ticket['date_hope']);
+											$date_hope=$date_hope->format('d/m/Y');
+										} else {$date_hope='';}
+										
+										if($ticket['state']=='3') {
+											$class='done success';
+											$color='success';
+											$date=T_('Résolu le').' : '.$date_res;
+											$date_label=T_('Date de résolution du ticket');
+										} else {
+											$class='';
+											$color='warning';
+											$date=T_('Date estimée le').' : '.$date_hope;
+											$date_label=T_('Date de résolution estimée du ticket');
+										}
+									}
+									echo '
+									<li data-target="" class="nav-item '.$class.'" >
+										<a class="nav-link" >
+											<span class="step-title" title="'.T_('Numéro de la tâche').'" class="step">
+												'.$task['number'].'
+											</span>
+											<span class="step-title-done">
+												<i class="fa fa-check text-success-m1"></i>
+											</span>
+										</a>
+										<span class="step-description">
+											<a title="'.T_('Ouvrir le ticket associé à cette tâche').'" target="_blank " href="index.php?page=ticket&id='.$ticket['id'].'">
+												<i class="fa fa-ticket-alt text-'.$color.'"></i> '.$ticket['id'].' : '.$ticket['title'].'
+											</a>
+											<div class="p-0"></div>
+											<i title="'.$date_label.'" class="fa fa-calendar text-'.$color.'"></i> '.$date.'
+										</span>
+										
+									</li>
+									';
+								}
+								$qry2->closeCursor();
+								echo '
+							</ul>
+						</div>
+						<div class="p-4"></div>
+						</div>
+					</div><!-- /.card-body -->
+				</div>
 			</div>
-			<div class="p-4"></div>
+			<br />
 			';
 		}
 		$qry->closeCursor();

@@ -8,7 +8,7 @@
 # @Create : 07/01/2007
 # @Update : 20/08/2019
 # @Update : 28/05/2020
-# @Version : 3.2.2 p2
+# @Version : 3.2.3 p3
 ################################################################################
 
 //initialize variables 
@@ -200,7 +200,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 					}
 					if($rright['ticket_event'] && $_GET['action']!='new')
 					{
-						echo '<button type="button" style="width:31px; height:27px; padding-top:5px;" class="btn btn-xs btn-warning" title="'.T_('Créer un rappel pour ce ticket').'" data-toggle="modal" data-target="#add_event" ><i class="fa fa-bell text-120"></i></button>&nbsp;';
+						echo '<button type="button" style="width:31px; height:27px; padding-top:5px;" class="btn btn-xs btn-warning" title="'.T_('Créer un rappel pour ce ticket').'" data-toggle="modal" data-target="#add_event" ><span style="color:#FFF;"><i class="fa fa-bell text-120"></i></span></button>&nbsp;';
 					}
 					if(($rright['planning']) && $rparameters['planning'] && $rright['ticket_calendar'] && $_GET['action']!='new') 
 					{
@@ -1559,7 +1559,7 @@ if($_SESSION['profile_id']==4 || $_SESSION['profile_id']==0 || $_SESSION['profil
 						if($rright['ticket_cancel']!=0)
 						{
 							echo '
-							<button title="ALT+SHIFT+c" accesskey="c" name="cancel" id="cancel" value="cancel" type="submit" class="btn btn-secondary btn-danger">
+							<button title="ALT+SHIFT+c" accesskey="c" name="cancel" id="cancel" value="cancel" type="submit" class="btn btn-secondary btn-danger" formnovalidate>
 								<i class="fa fa-times"></i> 
 								'; 
 								if(!$mobile) {echo '&nbsp;'.T_('Annuler');}

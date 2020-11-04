@@ -9,5 +9,3 @@ A full-sized drag & drop JavaScript event calendar
 - [Contributing](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)
 - [License](LICENSE.txt)
-
-*From the blog*: [Changes in the Upcoming v5](https://fullcalendar.io/blog/2020/02/changes-in-the-upcoming-v5)

@@ -7,7 +7,7 @@
 # @Author : Flox
 # @Create : 06/09/2013
 # @Update : 11/06/2020
-# @Version : 3.2.2 p1
+# @Version : 3.2.3 p2
 ################################################################################
 
 //initialize variables 
@@ -158,7 +158,7 @@ echo '
 						<i class=\"nav-icon fa fa-ticket-alt\"></i>
 						<span class=\"nav-text fadeable\">
 							"; echo T_('Vos tickets');
-								if($cnt3[0]>0 && $rright['side_your_not_read']!=0) echo '<span class="badge badge-transparent tooltip-error" title="" data-original-title="'.$cnt3[0].' Non lus"><i title="'.T_('Tickets non lus sont en attente').'" class="fa fa-exclamation-triangle text-warning"></i></span>';
+								if($cnt3[0]>0 && $rright['side_your_not_read']!=0) echo '<span class="badge badge-transparent tooltip-error" title="" data-original-title="'.$cnt3[0].' Non lus"><i title="'.T_('Tickets non lus sont en attente').'" class="fas fa-exclamation-triangle text-120 text-warning-m2"></i></span>';
 							echo '
 						</span>
 						<b class="caret fa fa-angle-left rt-n90"></b>
@@ -342,7 +342,7 @@ echo '
 						<i class="nav-icon fa fa-ticket-alt"></i>
 							<span class="nav-text fadeable"> 
 								'.T_('Tous les tickets');
-									if($cnt5[0]>0 && $rright['side_your_not_attribute']!=0) echo '&nbsp;&nbsp;<span title="'.T_("De nouveaux tickets sont en attente d'attribution").'" class="fas fa-exclamation-triangle text-120 text-danger-m2"></span>';
+									if($cnt5[0]>0 && $rright['side_your_not_attribute']!=0) echo '&nbsp;&nbsp;<span title="'.T_("De nouveaux tickets sont en attente d'attribution").'" class="fas fa-exclamation-triangle text-110 text-danger-m2"></span>';
 								echo '
 							</span>
 							<b class="caret fa fa-angle-left rt-n90"></b>

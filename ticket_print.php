@@ -4,9 +4,9 @@
 # @Description : page to print ticket
 # @Call : /ticket.php
 # @Author : Flox
-# @Version : 3.2.2 p1
+# @Version : 3.2.3
 # @Create : 09/02/2014
-# @Update : 28/05/2020
+# @Update : 08/07/2020
 ################################################################################
 
 require_once("core/init_get.php");
@@ -364,5 +364,6 @@ if($_GET['token'] && $_GET['token']==$_COOKIE["token"])
 } else {
 	echo DisplayMessage('error',T_("Vous n'avez pas les droits d'accès à cette page. Contacter votre administrateur"));
 }
+
 $db = null;
 ?>

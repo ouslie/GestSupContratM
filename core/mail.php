@@ -6,8 +6,8 @@
 # @Parameters : ticket id destinataires
 # @Author : Flox
 # @Create : 15/07/2014
-# @Update : 28/05/2020
-# @Version : 3.2.2 p5
+# @Update : 24/07/2020
+# @Version : 3.2.3 p3
 ################################################################################
 
 require_once('core/functions.php');
@@ -283,7 +283,15 @@ $object=T_($robject['mail_object']).' '.T_('pour le ticket').' n°'.$db_id.' : '
 $recipient=$userrow['mail'];
 
 //check if unique sender mail address exist else get creator mail address
-if($rparameters['mail_from_adr']==''){$sender=$creatorrow['mail'];} else {$sender=$rparameters['mail_from_adr'];}
+if(!$rparameters['mail_from_adr']){$sender=$creatorrow['mail'];} else {$sender=$rparameters['mail_from_adr'];}
+
+if(!$sender)
+{
+	echo DisplayMessage('error',T_("Aucune adresse mail d'émission n'est définie").$sender);
+	//log
+	if($rparameters['log']) {logit('error', 'No sender mail defined', $_SESSION['user_id']);}
+	die();
+}
 
 //display custom end text mail, else auto generate
 if($rparameters['mail_txt_end'])
@@ -683,7 +691,7 @@ if($send==1)
 			$recipient_mail='';
 			if($mail_auto==true) {
 				$author=0;
-				if($usermail['mail']) {$recipient_mail=$usermail['mail'];} else {$recipient_mail='';}
+				if(!empty($usermail['mail'])) {$recipient_mail=$usermail['mail'];} else {$recipient_mail='';}
 			} else {
 				$author=$_SESSION['user_id'];
 				//get dest mail to trace in thread from manual send

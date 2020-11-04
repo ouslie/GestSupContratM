@@ -7,7 +7,7 @@
 # @Author : Flox
 # @Create : 25/01/2016
 # @Update : 12/02/2020
-# @Version : 3.2.0
+# @Version : 3.2.3 p1
 ################################################################################
 
 if($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> where_service='.$where_service.' where_agency='.$where_agency.' POST_service='.$_POST['service'].' POST_agency='.$_POST['agency'].' POST_state='.$_POST['state'];}
@@ -241,7 +241,14 @@ if($rparameters['debug']==1) {echo '<u><b>DEBUG MODE:</b></u><br /><b>VAR</b> wh
 	//case filter by meta states
 	if($rparameters['meta_state'] && $_POST['state']=='meta')
 	{
-		$where_state="(tincidents.state='1' OR tincidents.state='2' OR tincidents.state='6')";
+		$where_state='(';
+		//generate meta state list 
+		$qry=$db->prepare("SELECT `id` FROM `tstates` WHERE meta='1'");
+		$qry->execute(array('id' => $_GET['id']));
+		while($state=$qry->fetch()) {$where_state.='tincidents.state='.$state['id'].' OR ';}
+		$qry->closeCursor();
+		$where_state=substr($where_state,0,-4);
+		$where_state.=')';
 	} else {
 		$where_state="tincidents.state LIKE '$_POST[state]'";
 	}

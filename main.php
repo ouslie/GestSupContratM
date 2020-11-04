@@ -5,23 +5,23 @@
 # @Call : /index.php
 # @Author : Flox
 # @Create : 26/12/2019
-# @Update : 11/06/2020
-# @Version : 3.2.2 p2
+# @Update : 12/08/2020
+# @Version : 3.2.3 p3
 ################################################################################
 
 //skin generation
-if($ruser['skin']=='skin-8') {$navbar='navbar-burlywood'; $sidebar='sidebar-gradient5'; $bgc="bgc-white";} //green and purple
-if($ruser['skin']=='skin-7') {$navbar='navbar-mediumseagreen'; $sidebar='sidebar-gradient1'; $bgc="bgc-white";} //green and purple
-if($ruser['skin']=='skin-6') {$navbar='navbar-orange'; $sidebar='sidebar-cadetblue'; $bgc="bgc-white";} //green
-if($ruser['skin']=='skin-5') {$navbar='navbar-teal'; $sidebar='sidebar-cadetblue'; $bgc="bgc-white";} //green
-if($ruser['skin']=='skin-4') {$navbar='navbar-dark'; $sidebar='sidebar-dark'; $bgc="bgc-dark";} //dark
-if($ruser['skin']=='skin-3') {$navbar='navbar-slategrey'; $sidebar='sidebar-slategrey'; $bgc="bgc-white";} //grey
-if($ruser['skin']=='skin-2') {$navbar='navbar-plum'; $sidebar='sidebar-plum'; $bgc="bgc-white";} //purple
-if($ruser['skin']=='skin-1') {$navbar='navbar-dark'; $sidebar='sidebar-dark'; $bgc="bgc-white";} //black
-if(!$ruser['skin']) {$navbar='navbar-skyblue'; $sidebar='sidebar-darkblue'; $bgc="bgc-white";}
+if($ruser['skin']=='skin-8') {$navbar='navbar-orange'; $sidebar='sidebar-plum'; $background_color="";} //orange and purple
+if($ruser['skin']=='skin-7') {$navbar='navbar-green'; $sidebar='sidebar-gradient1'; $background_color="";} //green and purple
+if($ruser['skin']=='skin-6') {$navbar='navbar-orange'; $sidebar='sidebar-cadetblue'; $background_color="";} //green
+if($ruser['skin']=='skin-5') {$navbar='navbar-teal'; $sidebar='sidebar-cadetblue'; $background_color="";} //green
+if($ruser['skin']=='skin-4') {$navbar='navbar-dark'; $sidebar='sidebar-dark'; $background_color="background-color:#454545;";} //dark
+if($ruser['skin']=='skin-3') {$navbar='navbar-slategrey'; $sidebar='sidebar-slategrey'; $background_color="";} //grey
+if($ruser['skin']=='skin-2') {$navbar='navbar-plum'; $sidebar='sidebar-plum'; $background_color="";} //purple
+if($ruser['skin']=='skin-1') {$navbar='navbar-dark'; $sidebar='sidebar-dark'; $background_color="";} //black
+if(!$ruser['skin']) {$navbar='navbar-skyblue'; $sidebar='sidebar-darkblue'; $background_color="";}
 echo '
-<body class="'.$bgc.'">
-	<div style="body-container" >
+<body>
+	<div class="body-container" >
 		<nav class="navbar navbar-expand-lg navbar-fixed '.$navbar.'">
 			<div class="navbar-inner">
 				<div class="navbar-intro justify-content-xl-between">
@@ -129,7 +129,7 @@ echo '
 				</div><!-- /.navbar-menu.navbar-collapse -->
 			</div><!-- /.navbar-inner -->
 		</nav>
-		<div class="main-container">
+		<div class="main-container" style="'.$background_color.'">
 			<div id="sidebar" class="sidebar sidebar-fixed expandable sidebar-color '.$sidebar.'">
 				';
 				require('menu.php');
@@ -258,6 +258,8 @@ echo '
 						elseif($_GET['page']=='dashboard' && $rright['side_all_service_disp']!=0) {include("$_GET[page].php");}
 						//allow display all tickets for user with display all agency, if rights are enable
 						elseif($_GET['page']=='dashboard' && $rright['side_all_agency_disp']!=0) {include("$_GET[page].php");}
+						//allow display all tickets for user with have right to view all
+						elseif($_GET['page']=='dashboard' && $rright['side_all'] && !$rparameters['user_company_view'] && !$rparameters['user_agency']&& !$rparameters['user_limit_service']) {include("$_GET[page].php");}
 						//allow modify ticket for user with same service service, if rights are enable (cnt_agency for case user have service and agency to allow edit)
 						elseif($_GET['page']=='ticket' && $_GET['action']!='new' && $rright['side_all_service_edit']!=0 && $cnt_service!=0) {
 							//check if open ticket is associated to the same service as the current user services
@@ -403,7 +405,7 @@ echo '
 							{$msg_error=T_("Vous n'avez pas les droits d'accès à la fiche de cet équipement, contacter votre administrateur");}
 							else {include("$_GET[page].php");} 
 						}
-						elseif($_GET['page']=='dashboard' && !$rright['side_all'] && $_GET['user']!=$_SESSION['user_id'] && $_GET['user']) //check user URL 
+						elseif($_GET['page']=='dashboard' && !$rright['side_all'] && $_GET['userid']!=$_SESSION['user_id'] && $_GET['userid']) //check user URL 
 						{
 							$msg_error=T_("Vous n'avez pas les droits de consulter le ticket de cet utilisateur, contacter votre administrateur");
 						}

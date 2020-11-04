@@ -5,8 +5,8 @@
 # @Call : ./core/ticket.php
 # @Parameters : ticket id 
 # @Author : Flox
-# @Update : 11/06/2020
-# @Version : 3.2.2 p3
+# @Update : 27/07/2020
+# @Version : 3.2.3 p2
 ################################################################################
 
 //initialize variables 
@@ -37,7 +37,7 @@ if($mail_u_group['u_group']!=0)
 {
 	
 	//check if group members have mail
-	$qry = $db->prepare("SELECT `tusers`.mail FROM `tusers`,`tgroups_assoc` WHERE `tusers`.id=`tgroups_assoc`.user and `tgroups_assoc`.group=:group AND `tusers`.disable='0'");
+	$qry = $db->prepare("SELECT `tusers`.mail FROM `tusers`,`tgroups_assoc` WHERE `tusers`.id=`tgroups_assoc`.user AND `tgroups_assoc`.group=:group AND `tusers`.disable='0'");
 	$qry->execute(array('group' => $mail_u_group['u_group']));
 	$mail_u_group_members=$qry->fetch();
 	$qry->closeCursor();
@@ -76,7 +76,7 @@ if(($rparameters['mail_auto_tech_attribution']==1) && (($_POST['send'] || $_POST
 		//check group change or attribution
 		if($t_group!=$globalrow['t_group'])
 		{
-			$qry2=$db->prepare("SELECT `tusers`.mail FROM `tusers`,`tgroups_assoc` WHERE `tusers`.id=`tgroups_assoc`.user and `tgroups_assoc`.group=:group AND `tusers`.disable='0'");
+			$qry2=$db->prepare("SELECT `tusers`.mail FROM `tusers`,`tgroups_assoc` WHERE `tusers`.id=`tgroups_assoc`.user AND `tgroups_assoc`.group=:group AND `tusers`.disable='0' ");
 			$qry2->execute(array('group' => $t_group));
 			while($row2=$qry2->fetch()) {$to.=$row2['mail'].';';}
 			$qry2->closeCursor();
@@ -93,7 +93,7 @@ if(($rparameters['mail_auto_tech_attribution']==1) && (($_POST['send'] || $_POST
 	//check if tech have mail
 	if($to) 
 	{
-		$object=T_('Le ticket').' n°'.$_GET['id'].': '.$_POST['title'].' '.T_('vous a été attribué');
+		$object=T_('Le ticket').' n°'.$_GET['id'].' : '.$_POST['title'].' '.T_('vous a été attribué');
 		//remove single quote in post data
 		$description = str_replace("'", "", $_POST['description']);
 		$title = str_replace("'", "", $_POST['title']);
@@ -105,13 +105,13 @@ if(($rparameters['mail_auto_tech_attribution']==1) && (($_POST['send'] || $_POST
 		$message = '
 		'.T_('Le ticket').' n°'.$_GET['id'].' '.T_('vous a été attribué').' <br />
 		<br />
-		<u>'.T_('Demandeur').':</u><br />
+		<u>'.T_('Demandeur').' :</u><br />
 		'.$userrow['firstname'].' '.$userrow['lastname'].'<br />		
 		<br />	
-		<u>'.T_('Objet').':</u><br />
+		<u>'.T_('Objet').' :</u><br />
 		'.$title.'<br />		
 		<br />	
-		<u>'.T_('Description').':</u><br />
+		<u>'.T_('Description').' :</u><br />
 		'.$description.'<br />
 		<br />
 		'.T_("Pour plus d'informations vous pouvez consulter le ticket sur").' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'</a>.
@@ -183,6 +183,7 @@ if(($rparameters['mail_auto']==1) && ((($mail_send['open']=='') && ($_POST['modi
 		//check if user is the technician and not user
 		if ($globalrow['user']!=$_SESSION['user_id'])
 		{
+			$_POST['withattachment']=1;
 			$send=1;
 			$mail_auto=true;
 			include('./core/mail.php');
@@ -219,10 +220,10 @@ if(($rparameters['mail_auto']==1) && ((($mail_send['open']=='') && ($_POST['modi
 		$message = '
 		'.T_('Le ticket').' n°'.$_GET['id'].' '.T_("a été déclaré par l'utilisateur").' '.$userrow['lastname'].' '.$userrow['firstname'].'.<br />
 		<br />
-		<u>'.T_('Objet').':</u><br />
+		<u>'.T_('Objet').' :</u><br />
 		'.$_POST['title'].'<br />		
 		<br />	
-		<u>'.T_('Description').':</u><br />
+		<u>'.T_('Description').' :</u><br />
 		'.$_POST['text'].'<br />
 		<br />
 		'.T_("Pour plus d'informations vous pouvez consulter le ticket sur").' <a href="'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'">'.$rparameters['server_url'].'/index.php?page=ticket&id='.$_GET['id'].'</a>.
@@ -250,7 +251,7 @@ if(($rparameters['mail_auto']==1) && ((($mail_send['open']=='') && ($_POST['modi
 	$userrow=$qry->fetch();
 	$qry->closeCursor();
 	
-	//get user mail
+	//define from mail
 	if(!$rparameters['mail_from_adr'])
 	{
 		if($userrow['mail']) {$from=$userrow['mail'];} else {$from=$rparameters['mail_cc'];}
@@ -321,7 +322,7 @@ if(($rparameters['mail_auto_user_newticket']==1) && ($mail_send['open']=='') && 
 		//debug
 		if($rparameters['debug']==1) {echo "<b>AUTO MAIL DETECT:</b> FROM user TO user (Reason: mail_auto_user_newticket enable, and open detect by user.) but user have no mail and mail_cc empty message not sent<br />";}
 	}
-} 
+}
 
 //send mail to user from tech for survey where ticket is in survey parameter state
 if(($rparameters['survey']==1) && ($_POST['modify'] || $_POST['quit'] || $_POST['close']) && ($_POST['state']==$rparameters['survey_ticket_state']))

@@ -5,8 +5,8 @@
 # @call : /admin/user.php
 # @Author : Flox
 # @Create : 15/10/2012
-# @Update : 11/06/2020
-# @Version : 3.2.2
+# @Update : 30/07/2020
+# @Version : 3.2.3
 ################################################################################
 
 //initialize variables
@@ -556,7 +556,7 @@ if($rparameters['ldap'])
 									{
 										$cnt_maj=$cnt_maj+1;
 										if($_GET['action']=='run') {
-											echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="fa fa-sync text-warning"></i><font class="text-warning"> '.T_('Utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$LDAP_login.'), '.T_('mis à jour').'.</font><br />';
+											echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="fa fa-sync text-warning"></i><font class="text-warning"> '.T_('Utilisateur').' <b>'.$givenname.' '.$sn.'</b> ('.$LDAP_login.'), '.T_('mis à jour').' '.$update.'.</font><br />';
 										} else {
 											echo '&nbsp;&nbsp;&nbsp;&nbsp;<i class="fa fa-sync text-warning"></i><font class="text-warning"> '.T_('Mise à jour').' '.$update.' '.T_('pour').' <b>'.$givenname.' '.$sn.'</b> ('.$LDAP_login.').</font><br />';
 										}

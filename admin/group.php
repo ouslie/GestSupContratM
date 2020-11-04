@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 06/07/2013
-# @Update : 11/06/2020
-# @Version : 3.2.2 p1
+# @Update : 12/08/2020
+# @Version : 3.2.3
 ################################################################################
 
 //initialize variables 
@@ -135,223 +135,226 @@ if(
 		
 		//display edit form
 		echo '
-			<div class="pl-4">
-				<div class="widget-box">
-					<div class="pt-4 pb-2">
-							<h5 class="text-primary-m2"><i class="fa fa-pencil-alt"></i> '.T_("Édition d'un groupe").' :</h5>
-							<hr class="mb-3 border-dotted">
-						</div>
-					<div class="widget-body">
-						<div class="widget-main no-padding">
-							<form id="1" name="form" method="post"  action="">
-								<fieldset>
-									<label for="name">'.T_('Nom').' :</label>
-									<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="name" type="text" value="'; if($rgroup['name']) echo "$rgroup[name]"; echo'" />
-								</fieldset>
-								<div class="pt-2"></div>
-								';
-								if($rparameters['user_limit_service'] && ($rright['admin_groups'] || $rright['admin']))
-								{
-									//find current service associated with group
-									$qry=$db->prepare("SELECT service FROM `tgroups` WHERE id=:id AND disable='0'");
-									$qry->execute(array('id' => $_GET['id']));
-									$row=$qry->fetch();
-									$qry->closeCursor();
-									if($cnt_service<=1 && $rright['admin']==0) //not show select field, if there are only one service, send data in background
-									{
-										echo '<input type="hidden" name="service" value="'.$row['service'].'" />'; 
-									} elseif($cnt_service>1 || $rright['admin']!=0) { //display select box for service
-										echo '
-											<fieldset>
-												<label for="service">'.T_('Service').' :</label>
-												<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="service" id="form-field-select-1" >
-												';
-													if($rright['dashboard_service_only']!=0 && $rparameters['user_limit_service']==1) {
-														//display only service associated with this user
-														$qry2=$db->prepare("SELECT tservices.id,tservices.name FROM `tservices`,`tusers_services` WHERE tservices.id=tusers_services.service_id AND tusers_services.user_id=:user_id AND tservices.disable='0' ORDER BY tservices.name");
-														$qry2->execute(array('user_id' => $_SESSION['user_id']));
-													} else {
-														//display all services
-														$qry2=$db->prepare("SELECT id,name FROM `tservices` WHERE disable='0' ORDER BY name");
-														$qry2->execute(array('user_id' => $_SESSION['user_id']));
-													}
-													while($row2=$qry2->fetch())
-													{
-														echo '
-														<option '; if($row['service']==$row2['id']) {echo 'selected';} echo ' value="'.$row2['id'].'">
-															'.T_($row2['name']).'
-														</option>';
-													}
-													$qry2->closeCursor();
-												echo '
-												</select>
-											</fieldset>
+		<div class="card bcard" id="card-1">
+			<div class="card-header">
+				<h5 class="card-title">
+					<i class="fa fa-pencil-alt"></i> '.T_("Édition d'un groupe").' :
+				</h5>
+			</div><!-- /.card-header -->
+			<div class="card-body p-0">
+				<!-- to have smooth .card toggling, it should have zero padding -->
+				<div class="p-3">
+					<form id="1" name="form" method="post"  action="">
+						<fieldset>
+							<label for="name">'.T_('Nom').' :</label>
+							<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="name" type="text" value="'; if($rgroup['name']) echo "$rgroup[name]"; echo'" />
+						</fieldset>
+						<div class="pt-2"></div>
+						';
+						if($rparameters['user_limit_service'] && ($rright['admin_groups'] || $rright['admin']))
+						{
+							//find current service associated with group
+							$qry=$db->prepare("SELECT service FROM `tgroups` WHERE id=:id AND disable='0'");
+							$qry->execute(array('id' => $_GET['id']));
+							$row=$qry->fetch();
+							$qry->closeCursor();
+							if($cnt_service<=1 && $rright['admin']==0) //not show select field, if there are only one service, send data in background
+							{
+								echo '<input type="hidden" name="service" value="'.$row['service'].'" />'; 
+							} elseif($cnt_service>1 || $rright['admin']!=0) { //display select box for service
+								echo '
+									<fieldset>
+										<label for="service">'.T_('Service').' :</label>
+										<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="service" id="form-field-select-1" >
 										';
+											if($rright['dashboard_service_only']!=0 && $rparameters['user_limit_service']==1) {
+												//display only service associated with this user
+												$qry2=$db->prepare("SELECT tservices.id,tservices.name FROM `tservices`,`tusers_services` WHERE tservices.id=tusers_services.service_id AND tusers_services.user_id=:user_id AND tservices.disable='0' ORDER BY tservices.name");
+												$qry2->execute(array('user_id' => $_SESSION['user_id']));
+											} else {
+												//display all services
+												$qry2=$db->prepare("SELECT id,name FROM `tservices` WHERE disable='0' ORDER BY name");
+												$qry2->execute(array('user_id' => $_SESSION['user_id']));
+											}
+											while($row2=$qry2->fetch())
+											{
+												echo '
+												<option '; if($row['service']==$row2['id']) {echo 'selected';} echo ' value="'.$row2['id'].'">
+													'.T_($row2['name']).'
+												</option>';
+											}
+											$qry2->closeCursor();
+										echo '
+										</select>
+										<i title="'.T_("Permet de limiter l'affichage des groupes en fonction d'un service").'" class="fa fa-question-circle text-primary-m2"></i>
+									</fieldset>
+								';
+							}
+						}
+						echo '
+						<div class="radio">
+							<label>
+								<input value="0" '; if($rgroup['type']=='0')echo "checked"; echo ' name="type" type="radio" class="ace">
+								<span class="lbl"> '.T_("Groupe d'utilisateurs").'</span>
+							</label>
+						</div>
+						<div class="radio">
+							<label>
+								<input value="1" '; if($rgroup['type']=='1')echo "checked"; echo ' name="type" type="radio" class="ace">
+								<span class="lbl"> '.T_('Groupe de techniciens').'</span>
+							</label>
+						</div>
+						<fieldset>
+							<label for="user">'.T_("Ajout d'un nouveau membre").' :</label>
+							<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="user" >
+								<option value=""></option>';
+								//display technician or user list
+								if($rgroup['type']=='1')
+								{
+									if($rright['ticket_tech_super']) //display supervisor
+									{
+										$qry=$db->prepare("SELECT id,lastname,firstname FROM `tusers` WHERE disable='0' AND (profile='0' OR profile='4' OR profile='3') ORDER BY lastname");
+										$qry->execute();
+									} else {
+										$qry=$db->prepare("SELECT id,lastname,firstname FROM `tusers` WHERE disable='0' AND (profile='0' OR profile='4') ORDER BY lastname");
+										$qry->execute();
 									}
 								}
-								echo '
-								<div class="radio">
-									<label>
-										<input value="0" '; if($rgroup['type']=='0')echo "checked"; echo ' name="type" type="radio" class="ace">
-										<span class="lbl"> '.T_("Groupe d'utilisateurs").'</span>
-									</label>
-								</div>
-								<div class="radio">
-									<label>
-										<input value="1" '; if($rgroup['type']=='1')echo "checked"; echo ' name="type" type="radio" class="ace">
-										<span class="lbl"> '.T_('Groupe de techniciens').'</span>
-									</label>
-								</div>
-								<fieldset>
-									<label for="user">'.T_("Ajout d'un nouveau membre").' :</label>
-									<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="user" >
-										<option value=""></option>';
-										//display technician or user list
-										if($rgroup['type']=='1')
-										{
-											if($rright['ticket_tech_super']) //display supervisor
-											{
-												$qry=$db->prepare("SELECT id,lastname,firstname FROM `tusers` WHERE disable='0' AND (profile='0' OR profile='4' OR profile='3') ORDER BY lastname");
-												$qry->execute();
-											} else {
-												$qry=$db->prepare("SELECT id,lastname,firstname FROM `tusers` WHERE disable='0' AND (profile='0' OR profile='4') ORDER BY lastname");
-												$qry->execute();
-											}
-										}
-										else
-										{
-											$qry=$db->prepare("SELECT `id`,`lastname`,`firstname` FROM `tusers` WHERE `disable`='0' AND (`profile`!='0' OR `profile`!='4') ORDER BY `lastname`");
-											$qry->execute();
-										}
-										while ($row=$qry->fetch()) 
-										{
-											echo "<option value=\"$row[id]\">$row[lastname] $row[firstname]</option>";
-										} 
-										$qry->closeCursor(); 
-									echo '
-									</select>
-								</fieldset>
-								<fieldset>
-								<label for="name">'.T_('Membres actuels').' :</label><br />';
-									//display current users in this group
-									$qry=$db->prepare("SELECT tusers.firstname, tusers.lastname, tusers.id FROM `tusers`,tgroups_assoc WHERE tusers.id=tgroups_assoc.user AND tgroups_assoc.group=:group AND tusers.disable='0'");
-									$qry->execute(array('group' => $_GET['id']));
-									while ($rowuser=$qry->fetch()) 
-									{
-										echo '<i class="fa fa-caret-right text-primary-m2 pl-2"></i> <a title="'.T_('Fiche Utilisateur').'" href="./index.php?page=admin&subpage=user&action=edit&userid='.$rowuser[2].'" >'.$rowuser[0].' '.$rowuser[1].'</a> 
-										<a title="'.T_("Enlever l'utilisateur du groupe").'" onClick="javascript: return confirm(\''.T_('Êtes-vous sur de vouloir supprimer cet utilisateur ?').'\');" href="./index.php?page=admin&amp;subpage=group&amp;id='.$_GET['id'].'&amp;user='.$rowuser[2].'&amp;action=delete"><i class="fa fa-trash text-danger"></i></a><br />';
-									}
-									$qry->closeCursor(); 
-									echo '
-								</fieldset>
-								<div class="border-t-1 brc-secondary-l1 bgc-secondary-l3 py-3 text-center mt-5">
-									<button name="Modifier" value="Modifier" id="Modifier" type="submit" class="btn btn-success">
-										<i class="fa fa-check"></i>
-										'.T_('Modifier').'
-									</button>
-									&nbsp;&nbsp;&nbsp;&nbsp;
-									<button name="cancel" value="cancel" type="submit" class="btn btn-danger" >
-										<i class="fa fa-reply"></i>
-										'.T_('Retour').'
-									</button>
-								</div>
-							</form>
+								else
+								{
+									$qry=$db->prepare("SELECT `id`,`lastname`,`firstname` FROM `tusers` WHERE `disable`='0' AND (`profile`!='0' OR `profile`!='4') ORDER BY `lastname`");
+									$qry->execute();
+								}
+								while ($row=$qry->fetch()) 
+								{
+									echo "<option value=\"$row[id]\">$row[lastname] $row[firstname]</option>";
+								} 
+								$qry->closeCursor(); 
+							echo '
+							</select>
+						</fieldset>
+						<fieldset>
+						<label for="name">'.T_('Membres actuels').' :</label><br />';
+							//display current users in this group
+							$qry=$db->prepare("SELECT tusers.firstname, tusers.lastname, tusers.id FROM `tusers`,tgroups_assoc WHERE tusers.id=tgroups_assoc.user AND tgroups_assoc.group=:group AND tusers.disable='0'");
+							$qry->execute(array('group' => $_GET['id']));
+							while ($rowuser=$qry->fetch()) 
+							{
+								echo '<i class="fa fa-caret-right text-primary-m2 pl-2"></i> <a title="'.T_('Fiche Utilisateur').'" href="./index.php?page=admin&subpage=user&action=edit&userid='.$rowuser[2].'" >'.$rowuser[0].' '.$rowuser[1].'</a> 
+								<a title="'.T_("Enlever l'utilisateur du groupe").'" onClick="javascript: return confirm(\''.T_('Êtes-vous sur de vouloir supprimer cet utilisateur ?').'\');" href="./index.php?page=admin&amp;subpage=group&amp;id='.$_GET['id'].'&amp;user='.$rowuser[2].'&amp;action=delete"><i class="fa fa-trash text-danger"></i></a><br />';
+							}
+							$qry->closeCursor(); 
+							echo '
+						</fieldset>
+						<div class="border-t-1 brc-secondary-l1 bgc-secondary-l3 py-3 text-center mt-5">
+							<button name="Modifier" value="Modifier" id="Modifier" type="submit" class="btn btn-success">
+								<i class="fa fa-check"></i>
+								'.T_('Modifier').'
+							</button>
+							&nbsp;&nbsp;&nbsp;&nbsp;
+							<button name="cancel" value="cancel" type="submit" class="btn btn-danger" >
+								<i class="fa fa-reply"></i>
+								'.T_('Retour').'
+							</button>
 						</div>
-					</div>
+					</form>
 				</div>
-			</div>
+			</div><!-- /.card-body -->
+		</div>
 		';
 	//display add form
 	} else if($_GET['action']=="add") {
 		echo '
-			<div class="pr-4 pl-4">
-				<div class="widget-box">
-					<div class="pt-4 pb-2">
-						<h5 class="text-primary-m2"><i class="fa fa-plus-circle"></i> '.T_("Ajout d'un groupe").' :</h5>
-						<hr class="mb-3 border-dotted">
-					</div>
-					<div class="widget-body">
-						<div class="widget-main no-padding">
-							<form id="1" name="form" method="post"  action="">
-								<div class="pl-4">
-									<fieldset>
-										<label for="name">'.T_('Nom').' :</label>
-										<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="name" type="text" value="" />
-									</fieldset>
-									<div class="pt-2"></div>
-									';
-									if($rparameters['user_limit_service']==1 && ($rright['admin_groups']!=0 || $rright['admin']!=0))
-									{
-										//find current service associated with group
-										$qry = $db->prepare("SELECT service FROM tgroups WHERE id=:id and disable='0'");
-										$qry->execute(array('id' => $_GET['id']));
-										$row = $qry->fetch();
-										$qry->closeCursor();
-										
-									if($cnt_service<=1 && $rright['admin']==0) //not show select field, if there are only one service, send data in background
-										{
-											echo '<input type="hidden" name="service" value="'.$user_services[0].'" />'; 
-										} elseif($cnt_service>1 || $rright['admin']!=0) { //display select box for service
-											echo '
-												<fieldset>
-													<label for="service">'.T_('Service').' :</label>
-													<select name="service" id="form-field-select-1" >
-													';
-														if($rright['dashboard_service_only']!=0 && $rparameters['user_limit_service']==1) {
-															//display only service associated with this user
-															$qry2 = $db->prepare("SELECT tservices.id,tservices.name FROM `tservices`,`tusers_services` WHERE tservices.id=tusers_services.service_id AND tusers_services.user_id=:user_id AND tservices.disable='0' ORDER BY tservices.name");
-															$qry2->execute(array('user_id' => $_SESSION['user_id']));
-														} else {
-															//display all services
-															$qry2 = $db->prepare("SELECT id,name FROM `tservices` WHERE disable='0' ORDER BY name");
-															$qry2->execute();
-														}
-														while ($row2=$qry2->fetch()) 
-														{
-															if(empty($row['service'])) {$row['service']='';}
-															if(empty($row2['id'])) {$row2['id']='';}
-															echo '
-															<option '; if($row['service']==$row2['id']) {echo 'selected';} echo ' value="'.$row2['id'].'">
-																'.T_($row2['name']).'
-															</option>';
-														}
-														$qry2->closeCursor();
-													echo '
-													</select>
-												</fieldset>
-											';
-										}
-									}
+		<div class="card bcard" id="card-1">
+			<div class="card-header">
+				<h5 class="card-title">
+					<i class="fa fa-plus-circle"></i> '.T_("Ajout d'un groupe").' :
+				</h5>
+			</div><!-- /.card-header -->
+			<div class="card-body p-0">
+				<!-- to have smooth .card toggling, it should have zero padding -->
+				<div class="p-3">
+					<form id="1" name="form" method="post"  action="">
+						<div class="pl-4">
+							<fieldset>
+								<label for="name">'.T_('Nom').' :</label>
+								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="name" type="text" value="" />
+							</fieldset>
+							<div class="pt-2"></div>
+							';
+							if($rparameters['user_limit_service']==1 && ($rright['admin_groups']!=0 || $rright['admin']!=0))
+							{
+								//find current service associated with group
+								$qry = $db->prepare("SELECT service FROM tgroups WHERE id=:id and disable='0'");
+								$qry->execute(array('id' => $_GET['id']));
+								$row = $qry->fetch();
+								$qry->closeCursor();
+								
+							if($cnt_service<=1 && $rright['admin']==0) //not show select field, if there are only one service, send data in background
+								{
+									echo '<input type="hidden" name="service" value="'.$user_services[0].'" />'; 
+								} elseif($cnt_service>1 || $rright['admin']!=0) { //display select box for service
 									echo '
-									<div class="radio">
-										<label>
-											<input value="0" name="type" type="radio" class="ace">
-											<span class="lbl"> '.T_("Groupe d'utilisateur").'</span>
-										</label>
-									</div>
-									<div class="radio">
-										<label>
-											<input value="1" name="type" type="radio" class="ace">
-											<span class="lbl"> '.T_('Groupe de techniciens').'</span>
-										</label>
-									</div>
-								</div>
-								<div class="border-t-1 brc-secondary-l1 bgc-secondary-l3 py-3 text-center mt-5">
-									<button name="add" value="add" id="add" type="submit"  class="btn btn-success">
-										<i class="fa fa-check"></i>
-										'.T_('Ajouter').'
-									</button>
-									&nbsp;&nbsp;&nbsp;&nbsp;
-									<button name="cancel" value="cancel" type="submit" class="btn btn-danger" >
-										<i class="fa fa-reply"></i>
-										'.T_('Retour').'
-									</button>
-								</div>
-							</form>
+										<fieldset>
+											<label for="service">'.T_('Service').' :</label>
+											<select name="service" id="form-field-select-1" >
+											';
+												if($rright['dashboard_service_only']!=0 && $rparameters['user_limit_service']==1) {
+													//display only service associated with this user
+													$qry2 = $db->prepare("SELECT tservices.id,tservices.name FROM `tservices`,`tusers_services` WHERE tservices.id=tusers_services.service_id AND tusers_services.user_id=:user_id AND tservices.disable='0' ORDER BY tservices.name");
+													$qry2->execute(array('user_id' => $_SESSION['user_id']));
+												} else {
+													//display all services
+													$qry2 = $db->prepare("SELECT id,name FROM `tservices` WHERE disable='0' ORDER BY name");
+													$qry2->execute();
+												}
+												while ($row2=$qry2->fetch()) 
+												{
+													if(empty($row['service'])) {$row['service']='';}
+													if(empty($row2['id'])) {$row2['id']='';}
+													echo '
+													<option '; if($row['service']==$row2['id']) {echo 'selected';} echo ' value="'.$row2['id'].'">
+														'.T_($row2['name']).'
+													</option>';
+												}
+												$qry2->closeCursor();
+											echo '
+											</select>
+											<i title="'.T_("Permet de limiter l'affichage des groupes en fonction d'un service").'" class="fa fa-question-circle text-primary-m2"></i>
+										</fieldset>
+										
+									';
+								}
+							}
+							echo '
+							<div class="radio">
+								<label>
+									<input value="0" name="type" type="radio" class="ace">
+									<span class="lbl"> '.T_("Groupe d'utilisateur").'</span>
+								</label>
+							</div>
+							<div class="radio">
+								<label>
+									<input value="1" name="type" type="radio" class="ace">
+									<span class="lbl"> '.T_('Groupe de techniciens').'</span>
+								</label>
+							</div>
 						</div>
-					</div>
+						<div class="border-t-1 brc-secondary-l1 bgc-secondary-l3 py-3 text-center mt-5">
+							<button name="add" value="add" id="add" type="submit"  class="btn btn-success">
+								<i class="fa fa-check"></i>
+								'.T_('Ajouter').'
+							</button>
+							&nbsp;&nbsp;&nbsp;&nbsp;
+							<button name="cancel" value="cancel" type="submit" class="btn btn-danger" >
+								<i class="fa fa-reply"></i>
+								'.T_('Retour').'
+							</button>
+						</div>
+					</form>
 				</div>
-			</div>
+			</div><!-- /.card-body -->
+		</div>
 		';
 	} else {
 		//display group list
@@ -382,7 +385,7 @@ if(
 						</a>
 					</li>
 				</ul>
-				<div class="tab-content">
+				<div class="tab-content" style="background-color:#FFF;">
 					<table id="sample-table-1" class="table table-striped table-bordered table-hover">
 						<thead>
 							<tr>
@@ -431,7 +434,7 @@ if(
 									}
 									echo '
 									<td>
-										<a class="btn btn-sm btn-warning" href="./index.php?page=admin&amp;subpage=group&amp;action=edit&amp;id='.$rgroup['id'].'"  title="'.T_('Modifier ce groupe').'" ><center><i class="fa fa-pencil-alt "></i></center></a>
+										<a class="btn btn-sm btn-warning" href="./index.php?page=admin&amp;subpage=group&amp;action=edit&amp;id='.$rgroup['id'].'"  title="'.T_('Modifier ce groupe').'" ><center><span <i style="color:#FFF;" class="fa fa-pencil-alt "></i></center></a>
 										<a class="btn btn-sm btn-danger" onClick="javascript: return confirm(\''.T_('Êtes-vous sur de vouloir supprimer ce groupe ?').'\');" href="./index.php?page=admin&amp;subpage=group&amp;id='.$rgroup['id'].'&amp;type='.$_GET['type'].'&amp;action=delete"  title="'.T_('Supprimer ce groupe').'" ><center><i class="fa fa-trash"></i></center></a>
 									</td>
 								</tr>';

@@ -5,9 +5,9 @@
 # @Call : auto mail
 # @Parameters : token
 # @Author : Flox
-# @Version : 3.2.2 p1
+# @Version : 3.2.3 p2
 # @Create : 22/04/2017
-# @Update : 28/05/2020
+# @Update : 13/08/2020
 ################################################################################
 
 //initialize variables 
@@ -221,206 +221,209 @@ if($_POST['validation'] && !$error && $ticket_id)
 			</nav>
 			<div class="main-container p-4" id="main-container">
 				<div role="main" class="main-content">
-					<div class="page-header ">
-						<h1 class="page-title text-primary-m2">
-							<i class="fa fa-ticket-alt text-primary-m2"></i> <?php if($ticket_id) {echo T_('Ticket').' n°'.$ticket_id.' : '.$ticket['title'].'';} ?>
-						</h1>
-					</div>
-					<div class="span12">
-						<div class="">
-							<?php 
-							if($rparameters['survey']==1)
-							{
-								if($token==true)
-								{
-									if($_POST['validation'] && !$error)
+					<div class="card bcard" id="card-1">
+						<div class="card-header">
+							<h5 class="card-title">
+								<i class="fa fa-ticket-alt text-primary-m2"></i> <?php if($ticket_id) {echo T_('Ticket').' n°'.$ticket_id.' : '.$ticket['title'].'';} ?>
+							</h5>
+						</div><!-- /.card-header -->
+						<div class="card-body p-0">
+							<!-- to have smooth .card toggling, it should have zero padding -->
+							<div class="p-3">
+								<?php 
+									if($rparameters['survey']==1)
 									{
-										echo '<br /><br /><br />';
-										echo DisplayMessage('success',T_('Votre sondage a été envoyé merci'));
-									} 
-									else
-									{
-										echo '
-										<div class="">
-											<div class="">
-												<div id="smartwizard-1" class="sw-main sw-theme-circles">
-													<ul class="mx-auto nav nav-tabs step-anchor">
-														';
-														$qry=$db->prepare("SELECT `id`,`number` FROM `tsurvey_questions` WHERE disable='0' ORDER BY `number`");
-														$qry->execute();
-														while($row=$qry->fetch()) 
-														{
-															if($question_number>=$row['number']) {$active='done success';} else {$active='';}
-															echo '
-															<li data-target="" class="nav-item '.$active.'" >
-																<a class="nav-link" >
-																	<span class="step-title">'.$row['number'].'</span>
-																	<span class="step-title-done"><i class="fa fa-check text-success-m1"></i></span>
-																</a>
-															</li>
-															';
-														}
-														$qry->closeCursor();
-														echo '
-													</ul>
-												</div>
-												<hr>
-												<form method="post" id="form" action="" class="form-horizontal" id="sample-form" >
-													<div class="step-content row-fluid position-relative" id="step-container">
-														';
-														//display error
-														if($error) {echo DisplayMessage('error',$error);} 
-														echo '
-														<div class="col-xs-6 col-sm-2"></div>
-														<div class="col-xs-6 col-sm-10" id="step1">
+										if($token==true)
+										{
+											if($_POST['validation'] && !$error)
+											{
+												echo '<br /><br /><br />';
+												echo DisplayMessage('success',T_('Votre sondage a été envoyé merci'));
+											} 
+											else
+											{
+												echo '
+												<div class="">
+													<div class="">
+														<div id="smartwizard-1" class="sw-main sw-theme-circles">
+															<ul class="mx-auto nav nav-tabs step-anchor">
 																';
-																//get question
-																$qry=$db->prepare("SELECT * FROM `tsurvey_questions` WHERE number=:number AND disable='0'");
-																$qry->execute(array('number' => $question_number));
-																$row=$qry->fetch();
-																$qry->closeCursor();
-																
-																//get question answer
-																$qry=$db->prepare("SELECT `answer` FROM `tsurvey_answers` WHERE ticket_id=:ticket_id AND question_id=:question_id");
-																$qry->execute(array('ticket_id' => $ticket_id, 'question_id' => $question_id,));
-																$answer=$qry->fetch();
-																$qry->closeCursor();
-																if(empty($answer['answer'])) {$answer['answer']='';}
-																//display question
-																echo '<h3 class="lighter text-success pb-4">'.T_('Question').' n°'.$row['number'].' : '.$row['text'].'</h3><div class="space-8"></div>';
-																
-																//yes / no question
-																if($row['type']==1)
-																{
-																	//check if an existing value is present in db
-																	if($answer['answer']==T_('Oui')) {$checked_yes='checked';} else {$checked_yes='';}
-																	if($answer['answer']==T_('Non')) {$checked_no='checked';} else {$checked_no='';}
-																	
-																	echo '
-																		<div class="pl-4">
-																			<div class="radio">
-																				<label>
-																					<input name="answer" '.$checked_yes.' value="'.T_('Oui').'" type="radio" class="ace">
-																					<span class="lbl"> '.T_('Oui').'</span>
-																				</label>
-																			</div>
-																			<div class="radio">
-																				<label>
-																					<input name="answer" '.$checked_no.' value="'.T_('Non').'" type="radio" class="ace">
-																					<span class="lbl"> '.T_('Non').'</span>
-																				</label>
-																			</div>
-																		</div>
-																	';
-																}
-																//text question
-																if($row['type']==2)
-																{
-																	echo '
-																		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-																		<textarea class="form-control" id="answer" name="answer" width="200" cols="100" rows="8">'.$answer['answer'].'</textarea>
-																	';
-																}
-																//select question
-																if($row['type']==3)
-																{
-																	echo '
-																	<div class="pl-4">
-																		<select style="width:auto;" class="form-control" width="20" id="answer" name="answer" >
-																			';
-																			if($row['select_1']) {echo '<option value="'.$row['select_1'].'" '; if($answer['answer']==$row['select_1']) {echo 'selected';} echo ' >'.$row['select_1'].'</option>';}	
-																			if($row['select_2']) {echo '<option value="'.$row['select_2'].'" '; if($answer['answer']==$row['select_2']) {echo 'selected';} echo ' >'.$row['select_2'].'</option>';}	
-																			if($row['select_3']) {echo '<option value="'.$row['select_3'].'" '; if($answer['answer']==$row['select_3']) {echo 'selected';} echo ' >'.$row['select_3'].'</option>';}	
-																			if($row['select_4']) {echo '<option value="'.$row['select_4'].'" '; if($answer['answer']==$row['select_4']) {echo 'selected';} echo ' >'.$row['select_4'].'</option>';}	
-																			if($row['select_5']) {echo '<option value="'.$row['select_5'].'" '; if($answer['answer']==$row['select_5']) {echo 'selected';} echo ' >'.$row['select_5'].'</option>';}	
-																			echo '
-																		</select>
-																	</div>
-																	';
-																}
-																if($row['type']==4)
-																{
-																	for($i = 1; $i <= $row['scale']; $i++)
-																	{
-																		echo '
-																		<div class="radio pl-4">
-																			<label>
-																				<input name="answer" value="'.$i.'" type="radio" '; if($answer['answer']==$i) {echo 'checked';} echo ' class="ace">
-																				<span class="lbl"> '.$i.'</span>
-																			</label>
-																		</div>
-																		';
-																	}
-																}
-																echo '
-														</div>
-														<br /><br /><br />
-														<br /><br /><br /><br /><br />
-														<hr>
-														<input type="hidden" name="question_number" value="'.$question_number.'">
-														<input type="hidden" name="question_id" value="'.$row['id'].'">
-														<div class="row-fluid wizard-actions">
-															<center>
-																';
-																if($question_number!=1)
-																{
-																	echo '
-																	<button type="submit" id="previous" name="previous" value="previous" class="btn btn-grey " data-last="Finish ">
-																	<i class="fa fa-arrow-left fa fa-on-right"></i>
-																		'.T_('Précédent').'
-																	</button>
-																	&nbsp;&nbsp;&nbsp;
-																	';
-																}
-																//get last question number
-																$qry=$db->prepare("SELECT MAX(number) FROM `tsurvey_questions` WHERE disable='0'");
+																$qry=$db->prepare("SELECT `id`,`number` FROM `tsurvey_questions` WHERE disable='0' ORDER BY `number`");
 																$qry->execute();
-																$row=$qry->fetch();
-																$qry->closeCursor();
-																
-																if($row[0]==$question_number)
+																while($row=$qry->fetch()) 
 																{
+																	if($question_number>=$row['number']) {$active='done success';} else {$active='';}
 																	echo '
-																	<button type="submit" id="validation" name="validation" value="validation" class="btn btn-success btn-next" data-last="Finish">
-																		'.T_('Valider').'
-																		<i class="fa fa-arrow-right fa fa-on-right"></i>
-																	</button>
-																	';
-																} else {
-																	echo '
-																	<button type="submit" id="next" name="next" value="next" class="btn btn-info btn-next" data-last="Finish">
-																		'.T_('Suivant').'
-																		<i class="fa fa-arrow-right fa fa-on-right"></i>
-																	</button>
+																	<li data-target="" class="nav-item '.$active.'" >
+																		<a class="nav-link" >
+																			<span class="step-title">'.$row['number'].'</span>
+																			<span class="step-title-done"><i class="fa fa-check text-success-m1"></i></span>
+																		</a>
+																	</li>
 																	';
 																}
-																
+																$qry->closeCursor();
 																echo '
-																
-															</center>
+															</ul>
 														</div>
-													</div>
-												</form>
-											</div><!-- /widget-main -->
-										</div><!-- /widget-body -->
-										';
-									}
-								} else {
-									echo DisplayMessage('error',T_('Jeton invalide, contacter votre administrateur'));
-								}
-							} else {
-								echo DisplayMessage('error',T_("La fonction sondage n'est pas activée contacter votre administrateur"));
-							} 
-							?>
-						</div>
-					</div>
+														<hr>
+														<form method="post" id="form" action="" class="form-horizontal" id="sample-form" >
+															<div class="step-content row-fluid position-relative" id="step-container">
+																';
+																//display error
+																if($error) {echo DisplayMessage('error',$error);} 
+																echo '
+																<div class="col-xs-6 col-sm-2"></div>
+																<div class="col-xs-6 col-sm-10" id="step1">
+																		';
+																		//get question
+																		$qry=$db->prepare("SELECT * FROM `tsurvey_questions` WHERE number=:number AND disable='0'");
+																		$qry->execute(array('number' => $question_number));
+																		$row=$qry->fetch();
+																		$qry->closeCursor();
+																		
+																		//get question answer
+																		$qry=$db->prepare("SELECT `answer` FROM `tsurvey_answers` WHERE ticket_id=:ticket_id AND question_id=:question_id");
+																		$qry->execute(array('ticket_id' => $ticket_id, 'question_id' => $question_id,));
+																		$answer=$qry->fetch();
+																		$qry->closeCursor();
+																		if(empty($answer['answer'])) {$answer['answer']='';}
+																		//display question
+																		echo '<h3 class="lighter text-success pb-4">'.T_('Question').' n°'.$row['number'].' : '.$row['text'].'</h3><div class="space-8"></div>';
+																		
+																		//yes / no question
+																		if($row['type']==1)
+																		{
+																			//check if an existing value is present in db
+																			if($answer['answer']==T_('Oui')) {$checked_yes='checked';} else {$checked_yes='';}
+																			if($answer['answer']==T_('Non')) {$checked_no='checked';} else {$checked_no='';}
+																			
+																			echo '
+																				<div class="pl-4">
+																					<div class="radio">
+																						<label>
+																							<input name="answer" '.$checked_yes.' value="'.T_('Oui').'" type="radio" class="ace">
+																							<span class="lbl"> '.T_('Oui').'</span>
+																						</label>
+																					</div>
+																					<div class="radio">
+																						<label>
+																							<input name="answer" '.$checked_no.' value="'.T_('Non').'" type="radio" class="ace">
+																							<span class="lbl"> '.T_('Non').'</span>
+																						</label>
+																					</div>
+																				</div>
+																			';
+																		}
+																		//text question
+																		if($row['type']==2)
+																		{
+																			echo '
+																				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+																				<textarea class="form-control" id="answer" name="answer" width="200" cols="100" rows="8">'.$answer['answer'].'</textarea>
+																			';
+																		}
+																		//select question
+																		if($row['type']==3)
+																		{
+																			echo '
+																			<div class="pl-4">
+																				<select style="width:auto;" class="form-control" width="20" id="answer" name="answer" >
+																					';
+																					if($row['select_1']) {echo '<option value="'.$row['select_1'].'" '; if($answer['answer']==$row['select_1']) {echo 'selected';} echo ' >'.$row['select_1'].'</option>';}	
+																					if($row['select_2']) {echo '<option value="'.$row['select_2'].'" '; if($answer['answer']==$row['select_2']) {echo 'selected';} echo ' >'.$row['select_2'].'</option>';}	
+																					if($row['select_3']) {echo '<option value="'.$row['select_3'].'" '; if($answer['answer']==$row['select_3']) {echo 'selected';} echo ' >'.$row['select_3'].'</option>';}	
+																					if($row['select_4']) {echo '<option value="'.$row['select_4'].'" '; if($answer['answer']==$row['select_4']) {echo 'selected';} echo ' >'.$row['select_4'].'</option>';}	
+																					if($row['select_5']) {echo '<option value="'.$row['select_5'].'" '; if($answer['answer']==$row['select_5']) {echo 'selected';} echo ' >'.$row['select_5'].'</option>';}	
+																					echo '
+																				</select>
+																			</div>
+																			';
+																		}
+																		if($row['type']==4)
+																		{
+																			for($i = 1; $i <= $row['scale']; $i++)
+																			{
+																				echo '
+																				<div class="radio pl-4">
+																					<label>
+																						<input name="answer" value="'.$i.'" type="radio" '; if($answer['answer']==$i) {echo 'checked';} echo ' class="ace">
+																						<span class="lbl"> '.$i.'</span>
+																					</label>
+																				</div>
+																				';
+																			}
+																		}
+																		echo '
+																</div>
+																<br /><br /><br />
+																<br /><br /><br /><br /><br />
+																<hr>
+																<input type="hidden" name="question_number" value="'.$question_number.'">
+																<input type="hidden" name="question_id" value="'.$row['id'].'">
+																<div class="row-fluid wizard-actions">
+																	<center>
+																		';
+																		if($question_number!=1)
+																		{
+																			echo '
+																			<button type="submit" id="previous" name="previous" value="previous" class="btn btn-grey " data-last="Finish ">
+																			<i class="fa fa-arrow-left fa fa-on-right"></i>
+																				'.T_('Précédent').'
+																			</button>
+																			&nbsp;&nbsp;&nbsp;
+																			';
+																		}
+																		//get last question number
+																		$qry=$db->prepare("SELECT MAX(number) FROM `tsurvey_questions` WHERE disable='0'");
+																		$qry->execute();
+																		$row=$qry->fetch();
+																		$qry->closeCursor();
+																		
+																		if($row[0]==$question_number)
+																		{
+																			echo '
+																			<button type="submit" id="validation" name="validation" value="validation" class="btn btn-success btn-next" data-last="Finish">
+																				'.T_('Valider').'
+																				<i class="fa fa-arrow-right fa fa-on-right"></i>
+																			</button>
+																			';
+																		} else {
+																			echo '
+																			<button type="submit" id="next" name="next" value="next" class="btn btn-info btn-next" data-last="Finish">
+																				'.T_('Suivant').'
+																				<i class="fa fa-arrow-right fa fa-on-right"></i>
+																			</button>
+																			';
+																		}
+																		
+																		echo '
+																		
+																	</center>
+																</div>
+															</div>
+														</form>
+													</div><!-- /widget-main -->
+												</div><!-- /widget-body -->
+												';
+											}
+										} else {
+											echo DisplayMessage('error',T_('Jeton invalide, contacter votre administrateur'));
+										}
+									} else {
+										echo DisplayMessage('error',T_("La fonction sondage n'est pas activée contacter votre administrateur"));
+									} 
+									?>
+							</div>
+						</div><!-- /.card-body -->
+					</div>	<!-- /.card -->		
 				</div>
 			</div>
 		</div>
 		<span style="position: absolute; bottom: 0; right: 0; font-size:10px; "><a target="_blank" href="https://gestsup.fr"><?php echo T_('Sondage généré par'); ?> GestSup</a></span>
 	</body>
-	
 
+	<!-- include  scripts -->
 	<script type="text/javascript" src="./components/jquery/jquery.min.js"></script>
 	<script type="text/javascript" src="./components/popper-js/dist/umd/popper.min.js"></script>
 	<script type="text/javascript" src="./components/bootstrap/dist/js/bootstrap.min.js"></script>

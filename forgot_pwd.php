@@ -4,9 +4,9 @@
 # @Description : send mail to user to init password
 # @Call : /login.php
 # @Author : Flox
-# @Version : 3.2.2
+# @Version : 3.2.3
 # @Create : 25/10/2019
-# @Update : 28/05/2020
+# @Update : 12/08/2020
 ################################################################################
 
 //initialize variable
@@ -130,7 +130,7 @@ if($rparameters['user_forgot_pwd'])
 	echo '
 	<body>
 		<div class="body-container" style=" background-image: linear-gradient(#6baace, #264783); background-attachment: fixed; background-repeat: no-repeat;" >
-			<div class="main-container container">
+			<div class="main-container container bgc-transparent">
 				<div role="main" class="main-content ">
 					<div class="justify-content-center pb-2">
 						';
@@ -201,7 +201,7 @@ if($rparameters['user_forgot_pwd'])
 																</div>
 															</div>
 															<div class="form-group col-md-6 offset-md-3 mt-4">
-																<button onclick="submit()" type="submit" id="submit" name="submit" class="btn btn-warning btn-block btn-md btn-bold mt-2 mb-4">
+																<button onclick="submit()" type="submit" id="submit" name="submit" class="btn btn-orange btn-block px-4 btn-bold mt-2 mb-4">
 																	<i class="fa fa-check"></i>
 																	'.T_('Valider').'
 																</button>
@@ -221,7 +221,7 @@ if($rparameters['user_forgot_pwd'])
 																</div>
 															</div>
 															<div class="form-group col-md-6 offset-md-3 mt-4">
-																<button onclick="submit()" type="submit" id="submit" name="submit" class="btn btn-warning btn-block btn-md btn-bold mt-2 mb-4">
+																<button onclick="submit()" type="submit" id="submit" name="submit" class="btn btn-orange btn-block px-4 btn-bold mt-2 mb-4">
 																	<i class="fa fa-check"></i>
 																	'.T_('Valider').'
 																</button>

@@ -56,9 +56,9 @@ module.exports = class AssetFinder {
 	
 	///////////////
 	//convert local file's path to CDN(jsdelivr.com) path
-	static _localToCDN(fileName, pkgName, min) {
+	static _localToCDN(fileName, pkgName, min, version) {
 		let rx = new RegExp('.*node_modules/' + pkgName.replace('.', '\\.'));//escape '.' in package name
-		let replacement = constants.CDN == 'unpkg' ? `${pkgName}` : `npm/${pkgName}`; 
+		let replacement = constants.CDN == 'unpkg' ? `${pkgName}` : (`npm/${pkgName}` + (version ? `@${version}` : '')); 
 		let cdnFile = fileName.replace(rx , replacement);
 		if(min) cdnFile = cdnFile.replace( /(\.min)?\.(js|css)$/ , '.min.$2' );
 		
@@ -72,14 +72,13 @@ module.exports = class AssetFinder {
 		for(let name of files) {
 			let res = this.GetFile(name, type);
 
-
 			if(res == null) continue;
 			else if(Array.isArray(res)) {//it was a glob, so we have a list of files
 				let parts = name.split('@', 1);
 				let pkgName = parts[1] || '';
 				
 				if(pkgName) {
-				  let version = false;//resolve.PkgVer(pkgName);
+				  let version = resolve.PkgVer(pkgName);
 				  for(let _res of res) if(_res != null) {
 					let cdnFile = this._localToCDN(_res, pkgName, min, version);					
 					resultFiles.push({file: cdnFile, pkg: pkgName});
@@ -88,10 +87,9 @@ module.exports = class AssetFinder {
 			}
 			else {
 				let parts = name.match(/([^\@]+)\@(.+)/);
-				let pkgName = parts && parts[2] ? parts[2] : '';
+				let pkgName = parts && parts[2] ? parts[2] : name;
 
-				let version = false;//resolve.PkgVer(pkgName);
-
+				let version = resolve.PkgVer(pkgName);
 				let cdnFile = this._localToCDN(res, pkgName, min, version);
 				resultFiles.push({file: cdnFile, pkg: pkgName});
 			}

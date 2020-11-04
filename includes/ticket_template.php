@@ -6,7 +6,7 @@
 # @Author : Flox
 # @Update : 21/10/2014
 # @Update : 20/07/2020
-# @Version : 3.2.2 p1
+# @Version : 3.2.3
 ################################################################################
 
 //initialize variables 
@@ -234,18 +234,7 @@ if($_POST['duplicate'] && $rright['ticket_template'])
 	}
 
 
-	$message=T_('Le modèle a été appliqué au ticket en cours');
-	echo '
-	<div role="alert" class="alert alert-lg bgc-success-l3 border-0 border-l-4 brc-success-m1 mt-4 mb-3 pr-3 d-flex">
-				<div class="flex-grow-1">
-					<i class="fas fa-check mr-1 text-120 text-success-m1"></i>
-					<strong class="text-success">'.$message.'</strong>
-				</div>
-				<button type="button" class="close align-self-start" data-dismiss="alert" aria-label="Close">
-					<span aria-hidden="true"><i class="fa fa-times text-80"></i></span>
-				</button>
-			</div>';
-
+	echo DisplayMessage('success',T_('Le modèle a été appliqué au ticket en cours'));
 	echo "<SCRIPT LANGUAGE='JavaScript'>
 			<!--
 			function redirect()

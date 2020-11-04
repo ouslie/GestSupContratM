@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 15/03/2011
-# @Update : 11/06/2020
-# @Version : 3.2.2
+# @Update : 12/08/2020
+# @Version : 3.2.3 p1
 ################################################################################
 
 //initialize variables 
@@ -478,7 +478,7 @@ if($_GET['action']=="add")
 		?>								
    </ul>
 	<!------------------------------------------------ display edit entry page ------------------------------------------------>
-	<div class="tab-content">
+	<div class="tab-content" style="background-color:#FFF;">
 		<?php
 		//Display 
 		if($_GET['action']=="disp_edit")
@@ -1728,7 +1728,7 @@ if($_GET['action']=="add")
 							}
 							echo '
 								<td width="104px">
-									<a class="btn btn-sm btn-warning" href="index.php?page=admin&amp;subpage=list&amp;table='.$_GET['table'].'&amp;action=disp_edit&amp;id='.$row['id'].'"  title="'.T_('Éditer cette ligne').'" ><i class="fa fa-pencil-alt"></i></a>&nbsp;';
+									<a class="btn btn-sm btn-warning" href="index.php?page=admin&amp;subpage=list&amp;table='.$_GET['table'].'&amp;action=disp_edit&amp;id='.$row['id'].'"  title="'.T_('Éditer cette ligne').'" ><i style="color:#FFF;"  class="fa fa-pencil-alt"></i></a>&nbsp;';
 									if(($_GET['table']!='tstates' || $row['id']>6) && $row['id']!=0 && ($_GET['table']!='tassets_iface_role' || $row['id']>2) && ($_GET['table']!='tassets_state' || $row['id']>4)) 
 									{
 										echo '<a class="btn btn-sm btn-danger" onClick="javascript: return confirm(\''.T_('Êtes-vous sur de vouloir supprimer cette ligne ?').'\');" href="./index.php?page=admin&amp;subpage=list&amp;table='.$_GET['table'].'&amp;id='.$row['id'].'&amp;action=delete"  title="'.T_('Supprimer cette ligne').'" ><i class="fa fa-trash"></i></a>&nbsp;';

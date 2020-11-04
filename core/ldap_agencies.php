@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 05/04/2017
-# @Update : 26/05/2020
-# @Version : 3.2.2
+# @Update : 30/07/2020
+# @Version : 3.2.3
 ####################################################################################
 
 if(!isset($ldap_query)) $ldap_query = '';
@@ -69,6 +69,9 @@ if(!isset($rparameters['ldap_user']))
 	require_once('./core/init_get.php');
 	require_once('./core/functions.php');
 }
+
+//check activate function
+if(!$rparameters['ldap_agency']) {exit('ERROR : Function disabled');}
 	
 //LDAP connection parameters
 $user=$rparameters['ldap_user']; 

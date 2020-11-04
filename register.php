@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 07/03/2010
-# @Update : 28/05/2020
-# @Version : 3.2.2
+# @Update : 12/08/2020
+# @Version : 3.2.3
 ################################################################################
 	
 //initialize variable
@@ -178,7 +178,7 @@ if($rparameters['user_register'])
 	echo '
 	<body>
 		<div class="body-container" style=" background-image: linear-gradient(#6baace, #264783); background-attachment: fixed; background-repeat: no-repeat;" >
-			<div class="main-container container">
+			<div class="main-container container bgc-transparent">
 				<div role="main" class="main-content ">
 					<div class="justify-content-center pb-2">
 						';

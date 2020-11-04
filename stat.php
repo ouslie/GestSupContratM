@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 11/06/2020
-# @Version : 3.2.2
+# @Update : 12/08/2020
+# @Version : 3.2.3
 ################################################################################
 
 //initialize variables 
@@ -143,7 +143,7 @@ if(($rparameters['user_limit_service']==1 && $cnt_service!=0) || $rright['stat']
 				}
 				echo '
 			</ul>
-			<div class="tab-content rounded-bottom">
+			<div style="background-color:#FFF;" class="tab-content rounded-bottom">
 				<div id="ticket" class="tab-pane '; if($_GET['tab']=='ticket') echo 'active'; echo ' ">
 					'; include('./ticket_stat.php'); echo '
 				</div>

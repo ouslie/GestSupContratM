@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 10/11/2013
-# @Update : 11/06/2020
-# @Version : 3.2.2
+# @Update : 01/07/2020
+# @Version : 3.2.3
 ################################################################################
 
 //initialize variables 
@@ -225,29 +225,39 @@ while($row=$qry->fetch()){$db_size += $row["Data_length"] + $row["Index_length"]
 $qry->closeCursor();
 $db_size=formatfilesize($db_size);
 
+/*
 //check if latest stable version is installed
 if($_GET['subpage']=='system')
 {
 	if(extension_loaded('ftp'))
 	{
-		//ftp check
-		$conn_id = ftp_connect('ftp.gestsup.fr',21,2) or die('ERROR : enable to access on GestSup FTP Server');
-		$login_result = ftp_login($conn_id, 'gestsup', 'gestsup');
-		$pasv = ftp_pasv($conn_id, true);
-		$ftp_list=ftp_nlist($conn_id, "./versions/current/stable/");
-		$patch_ftp_list = preg_grep("/patch_/", $ftp_list);
-		$patch_ftp_array = array();
-		foreach($patch_ftp_list as $patch){
-			$patch=explode("_",$patch);
-			$patch=explode(".zip",$patch[1]);
-			array_push($patch_ftp_array, $patch[0]);
+		//check if server is connected to Internet
+		$connected = fsockopen("ftp.gestsup.fr", 21); 
+		if($connected){
+			//ftp check
+			$conn_id = ftp_connect('ftp.gestsup.fr',21,5) or die('ERROR : enable to connect on GestSup FTP Server');
+			$login_result = ftp_login($conn_id, 'gestsup', 'gestsup');
+			$pasv = ftp_pasv($conn_id, true);
+			$ftp_list=ftp_nlist($conn_id, "./versions/current/stable/");
+			$patch_ftp_list = preg_grep("/patch_/", $ftp_list);
+			$patch_ftp_array = array();
+			foreach($patch_ftp_list as $patch){
+				$patch=explode("_",$patch);
+				$patch=explode(".zip",$patch[1]);
+				array_push($patch_ftp_array, $patch[0]);
+			}
+			natsort($patch_ftp_array);
+			$last_ftp_patch=end($patch_ftp_array);
+			if($last_ftp_patch>$rparameters['version'])
+			{$gestsup_version='<i style="width:20px;" title="'.T_("Votre version de l'application est obsolète, installer la dernière version stable").' '.$last_ftp_patch.'" class="fa fa-ticket-alt text-warning"></i>';} 
+			fclose($connected);
+		}else{
+			$gestsup_version='<i style="width:20px;" title="'.T_("Impossible de vérifier la dernière version de GestSup, accès au FTP impossible").'" class="fa fa-ticket-alt text-warning"></i>';
 		}
-		natsort($patch_ftp_array);
-		$last_ftp_patch=end($patch_ftp_array);
-		if($last_ftp_patch>$rparameters['version'])
-		{$gestsup_version='<i style="width:20px;" title="'.T_("Votre version de l'application est obsolète, installer la dernière version stable").' '.$last_ftp_patch.'" class="fa fa-ticket-alt text-warning"></i>';} 
+		
 	}
 }
+*/
 
 if(!isset($gestsup_version))
 {
@@ -296,7 +306,7 @@ $upload_size=round(((folderSize('upload')/1024)/1024),2).'MB';
 				<i style="width:16px;" class="fa fa-hdd text-success"></i> &nbsp;<b><?php echo T_('Fichiers chargés'); ?> :</b> <?php echo $upload_size; ?><br />
 				<i style="width:19px;" class="fa fa-key text-success"></i> 
 					<b><?php echo T_('Clé privée'); ?> :</b> 
-					<button onclick="DisplayKey()" class="btn btn-sm btn-info"><?php echo T_('Afficher');?></button>
+					<span onclick="DisplayKey()" class="badge badge badge-primary"><?php echo T_('Afficher');?></span>
 					<span id="private_key" style="display:none"><?php echo $rparameters['server_private_key']; ?> <i><?php echo T_("(Clé à ne pas divulguer)"); ?></i></span>
 				 	<script>function DisplayKey() {document.getElementById("private_key").style.display= '';}</script>
 				<?php 
@@ -313,8 +323,8 @@ $upload_size=round(((folderSize('upload')/1024)/1024),2).'MB';
 		<tr>
 			<td style="width: 150px;" class="text-95 text-default-d3 bgc-secondary-l3"><i class="fa fa-desktop text-blue-m3 pr-1"></i><?php echo T_('Client'); ?> </td>
 			<td class="text-95 text-default-d3">
-				<i class="fa fa-check-circle text-success"></i> <b>Mobile :</b> <?php if($mobile) {echo 'Oui';} else {echo 'Non';} ?><br />
-				<i class="fa fa-check-circle text-success"></i> <b>Infos :</b> <?php echo $_SERVER['HTTP_USER_AGENT']; ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b><?php echo T_('Mobile'); ?> :</b> <?php if($mobile) {echo 'Oui';} else {echo 'Non';} ?><br />
+				<i class="fa fa-check-circle text-success"></i> <b><?php echo T_('Navigateur'); ?> :</b> <?php echo $_SERVER['HTTP_USER_AGENT']; ?><br />
 				<i class="fa fa-check-circle text-success"></i> <b><?php if(strstr($_SERVER['REMOTE_ADDR'],':')) {echo 'IPv6';} else {echo 'IPv4';}  ?> :</b> <?php echo $_SERVER['REMOTE_ADDR']; ?><br />
 			</td>
 		</tr>
@@ -351,7 +361,7 @@ $upload_size=round(((folderSize('upload')/1024)/1024),2).'MB';
 				echo "<br />";
 				if(extension_loaded('curl')) echo '<i class="fa fa-check-circle text-success"></i> <b>php_curl :</b> '.T_('Activée'); else echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>php_curl</b> : '.T_("Désactivée").' <i>('.T_("Le contrôle de sécurité sur le listing des répertoire ne fonctionnera pas. apt-get install php7.3-curl").')</i>';
 				echo "<br />";
-				if(extension_loaded('mbstring')) echo '<i class="fa fa-check-circle text-success"></i> <b>php_mbstring :</b> '.T_('Activée'); else echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>php_mbstring</b> : '.T_("Désactivée").' <i>('.T_("des erreurs sont possible dans la liste des tickets. apt install php7.3-mbstring").')</i>';
+				if(extension_loaded('mbstring')) echo '<i class="fa fa-check-circle text-success"></i> <b>php_mbstring :</b> '.T_('Activée'); else echo '<i class="fa fa-times-circle text-danger"></i> <b>php_mbstring</b> : '.T_("Désactivée").' <i>('.T_("des erreurs sont possibles dans la liste des tickets et sur le connecteur IMAP. apt install php7.3-mbstring").')</i>';
 				echo "<br />";
 				if(extension_loaded('gd')) echo '<i class="fa fa-check-circle text-success"></i> <b>php_gd :</b> '.T_('Activée'); else echo '<i class="fa fa-times-circle text-danger"></i> <b>php_gd</b> : '.T_("Désactivée").' <i>('.T_("La confirmation visuelle lors de l'enregistrement d'un utilisateur ne fonctionnera pas. apt install php7.3-gd").')</i>';
 				?>
@@ -445,11 +455,17 @@ $upload_size=round(((folderSize('upload')/1024)/1024),2).'MB';
 					{
 						if($rparameters['ldap_port']=='636')
 						{
-							echo '<i class="fa fa-check-circle text-success"></i> <b>LDAP : </b>'.T_('Sécurisé').'<br />';
+							echo '<i class="fa fa-check-circle text-success"></i> <b>LDAP : </b>'.T_('Port sécurisé').'<br />';
 						} else {
-							echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>LDAP : </b>'.T_('Non sécurisé').' <i>('.T_('Régler le port 636, dans la configuration du connecteur').').</i><br />';
+							echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>LDAP : </b>'.T_('Port non sécurisé').' <i>('.T_('Régler le port 636, dans la configuration du connecteur').').</i><br />';
+						}
+						//check LDAP user admin 
+						if(strtoupper($rparameters['ldap_user'])=='ADMINISTRATEUR')
+						{
+							echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>'.T_('LDAP').' : </b>'.T_('Utilisateur administrateur').' <i>('.T_("L'utilisateur administrateur est spécifié sur les paramètres du connecteur LDAP, l'application n'a pas besoins de ces privilèges, renseigner un utilisateur du domaine").').</i><br />';
 						}
 					}
+					
 					//check password policy
 					if($rparameters['ldap_auth'])
 					{
@@ -460,11 +476,23 @@ $upload_size=round(((folderSize('upload')/1024)/1024),2).'MB';
 						{
 							echo '<i class="fa fa-check-circle text-success"></i> <b>'.T_('Mots de passes').' : </b>'.T_('Sécurisés').'<br />';
 						} else {
-							echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>'.T_('Mots de passes').' : </b>'.T_('Longueur de mot de passe trop faible').' <i>('.T_('Définir la longueur minimal à 8 caractères').').</i><br />';
+							echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>'.T_('Mots de passes').' : </b>'.T_('Longueur de mot de passe trop faible').' <i>('.T_('Définir la longueur minimale à 8 caractères').').</i><br />';
 						}
 					} else {
 						echo '<i class="fa fa-exclamation-triangle text-warning"></i> <b>'.T_('Mots de passes').' : </b>'.T_('Aucune politique définie').' <i>('.T_('Définissez une politique de mot de passe dans Administration > Paramètres > Général > Utilisateur').').</i><br />';
 					}
+					//check admin password
+					$qry=$db->prepare("SELECT `last_pwd_chg` FROM `tusers` WHERE `login`='admin' AND `disable`='0'");
+					$qry->execute();
+					$admin_pwd=$qry->fetch();
+					$qry->closeCursor();
+					if($admin_pwd['last_pwd_chg']=='0000-00-00')
+					{
+						echo '<i class="fa fa-times-circle text-danger"></i> <b>'.T_('Mot de passe administrateur').' : </b>'.T_('Pas encore modifié').' <i>('.T_("Changer le mot de passe du compte ayant l'identifiant admin").').</i><br />';
+					} else {
+						echo '<i class="fa fa-check-circle text-success"></i> <b>'.T_('Mot de passe administrateur').' : </b>'.T_('Modifié').'<br />';
+					}
+
 					//check enable log 
 					if($rparameters['log'])
 					{
@@ -479,7 +507,6 @@ $upload_size=round(((folderSize('upload')/1024)/1024),2).'MB';
 					} else {
 						echo '<i class="fa fa-info-circle text-info"></i> <b>'.T_('Restriction IP').' : </b>'.T_('Désactivé').' <i>('.T_("Pour plus de sécurité, il est possible de restreindre l'accès des clients à certaines adresses IP, cf Administration > Paramètres > Général > Serveur").').</i><br />';
 					}
-					
 				}
 				?>
 			</td>

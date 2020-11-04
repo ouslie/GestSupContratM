@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 19/02/2018
-# @Update : 11/06/2020
-# @Version : 3.2.2 p1
+# @Update : 12/08/2020
+# @Version : 3.2.3 p1
 ################################################################################
 
 //init var
@@ -41,50 +41,54 @@ if($_POST['technician']!='%')
 <div class="row pr-4 pl-4">
 	<div class="col-xs-12">
 		<div class="row">
-			<div class="col-sm-9">
-				<form method="post" action="" name="technician">
-					<?php echo T_('Technicien'); ?> :
-					<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="technician" onchange="submit()">
-						<?php
-						$qry=$db->prepare("SELECT `id`,`firstname`,`lastname` FROM `tusers` WHERE (`profile`=0 OR `profile`=4) AND `disable`=0");
-						$qry->execute();
-						while($row=$qry->fetch()) {
-							if ($row['id'] == $_POST['technician']) 
-							{ 
-								echo '<option value="'.$row['id'].'" selected>'.$row['firstname'].' '.$row['lastname'].'</option>'; 
-							} else {
-								echo '<option value="'.$row['id'].'" >'.$row['firstname'].' '.$row['lastname'].'</option>'; 
-							}
-						}
-						$qry->closeCursor();
-						if ($_POST['technician']=='%') {echo '<option value="%" selected >'.T_('Tous').'</option>'; } else {echo '<option value="%">'.T_('Tous').'</option>'; }
-						?>
-					</select> 
-				</form>
-				<div class="space"></div>
-			</div>
-			<br />
-			<br />
-			<div class="space"></div>
-			<div id="calendar"></div>
+			<div class="card bcard" id="card-1">
+				<div class="card-header">
+					<h5 class="card-title">
+						<form method="post" action="" name="technician">
+							<?php echo T_('Technicien'); ?> :
+							<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="technician" onchange="submit()">
+								<?php
+								$qry=$db->prepare("SELECT `id`,`firstname`,`lastname` FROM `tusers` WHERE (`profile`=0 OR `profile`=4) AND `disable`=0");
+								$qry->execute();
+								while($row=$qry->fetch()) {
+									if ($row['id'] == $_POST['technician']) 
+									{ 
+										echo '<option value="'.$row['id'].'" selected>'.$row['firstname'].' '.$row['lastname'].'</option>'; 
+									} else {
+										echo '<option value="'.$row['id'].'" >'.$row['firstname'].' '.$row['lastname'].'</option>'; 
+									}
+								}
+								$qry->closeCursor();
+								if ($_POST['technician']=='%') {echo '<option value="%" selected >'.T_('Tous').'</option>'; } else {echo '<option value="%">'.T_('Tous').'</option>'; }
+								?>
+							</select> 
+						</form>
+					</h5>
+					</div><!-- /.card-header -->
+					<div class="card-body p-0">
+						<!-- to have smooth .card toggling, it should have zero padding -->
+						<div class="p-3">
+						<div  id="calendar"></div>
+						</div>
+					</div><!-- /.card-body -->
+				</div>
+
+
 		</div>
 	</div>
 </div>
 
 <script type="text/javascript" src="./components/bootstrap/dist/js/bootstrap.min.js"></script>
 
-<!-- Fullcalendar 4 scripts -->
-<script src='./components/fullcalendar/packages/core/main.js'></script>
-<script src='./components/fullcalendar/packages/daygrid/main.js'></script>
-<script src='./components/fullcalendar/packages/timegrid/main.js'></script>
-<script src='./components/fullcalendar/packages/interaction/main.js'></script>
-<script src='./components/fullcalendar/packages/core/locales-all.min.js'></script>
+<!-- Fullcalendar 5 scripts -->
+<script src='./components/fullcalendar/lib/main.min.js'></script>
+<script src='./components/fullcalendar/lib/locales-all.min.js'></script>
 
 <script src='./components/moment/min/moment.min.js'></script>
 <script src="./components/bootbox/bootbox.all.min.js"></script>
 
-<!-- calendar script -->
-<script type="text/javascript">
+<!-- fullcalendar script -->
+<script>
 document.addEventListener('DOMContentLoaded', function() {
   var calendarEl = document.getElementById('calendar');
   var calendar = new FullCalendar.Calendar(calendarEl, {
@@ -93,13 +97,12 @@ document.addEventListener('DOMContentLoaded', function() {
 	if($ruser['language']=='de_DE') {echo "locale:'de',";}
 	if($ruser['language']=='es_ES') {echo "locale:'es',";}
 	?>
-    plugins: [ 'interaction', 'dayGrid', 'timeGrid' ],
     timeZone: 'UTC',
-    defaultView: 'timeGridWeek',
-    header: {
+    initialView: 'timeGridWeek',
+    headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: 'dayGridMonth,timeGridWeek,timeGridDay,list'
+      right: 'dayGridMonth,timeGridWeek,timeGridDay'
     },
     editable: true,
 	droppable: false,
@@ -108,8 +111,8 @@ document.addEventListener('DOMContentLoaded', function() {
 	weekNumbers: 'true',
 	displayEventEnd : 'true',
 	aspectRatio: 1.35,
-	minTime: '07:00:00',
-	maxTime: '21:00:00',
+	slotMinTime: '07:00:00',
+	slotMaxTime: '21:00:00',
 	height: 'auto',
 	timeZone: 'local',
 	events:
@@ -122,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		$calendar=json_encode($qry->fetchAll(PDO::FETCH_ASSOC)); 
 		$calendar=str_replace('"false"', 'false',$calendar);
 		$calendar=str_replace('"true"', 'true',$calendar);
-		if($calendar!='[]') {$calendar=str_replace(']',',{daysOfWeek: [0,6],rendering:"background",color: "#d9d9d9",overLap: false,allDay: true}]',$calendar);} //colorize WeekEnd
+		if($calendar!='[]') {$calendar=str_replace("]",",{daysOfWeek: [0,6],rendering: 'background',color: '#d9d9d9',overLap: false,allDay: true}]",$calendar);} //colorize WeekEnd
 		echo $calendar;
 	?>
 	,

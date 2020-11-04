@@ -6,16 +6,17 @@
 # @parameters : $from, $to, $message, $object
 # @Author : Flox
 # @Create : 21/11/2012
-# @Update : 28/05/2020
-# @Version : 3.2.2 p1
+# @Update : 03/07/2020
+# @Version : 3.2.3 p2
 ################################################################################
 
 //init var
 $mail_send=1;
 
 //functions
-require_once('core/functions.php');
+require_once(__DIR__.'/../core/functions.php');
 
+//load mailer
 require_once(__DIR__.'/../components/PHPMailer/src/PHPMailer.php');
 require_once(__DIR__.'/../components/PHPMailer/src/SMTP.php');
 require_once(__DIR__.'/../components/PHPMailer/src/Exception.php');

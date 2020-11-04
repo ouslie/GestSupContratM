@@ -7,7 +7,7 @@
 # @Author : Flox
 # @Create : 06/02/2018  
 # @Update : 28/05/2020  
-# @Version : 3.2.2 p1
+# @Version : 3.2.3 p1
 ################################################################################
 if(!function_exists("date_cnv")){
 	//date conversion to fr format

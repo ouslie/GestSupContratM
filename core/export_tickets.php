@@ -6,15 +6,21 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 27/01/2014
-# @Update : 11/06/2020
-# @Version : 3.2.2
+# @Update : 21/07/2020
+# @Version : 3.2.3
 ################################################################################
 
-//locales
-$lang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
-if($lang=='fr') {$_GET['lang'] = 'fr_FR';}
-else {$_GET['lang'] = 'en_US';}
+//database connection
+require "../connect.php"; 
 
+//get language of connected user
+$qry=$db->prepare("SELECT `language` FROM `tusers` WHERE id=:id");
+$qry->execute(array('id' => $_GET['userid']));
+$user=$qry->fetch();
+$qry->closeCursor();
+$_GET['lang']=$user['language'];
+
+//locales
 define('PROJECT_DIR', realpath('../'));
 define('LOCALE_DIR', PROJECT_DIR .'/locale');
 define('DEFAULT_LOCALE', '($_GET[lang]');
@@ -30,9 +36,6 @@ T_textdomain($_GET['lang']);
 require_once(__DIR__."/../core/init_get.php");
 if(!isset($_COOKIE['token'])) $_COOKIE['token'] = ''; 
 if(!isset($cnt_service)) $cnt_service=''; 
-
-//database connection
-require "../connect.php"; 
 
 $db_userid=strip_tags($_GET['userid']);
 $db_agency=strip_tags($_GET['agency']);

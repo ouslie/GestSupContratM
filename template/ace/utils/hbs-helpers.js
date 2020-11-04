@@ -10,22 +10,22 @@ const asset = require('./asset-finder');
 const constants = require('./constants');
 
 
-//in Layout we have a list of partials dir which is updated (the "dir" attr is updated) when we go to a new page
+// in Layout we have a list of partials dir which is updated (the "dir" attr is updated) when we go to a new page
 class Layout {
 	constructor(base, dataPath) {
 		this._base = base;
 		this._dataPath = dataPath;
-		
+
 		this.layoutsDir = `${this._base}/layouts`;
 		this.pagesDir = `${this._base}/pages`;
-		
+
 		this.defaultLayout = constants.DEFAULT_LAYOUT;
 		this.partialsDir = [];
 		this.partialsDir_KeyMap = {};
-		
+
 		this._setDefaultPartialsDir();
 	}
-	
+
 	getBase() {
 		return this._base;
 	}
@@ -33,22 +33,22 @@ class Layout {
 	getDataDir() {
 		return `${this._dataPath}/layouts`;
 	}
-	
+
 	updatePagePartialsDirFor(page) {
 		this._updatePartialsDir('page', `${this.pagesDir}/partials/${page}`);
 		this._updatePartialsDir('include', `${this.pagesDir}/partials/${page}`);
 	}
-	
+
 	getPagePartialsDir(page) {
 		return `${this.pagesDir}/partials/${page}`;
 	}
-	
+
 	_setDefaultPartialsDir() {
 		this._updatePartialsDir('layout', `${this.layoutsDir}/partials`);
 		this._updatePartialsDir('page', `${this.pagesDir}/partials`);
 		this._updatePartialsDir('include', `${this.pagesDir}/partials`);
 	}
-	
+
 	_updatePartialsDir(namespace, dir) {
 		if( !(this.partialsDir_KeyMap[namespace] instanceof Object) ) {
 			this.partialsDir_KeyMap[namespace] = {namespace, dir};
@@ -66,26 +66,32 @@ class Page {
 		this._base = base;
 		this._dataPath = dataPath;
 		this._layout = null;
-		
+
 		this._pageList = new PageList();
-		this._pageList.setDataFile( resolve.AppDirAbs()+'/data/'+constants.DEFAULT_DEMO+'/layouts/pages.json' );
+
+		// there may be a different `pages.json` file for this page ... for example `horizontal` and `dashboard-2`
+		var dataFileFolder = resolve.AppDirAbs() + '/data/'+constants.DEFAULT_DEMO+'/layouts/';
+		var dataFile = dataFileFolder + 'sidebar-' + id + '.json';
+		if (!fs.existsSync(dataFile)) dataFile = dataFileFolder + 'sidebar.json';
+
+		this._pageList.setDataFile(dataFile);
 		this._pageList.initSidebarTree();
 		this._pageList.updateSelectedPage(id);
-		
+
 		//var sidebar = this.getSidebar();
 	}
-	
+
 	getTemplate() {
 		return `${this._base}/pages/${this.id}`;
 	}
-	
+
 	getPartialsDir() {
 		return `${this._base}/pages/partials/${this.id}`;
 	}
 	getDataDir() {
 		return `${this._dataPath}/pages/${this.id}`;
 	}
-	
+
 	getSidebar() {
 		return this._pageList.getSidebarTree();
 	}
@@ -140,7 +146,7 @@ class Display {
 	connect(app) {
 		this.setApp(app);
 		if( !this.app || !this._layout ) return this;
-		
+
 		this.app.engine('.hbs', exphbs({
 											extname: this.extname,
 											layoutsDir: this._layout.layoutsDir,
@@ -180,10 +186,11 @@ class HbsHelpers {
 
 
 	//we keep a list of required assets
-	//so when building release package we include those assets from node_modules folder
+	//so when building release package's zip file, we include those assets from node_modules folder
 	static keepRequiredAssets(keep=true) {
 		HbsHelpers._keepRequiredAssets = keep;
 	}
+
 	static getRequiredAssets() {
 		return HbsHelpers._requireAssetsList;
 	}
@@ -200,7 +207,7 @@ class HbsHelpers {
 
 		let res = '';
 		for(let file of resultFiles) {
-			res += `<script type="text/javascript" src="${file}"></script>\n`;
+			res += `<script src="${file}"></script>\n`;
 
 			// add to list of required assets
 			if (HbsHelpers._keepRequiredAssets) HbsHelpers._requireAssetsList.push(file)		
@@ -239,9 +246,9 @@ class HbsHelpers {
 		if ( fs.existsSync( src ) ) {
 			var build = process.env.BUILD;
 
-			if(build == 'dist') return '<script type="text/javascript">\n' + fs.readFileSync(src, 'utf-8') + '\n</script>';//inline (inside HTML)
+			if(build == 'dist') return '<script>\n' + fs.readFileSync(src, 'utf-8') + '\n</script>';//inline (inside HTML)
 
-			return `<script type="text/javascript" src="${src}"></script>`;	
+			return `<script src="${src}"></script>`;	
 		}
 		return '';
 	}
@@ -278,15 +285,17 @@ class HbsHelpers {
 
 		return HbsHelpers._readData(dataFile);
 	}
-
-	static GetLayoutData(layout, name) {
+	/**
+	static GetLayoutData(page, name) {
 		if( !page || !(page instanceof Page) ) return {};
-		let layout = page.getLayout();
+
+		var layout = page.getLayout();
 		if( !layout || !(layout instanceof Layout) ) return {};
 
 		var dataFile = layout.getDataDir() + '/' + name;
 		return HbsHelpers._readData(dataFile);
 	}
+	*/
 
 	static _readData(dataFile) {		
 		

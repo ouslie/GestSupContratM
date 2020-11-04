@@ -6,8 +6,8 @@
 # @Parameters : 
 # @Author : Flox
 # @Create : 03/09/2013
-# @Update : 28/05/2020
-# @Version : 3.2.2
+# @Update : 12/08/2020
+# @Version : 3.2.3
 ################################################################################
 
 //initialize variables 
@@ -123,14 +123,16 @@ if($_GET['action']=='add' && $rright['procedure_add']!=0)
 	}
 	////////////////////////////////////////////////////////// START FORM ADD NEW PROCEDURE ///////////////////////////////////////////////////
 	echo '
-		<div class="page-header position-relative">
-			<h1 class="page-title text-primary-m2">
-				<i class="fa fa-book text-primary-m2"></i> '.T_("Ajout d'une procédure").'
-			</h1>
-		</div>
-		<fieldset>
-			<div class="col-xs-12">
-				<form method="POST" enctype="multipart/form-data" name="myform" id="myform" action="" onsubmit="loadVal();" >
+		<div class="card bcard" id="card-1">
+			<div class="card-header">
+				<h5 class="card-title">
+					<i class="fa fa-book text-primary-m2"></i> '.T_("Ajout d'une procédure").'
+				</h5>
+			</div><!-- /.card-header -->
+			<div class="card-body p-0">
+				<!-- to have smooth .card toggling, it should have zero padding -->
+				<div class="p-3">
+					<form method="POST" enctype="multipart/form-data" name="myform" id="myform" action="" onsubmit="loadVal();" >
 					<label for="name">'.T_('Nom').' :</label>
 					<input name="name" style="width:auto;" class="form-control form-control-sm d-inline-block" type="text" value="'; echo $_POST['name']; echo '">
 					<br />
@@ -165,12 +167,12 @@ if($_GET['action']=='add' && $rright['procedure_add']!=0)
 					echo '
 					<label for="category">'.T_('Catégorie').' :</label>
 					<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="category" onchange="submit();">
-					    ';
+						';
 						$qry2=$db->prepare("SELECT `id`,`name` FROM `tcategory` ORDER BY `name`");
 						$qry2->execute();
 						while($row2=$qry2->fetch()) 
 						{
-							 if($_POST['category'])
+							if($_POST['category'])
 							{
 								if($row2['id']==$_POST['category']) {echo '<option selected value="'.$row2['id'].'">'.$row2['name'].'</option>';}
 							} elseif(isset($row['category'])==$row2['id']) 
@@ -180,13 +182,13 @@ if($_GET['action']=='add' && $rright['procedure_add']!=0)
 							echo '<option value="'.$row2['id'].'">'.$row2['name'].'</option>';
 						}
 						$qry2->closeCursor();
-					    echo '
+						echo '
 					</select>
 					<br />
 					<br />
 					<label for="subcat">'.T_('Sous-catégorie').' :</label>
 					<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="subcat">
-					   ';
+					';
 						if($_POST['category'])
 						{
 							$qry2= $db->prepare("SELECT `id`,`name` FROM `tsubcat` WHERE `cat` LIKE :cat ORDER BY `name` ASC"); 
@@ -210,7 +212,7 @@ if($_GET['action']=='add' && $rright['procedure_add']!=0)
 							
 						}
 						$qry2->closeCursor();
-					    echo '
+						echo '
 					</select>
 					<br /><br />
 					<label for="procedure_file">'.T_('Joindre un fichier').' :</label>
@@ -236,8 +238,12 @@ if($_GET['action']=='add' && $rright['procedure_add']!=0)
 						</button>
 					</div>
 				</form>
-			</div>
-		</fieldset>			
+
+
+
+				</div>
+			</div><!-- /.card-body -->
+		</div>
 	';
 	////////////////////////////////////////////////////////// END FORM ADD NEW PROCEDURE ///////////////////////////////////////////////////
 }
@@ -328,13 +334,17 @@ elseif($_GET['action']=='edit')
 	if($row['company_id']==$ruser['company'] || $rright['procedure_list_company_only']==0) //security check before display procedure
 	{
 		echo '
-			<div class="page-header position-relative">
-				<h1 class="page-title text-primary-m2">
+		
+		<div class="card bcard mt-2" id="card-1">
+			<div class="card-header">
+				<h5 class="card-title">
 					<i class="fa fa-book text-primary-m2"></i> '.T_('Procédure').' n°'.$row['id'].' : '.$row['name'].'
-				</h1>
-			</div>
-			<fieldset>
-				<div class="col-xs-12">
+				</h5>
+				
+			</div><!-- /.card-header -->
+			<div class="card-body p-0">
+				<!-- to have smooth .card toggling, it should have zero padding -->
+				<div class="p-3">
 					<form method="POST" enctype="multipart/form-data" name="myform" id="myform" action="" onsubmit="loadVal();" >
 						<label for="name">'.T_('Nom de la procédure').' :</label>
 						<input name="name" style="width:auto;" class="form-control form-control-sm d-inline-block" type="text" value="'.$row['name'].'" '; if($rright['procedure_modify']==0) {echo 'readonly="readonly"';} echo '>
@@ -392,7 +402,7 @@ elseif($_GET['action']=='edit')
 						<br />
 						<label for="subcat">'.T_('Sous-catégorie').' :</label>
 						<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="subcat" '; if($rright['procedure_modify']==0) {echo 'disabled="disabled"';} echo '>
-						   ';
+						';
 							if($_POST['category'])
 							{
 								$qry2= $db->prepare("SELECT `id`,`name` FROM `tsubcat` WHERE cat LIKE :cat ORDER BY `name` ASC");
@@ -481,7 +491,8 @@ elseif($_GET['action']=='edit')
 						</div>
 					</form>
 				</div>
-			</fieldset>			
+			</div><!-- /.card-body -->
+		</div>
 		';
 	} else {
 		//display right error
@@ -575,7 +586,7 @@ elseif($_GET['action']=='edit')
 								<div class="hidden-phone visible-desktop btn-group">	
 									';
 									//display actions buttons
-									if($rright['procedure_modify']) {echo'<a class="btn btn-xs btn-warning mr-1" href="./index.php?page=procedure&amp;id='.$row['id'].'&amp;action=edit" title="'.T_('Modifier cette procédure').'" ><center><i class="fa fa-pencil-alt"></i></center></a>';}
+									if($rright['procedure_modify']) {echo'<a class="btn btn-xs btn-warning mr-1" href="./index.php?page=procedure&amp;id='.$row['id'].'&amp;action=edit" title="'.T_('Modifier cette procédure').'" ><center><span style="color:#FFF;#"><i class="fa fa-pencil-alt"></i></span></center></a>';}
 									if($rright['procedure_delete']) {echo'<a class="btn btn-xs btn-danger" onClick="javascript: return confirm(\''.T_('Êtes-vous sur de vouloir supprimer cette procédure ?').'\');" href="./index.php?page=procedure&amp;id='.$row['id'].'&amp;action=delete" title="'.T_('Supprimer cette procédure').'" ><center><i class="fa fa-trash"></i></center></a>';}
 									echo '
 								</div>
@@ -591,7 +602,4 @@ elseif($_GET['action']=='edit')
 	';
 	//////////////////////////////////////////////////////////////// END PROCEDURE LIST ///////////////////////////////////////////////////////////
 }
-echo '
-
-';
 ?>

@@ -13,7 +13,7 @@ const constants = require('./constants');
 module.exports = class AppResolve {
 
  static relativePath(path, to=null) {
- 	return relative(!to ? process.cwd() : to, path)
+ 	return relative(!to ? process.cwd() + '/' : to, path)
 		  .replace(/[\\\/]+/g, '/')
 		  .replace(/^([^../|./])/ , './$1');//if relative path doesn't start with './' or '../' prepend it for node to be able to locate/access files correctly
  }
@@ -118,14 +118,17 @@ module.exports = class AppResolve {
  }
 
  static PkgVer(name) {
-  var folder = this.relativePath(this.PkgDir(name), __dirname);//require is called from this file's __dirname
+  var folder = this.PkgDir(name);
   if(folder == null) return false;
-  
+  //folder = this.relativePath(folder, __dirname);//require is called from this file's __dirname
+
+
   var pkgInfo = {};
   try {
-	  pkgInfo = JSON.parse(fs.readFileSync(folder + '/package.json', 'utf-8'));
+    pkgInfo = JSON.parse(fs.readFileSync(folder + '/package.json', 'utf-8'));
   }
   catch(e) {}
+
   return pkgInfo.version || false;
  }
   

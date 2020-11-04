@@ -5,8 +5,8 @@
 # @Call : admin.php
 # @Author : Flox
 # @Create : 12/01/2011
-# @Update : 11/06/2020
-# @Version : 3.2.2 p3
+# @Update : 08/07/2020
+# @Version : 3.2.3 p2
 ################################################################################
 
 //initialize variables 
@@ -905,12 +905,12 @@ if(($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_S
                 								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="mobile" type="text" value="'.$user1['mobile'].'" />
                 								<div class="space-4"></div>
                 								<label for="fax">'.T_('Fax').' :</label>
-												';if($mobile==1) {echo '<br />';} echo '
+												';if($mobile) {echo '<br />';} echo '
                 								<input style="width:auto;" class="form-control form-control-sm d-inline-block" name="fax" type="text" value="'.$user1['fax'].'" />
                 								<div class="space-4"></div>
                 								<label for="service">'.T_('Service').' :</label>
 												';
-												if($mobile==1) {echo '<br />';} 
+												if($mobile) {echo '<br />';} 
 												//service add field
 												if($rright['user_profil_service'])
 												{
@@ -990,7 +990,7 @@ if(($_GET['action']=='edit') && (($_SESSION['user_id']==$_GET['userid']) || ($_S
 																echo '
 															</ul>
 														';
-													}
+													} 
 												}
 												echo '
                 								<div class="space-4"></div>
@@ -1203,10 +1203,15 @@ else if($_GET['action']=="add" && (($_SESSION['user_id']==$_GET['userid']) || ($
 								<hr />
 								<label class="control-label bolder text-primary-m2" for="skin">'.T_('Thème').' :</label>
 								<select style="width:auto;" class="form-control form-control-sm d-inline-block" name="skin">
-									<option style="background-color:#438EB9;" value="">'.T_('Bleu (Défaut)').'</option>
-									<option style="background-color:#222A2D;" value="skin-1">'.T_('Noir').'</option>
-									<option style="background-color:#C6487E;" value="skin-2">'.T_('Rose').'</option>
-									<option style="background-color:#D0D0D0;" value="skin-3">'.T_('Gris').'</option>
+									<option value="">'.T_('Bleu (Défaut)').'</option>
+									<option value="skin-3">'.T_('Gris').'</option>
+									<option value="skin-1">'.T_('Noir').'</option>
+									<option value="skin-2">'.T_('Violet').'</option>
+									<option value="skin-5">'.T_('Vert').'</option>
+									<option value="skin-7">'.T_('Vert et violet').'</option>
+									<option value="skin-6">'.T_('Orange').'</option>
+									<option value="skin-8">'.T_('Orange et violet').'</option>
+									<option value="skin-4">'.T_('Sombre').'</option>
 								</select>
 								';
 								// Display profile list
@@ -1825,7 +1830,7 @@ else
 								<td onclick=\'window.location.href="index.php?page=admin&subpage=user&action=edit&userid='.$row['id'].'&tab=infos";\' >'.$lastlogin.'</td>
 								<td>
 								<div class="hidden-phone visible-desktop btn-group">
-									<a class="btn btn-xs btn-warning" href="index.php?page=admin&amp;subpage=user&amp;action=edit&amp;userid='.$row['id'].'&tab=infos"  title="'.T_("Éditer l'utilisateur").'" ><center><i class="fa fa-pencil-alt"></i></center></a>';
+									<a class="btn btn-xs btn-warning" href="index.php?page=admin&amp;subpage=user&amp;action=edit&amp;userid='.$row['id'].'&tab=infos"  title="'.T_("Modifier l'utilisateur").'" ><center><span style="color:#FFF;"><i class="fa fa-pencil-alt"></i></span></center></a>';
 									if(($row['disable']!=1) && ($row['id']!=$_SESSION['user_id']))
 									{
 										echo '<a class="btn btn-xs btn-danger" href="index.php?page=admin&amp;subpage=user&amp;userid='.$row['id'].'&amp;action=disable"  title="'.T_("Désactiver l'utilisateur").'" ><center><i class="fa fa-ban"></i></center></a>';
@@ -1900,7 +1905,7 @@ else
 		$qry->execute(array('disable' => $_GET['disable']));
 	}
 				
-    $resultcount = $qry->fetch();
+	$resultcount = $qry->fetch();
 	//multi-pages link
 	if($resultcount[0]>$rparameters['maxline'])
 	{

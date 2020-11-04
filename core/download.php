@@ -7,7 +7,7 @@
 # @Author : Flox
 # @Create : 17/12/2019
 # @Update : 11/02/2020
-# @Version : 3.2.0
+# @Version : 3.2.3 p1
 ################################################################################
 if(isset($_GET['download']))
 {
@@ -29,7 +29,8 @@ if(isset($_GET['download']))
             header('Expires: 0');
             header('Cache-Control: must-revalidate');
             header('Pragma: public');
-            header('Content-Length: ' . filesize($filepath));
+			header('Content-Length: ' . filesize($filepath));
+			ob_clean();
             flush(); // Flush system output buffer
             readfile($filepath);
             die();

@@ -6,8 +6,8 @@
 # @parameters : 
 # @Author : Flox
 # @Create : 07/04/2013
-# @Update : 11/06/2020
-# @Version : 3.2.2 p6
+# @Update : 07/08/2020
+# @Version : 3.2.3
 ################################################################################
 
 //initialize variables 
@@ -88,7 +88,7 @@ function func_attachement($c_ticket_number,$c_name_dir_upload,$mail,$db,$mailbox
 				} 
 			}
 		} 
-		else  //case attachment in mail
+		else //case attachment in mail
 		{
 			$c_name_file = $tabAttachment->name;
 			if($c_name_file && $c_ticket_number)
@@ -209,7 +209,7 @@ foreach ($mailboxes as $mailbox)
 	//connect to mailbox
 	$con_mailbox = new Mailbox($hostname, $mailbox, $mailbox_password,$c_name_dir_upload);
 	try {
-        $mailsIds = $con_mailbox->searchMailbox('ALL');
+		$mailsIds = $con_mailbox->searchMailbox('ALL');
     } catch (ConnectionException $ex) {
 		logit('error','IMAP connector : connection failed: '.$ex->getMessage(),'0');
         die('IMAP connection failed: '.$ex->getMessage());
@@ -356,7 +356,7 @@ foreach ($mailboxes as $mailbox)
 							{
 								if($rparameters['mail_from_adr']){$from=$rparameters['mail_from_adr'];}
 								$to=$techmail['mail'];
-								$object=T_('Le ticket').' n°'.$find_ticket_number.': '.T_(' a été modifié');
+								$object=T_('Le ticket').' n°'.$find_ticket_number.' : '.T_(' a été modifié');
 								$message = '
 								'.T_('Le ticket').' n°'.$find_ticket_number.' '.T_('a été modifié').' <br />
 								<br />
@@ -364,9 +364,10 @@ foreach ($mailboxes as $mailbox)
 								';
 								$mail_auto=true;
 								require('core/message.php');
+								
 								//trace mail in thread
 								$qry=$db->prepare("INSERT INTO `tthreads` (`ticket`,`date`,`author`,`text`,`type`,`dest_mail`) VALUES (:ticket,:date,:author,'','3',:dest_mail)");
-								$qry->execute(array('ticket' => $find_ticket_number,'date' => $datetime,'author' => 0,'dest_mail' => $techmail['mail']));								
+								$qry->execute(array('ticket' => $find_ticket_number,'date' => $datetime,'author' => 0,'dest_mail' => $techmail['mail']));
 							}
 							
 						}
@@ -383,7 +384,7 @@ foreach ($mailboxes as $mailbox)
 						$qry->execute(array('ticket' => $c_ticket_number,'date' => $datetime));
 						
 						//check if current mailbox is attached with service
-						if($rparameters['imap_mailbox_service']==1)
+						if($rparameters['imap_mailbox_service'])
 						{
 							//get service id for current mailbox
 							$qry=$db->prepare("SELECT `id`,`name` FROM `tservices` WHERE id IN (SELECT service_id FROM `tparameters_imap_multi_mailbox` WHERE mail=:mail)");
@@ -391,7 +392,7 @@ foreach ($mailboxes as $mailbox)
 							$row=$qry->fetch();
 							$qry->closeCursor();
 
-							if($row['id']) {
+							if(!empty($row['id'])) {
 								echo '['.$mailbox.'] [mail '.$count.'] Service associate with this mailbox: <span style="color:green">'.$row['name'].' ('.$row['id'].')</span><br />';
 								$qry=$db->prepare("UPDATE `tincidents` SET `u_service`=:u_service WHERE `id`=:id");
 								$qry->execute(array('u_service' => $row['id'],'id' => $c_ticket_number));
@@ -401,7 +402,7 @@ foreach ($mailboxes as $mailbox)
 						}
 						
 						echo '['.$mailbox.'] [mail '.$count.'] Import mail "'.$subject.'": <span style="color:green">OK</span><br />';
-						if($rparameters['debug']==1) 
+						if($rparameters['debug']) 
 						{
 							echo '['.$mailbox.'] [mail '.$count.'] Create new ticket: <span style="color:green">OK (ID=<a href="index.php?page=ticket&id='.$c_ticket_number.'" target="_blank\" >'.$c_ticket_number.'</a>)</span><br />';
 							echo '['.$mailbox.'] [mail '.$count.'] Content type detected: <span style="color:green">'.$contentype.'</span><br />';
@@ -411,8 +412,9 @@ foreach ($mailboxes as $mailbox)
 						
 						//add extra informations on ticket description
 						setlocale(LC_TIME, 'fr_FR.utf8','fra');
-						$date=strtotime($mail->date);
-						$date=strftime("%A %e %B %G à %H:%M",$date);
+						$date=strtotime(date('Y-m-d H:i:s'));
+						$date_only=utf8_encode(strftime("%A %e %B %G",$date));
+						$date=$date_only.' '.T_('à').' '.strftime("%H:%M",$date);
 						
 						$description_header=
 						'<b>'.T_('De').' :</b> '.$mail->fromAddress.'<br /> 
@@ -510,8 +512,8 @@ foreach ($mailboxes as $mailbox)
 			} //END for each unread mail 
 		} //END for each mail
 	}
-	echo "<br />";
+	echo '<br />';
 	sleep(1); //timeout 1 seconds to limit network trafic
 }
-echo "Total $count mail received</b><br />";
+echo 'Total '.$count.' mail received</b><br />';
 ?>
